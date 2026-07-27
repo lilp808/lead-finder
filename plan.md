@@ -14,7 +14,7 @@ The goal is **not** to build a Facebook Scraper, but to build a **Property Lead 
 | Layer | Choice |
 |---|---|
 | Runtime | Node.js (ESM) on Vercel Serverless |
-| Schedule | Vercel Cron (ทุก 30 นาที) |
+| Schedule | Vercel Cron (06:00 UTC วันละครั้ง — Hobby limit) |
 | Scraper | Apify Facebook Group Scraper Actor |
 | LLM | Groq (llama-3.3-70b-versatile) |
 | Database | Supabase Postgres |
@@ -113,7 +113,7 @@ Output
 # Pipeline Detail
 
 ```
-Vercel Cron (ทุก 30 นาที)
+Vercel Cron (06:00 UTC — วันละครั้ง)
   │
   ▼
 /api/collect

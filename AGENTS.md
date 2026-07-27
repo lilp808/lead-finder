@@ -9,7 +9,7 @@ Phase 1 in progress. Basic file structure built — `npm install && npm run setu
 | Layer | Choice |
 |---|---|
 | Runtime | Node.js 20+ (ESM) on Vercel Serverless |
-| Schedule | Vercel Cron (`*/30 * * * *`) |
+| Schedule | Vercel Cron (06:00 UTC daily — Hobby limit) |
 | Scraper | Apify Facebook Group Scraper Actor |
 | LLM | Groq (llama-3.3-70b-versatile) |
 | Database | Supabase Postgres (`leads` table) |
