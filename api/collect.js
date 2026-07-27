@@ -10,9 +10,8 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'No GROUP_URLS configured' });
   }
 
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : `https://${req.headers.host}`;
+  const host = req.headers.host || process.env.VERCEL_URL;
+  const baseUrl = process.env.SITE_URL || `https://${host}`;
 
   const webhookUrl = `${baseUrl}/api/webhook`;
 
