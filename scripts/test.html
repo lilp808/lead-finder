@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Property Lead — Test Dashboard</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f5; padding: 24px; color: #222; }
+  .container { max-width: 800px; margin: 0 auto; }
+  h1 { font-size: 1.5rem; margin-bottom: 4px; }
+  .subtitle { color: #666; font-size: 0.9rem; margin-bottom: 24px; }
+  .card { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .card h2 { font-size: 1rem; margin-bottom: 12px; }
+  button { background: #0066ff; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-size: 0.9rem; cursor: pointer; }
+  button:hover { background: #0052cc; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-small { padding: 6px 12px; font-size: 0.8rem; }
+  textarea { width: 100%; min-height: 160px; font-family: monospace; font-size: 0.8rem; padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin: 8px 0; }
+  pre { background: #f0f0f0; padding: 12px; border-radius: 6px; font-size: 0.8rem; overflow-x: auto; white-space: pre-wrap; max-height: 400px; overflow-y: auto; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+  .badge-ok { background: #d4edda; color: #155724; }
+  .badge-skip { background: #fff3cd; color: #856404; }
+  .badge-err { background: #f8d7da; color: #721c24; }
+  .sample-link { color: #0066ff; cursor: pointer; text-decoration: underline; font-size: 0.8rem; }
+  .sample-link:hover { color: #0052cc; }
+  .loading { display: inline-block; width: 14px; height: 14px; border: 2px solid #ccc; border-top-color: #0066ff; border-radius: 50%; animation: spin .6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .env-warning { background: #fff3cd; color: #856404; padding: 10px 16px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🏠 Property Lead Test Dashboard</h1>
+  <div class="subtitle">Phase 1 — Facebook Lead Collection MVP</div>
+
+  <div id="envWarning" class="env-warning" style="display:none">
+    ⚠️ env GROUP_URLS ไม่ได้ตั้งค่า — collect จะคืน error ถ้ากด
+  </div>
+
+  <div class="card">
+    <h2>⚡ ทดสอบ /api/collect (เรียก Apify จริง)</h2>
+    <p style="font-size:0.85rem;color:#666;margin-bottom:12px">
+      ต้องตั้งค่า env ครบ (<code>APIFY_API_KEY</code>, <code>GROUP_URLS</code> ฯลฯ) ใน <code>.env.local</code>
+    </p>
+    <button id="btnCollect" onclick="testCollect()">▶ เรียก Collect</button>
+    <div id="collectResult" style="margin-top:12px"></div>
+  </div>
+
+  <div class="card">
+    <h2>🧪 Simulate Webhook (ไม่ต้องพึ่ง Apify)</h2>
+    <p style="font-size:0.85rem;color:#666;margin-bottom:8px">
+      วาง JSON โพสต์จาก Facebook Group (จำลองข้อมูลที่ Apify ส่งมา) แล้วกด Test
+    </p>
+    <div class="row" style="margin-bottom:8px">
+      <span class="sample-link" onclick="loadSample()">📋 ใส่ตัวอย่างข้อมูล</span>
+    </div>
+    <textarea id="webhookBody" placeholder='{"url":"https://facebook.com/groups/...","text":"ขายบ้าน...","imageUrls":[],"authorName":"John"}'>{
+  "eventType": "ACTOR.RUN.SUCCEEDED",
+  "resource": {
+    "defaultDatasetId": "local-test"
+  }
+}</textarea>
+    <input type="hidden" id="mockItems" value="">
+    <div class="row">
+      <button onclick="testWebhook()">▶ Test Webhook</button>
+      <span id="webhookSpinner" style="display:none" class="loading"></span>
+    </div>
+    <div id="webhookResult" style="margin-top:12px"></div>
+  </div>
+
+  <div class="card">
+    <h2>📄 ตัวอย่างข้อมูลที่ Apify ส่งให้</h2>
+    <pre>{
+  "url": "https://facebook.com/groups/123/posts/456",
+  "text": "ขายบ้านเดี่ยว 2 ชั้น 50 ตรว. 3 ห้องนอน 2 ห้องน้ำ ใกล้ BTS บางนา ราคา 4.5 ล้าน สนใจติดต่อ 081-234-5678",
+  "imageUrls": ["https://scontent.xx.fbcdn.net/v/..."],
+  "authorName": "สมชาย ใจดี",
+  "authorUrl": "https://facebook.com/somchai",
+  "date": "2024-07-27T10:00:00.000Z",
+  "groupUrl": "https://facebook.com/groups/123"
+}</pre>
+  </div>
+</div>
+
+<script>
+const API_BASE = '';
+
+window.onload = checkEnv;
+
+function checkEnv() {
+  fetch(API_BASE + '/api/collect', { method: 'GET' })
+    .then(r => r.json())
+    .then(d => {
+      if (d.error && d.error.includes('GROUP_URLS')) {
+        document.getElementById('envWarning').style.display = 'block';
+      }
+    })
+    .catch(() => {});
+}
+
+async function testCollect() {
+  const btn = document.getElementById('btnCollect');
+  const resultDiv = document.getElementById('collectResult');
+  btn.disabled = true;
+  resultDiv.innerHTML = '<span class="loading"></span> กำลังเรียก...';
+
+  try {
+    const res = await fetch(API_BASE + '/api/collect');
+    const data = await res.json();
+    resultDiv.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+  } catch (err) {
+    resultDiv.innerHTML = '<span class="badge badge-err">Error:</span> <pre>' + err.message + '</pre>';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function testWebhook() {
+  const btn = event.target;
+  const spinner = document.getElementById('webhookSpinner');
+  const resultDiv = document.getElementById('webhookResult');
+  const textarea = document.getElementById('webhookBody');
+
+  btn.disabled = true;
+  spinner.style.display = 'inline-block';
+  resultDiv.innerHTML = '';
+
+  try {
+    const body = JSON.parse(textarea.value);
+
+    const res = await fetch(API_BASE + '/api/webhook', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    const data = await res.json();
+    resultDiv.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+  } catch (err) {
+    resultDiv.innerHTML = '<span class="badge badge-err">Error:</span> <pre>' + err.message + '</pre>';
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+  }
+}
+
+function loadSample() {
+  document.getElementById('webhookBody').value = JSON.stringify({
+  "eventType": "ACTOR.RUN.SUCCEEDED",
+  "resource": {
+    "defaultDatasetId": "local-test"
+  },
+  "_mockItems": [
+    {
+      "url": "https://facebook.com/groups/propertythailand/posts/123",
+      "text": "ขายบ้านเดี่ยว 2 ชั้น 50 ตรว. 3 ห้องนอน 2 ห้องน้ำ ใกล้ BTS บางนา ราคา 4.5 ล้าน สนใจติดต่อ 081-234-5678",
+      "imageUrls": [],
+      "authorName": "สมชาย ใจดี",
+      "authorUrl": "https://facebook.com/somchai",
+      "date": "2024-07-27T10:00:00.000Z",
+      "groupUrl": "https://facebook.com/groups/propertythailand"
+    },
+    {
+      "url": "https://facebook.com/groups/propertythailand/posts/789",
+      "text": "ให้เช่าคอนโด 1 ห้อง 30 ตรม. ชั้น 25 วิวเมือง แถวอโศก ราคา 15,000/เดือน สนใจทักไลน์ condo888",
+      "imageUrls": [],
+      "authorName": "ณัฐ ทรัพย์ทวี",
+      "authorUrl": "https://facebook.com/natt",
+      "date": "2024-07-27T11:00:00.000Z",
+      "groupUrl": "https://facebook.com/groups/propertythailand"
+    }
+  ]
+}, null, 2);
+}
+</script>
+</body>
+</html>
