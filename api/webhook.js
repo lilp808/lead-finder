@@ -11,6 +11,15 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  if (!req.body || Object.keys(req.body).length === 0) {
+    const raw = await new Promise(resolve => {
+      let data = '';
+      req.on('data', chunk => data += chunk);
+      req.on('end', () => resolve(data));
+    });
+    req.body = raw ? JSON.parse(raw) : {};
+  }
+
   const { eventType, resource } = req.body;
 
   if (eventType !== 'ACTOR.RUN.SUCCEEDED') {
