@@ -6,9 +6,8 @@
 
 | Layer | Choice |
 |---|---|
-| Runtime | Node.js (ESM) on Vercel Serverless |
-| Schedule | Vercel Cron (06:00 UTC daily — Hobby limit) |
-| Scraper | Apify Facebook Groups Scraper Actor |
+| Runtime | Node.js (ESM) — Vercel Serverless + Local script |
+| Scraper | Playwright Chromium (`scripts/scrape.mjs`) |
 | LLM | Groq (llama-3.3-70b-versatile) |
 | Database | Supabase Postgres (`leads` table) |
 | Image Storage | Supabase Storage (bucket: `lead-images`, public) |
@@ -16,13 +15,14 @@
 ### Architecture
 
 ```
-Vercel Cron → /api/collect
-  └─ Apify Actor run per group (webhook → /api/webhook)
-       └─ Webhook:
-            ├─ Check duplicate (post_url)
-            ├─ Groq → extract structured data
-            ├─ Download images → Supabase Storage
-            └─ Insert → Supabase `leads` table
+Local machine (manual / Task Scheduler)
+  └─ npm run scrape
+       └─ Playwright → เปิด Facebook Group → scroll → extract 10 posts
+            └─ POST → Vercel /api/webhook
+                 ├─ Check duplicate (post_url)
+                 ├─ Groq → extract structured data
+                 ├─ Download images → Supabase Storage
+                 └─ Insert → Supabase `leads` table
 ```
 
 ---
@@ -31,51 +31,62 @@ Vercel Cron → /api/collect
 
 ### ✅ Done
 
-- [x] Code structure: `api/`, `src/lib/`, `scripts/`, `vercel.json`
-- [x] GitHub repo pushed: `lilp808/lead-finder`
+- [x] Code structure: `api/`, `src/lib/`, `scripts/`
+- [x] GitHub repo: `lilp808/lead-finder`
 - [x] Deployed to Vercel: `https://lead-finder-systems.vercel.app`
-- [x] Test dashboard at `/`
-- [x] `/api/collect` triggers Apify successfully
-- [x] Webhook URL auto-constructed (supports `SITE_URL` env)
+- [x] Playwright installed + Chromium ready
+- [x] `scripts/scrape.mjs` — Playwright scraper (headless: false)
+- [x] `/api/webhook` — Groq extract + image upload + DB insert
+- [x] Test Webhook → data เข้า `leads` table ได้จริง
 
-### ⬜ Must Do (before data flows)
+### ⬜ Must Do
 
-- [ ] **Run `src/schema.sql` in Supabase SQL Editor** — creates `leads` table
-- [ ] **Create bucket `lead-images`** (public) in Supabase Storage
-- [ ] **Set env vars in Vercel dashboard**: `APIFY_API_KEY`, `APIFY_ACTOR_ID`, `GROQ_API_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GROUP_URLS`
-- [ ] **Test pipeline** — use dashboard Test Webhook with sample data, or wait for next cron run
+- [ ] Run `npm run scrape` ครั้งแรก → ดู data เข้า Supabase
+- [ ] Verify Groq extraction quality (ปรับ prompt ถ้าข้อมูลไม่ตรง)
+- [ ] Add `SITE_URL` ใน Vercel env (optional)
 
 ### 🔜 Next
 
-- [ ] Verify Groq extraction quality (adjust prompt if needed)
-- [ ] Add `SITE_URL=https://lead-finder-systems.vercel.app` in Vercel env for clean webhook URLs
-- [ ] Add more Facebook Group URLs to `GROUP_URLS`
-- [ ] Monitor first cron run at 06:00 UTC
+- [ ] ตั้ง Windows Task Scheduler ให้รันอัตโนมัติทุกวัน
+- [ ] เพิ่ม Group URL อื่นๆ ใน `GROUP_URLS`
+- [ ] ถ้า scrape ได้ดี → ปิด Apify (เลิกจ่ายค่า Apify)
 
 ---
 
 ## Flow Detail
 
 ```
-Vercel Cron (06:00 UTC)
+npm run scrape
   │
   ▼
-/api/collect
-  ├─ อ่าน GROUP_URLS
-  ├─ สร้าง webhook URL
-  └─ Apify API → startActorRun(groupUrl, webhookUrl)
+scripts/scrape.mjs (Playwright)
+  ├─ headless: false — เปิด Chromium ให้เห็น
+  ├─ ไป GROUP_URLS[0]
+  ├─ รอโพสต์โหลด
+  ├─ scroll + extract (สูงสุด 10 โพสต์)
+  └─ สร้าง JSON array → POST
        │
-       ▼ (async — Apify ส่ง callback)
-/api/webhook
-  ├─ eventType == ACTOR.RUN.SUCCEEDED?
-  ├─ อ่าน datasetItems จาก Apify
-  └─ แต่ละ post:
-       ├─ post_url ซ้ำ? → ข้าม
-       ├─ Groq extract
-       │    └─ confidence < 0.3 → ข้าม
-       ├─ Download รูป (สูงสุด 10, timeout 15s)
-       │    └─ Upload → Supabase Storage /lead-images/{leadId}/
-       └─ Insert → Supabase `leads` table
+       ▼
+Vercel /api/webhook
+  ├─ เช็ค duplicate (post_url)
+  ├─ Groq extract ข้อมูลทรัพย์ + contact
+  ├─ Download รูป → Supabase Storage
+  └─ Insert → Supabase `leads` table
+```
+
+---
+
+## วิธีใช้
+
+```bash
+# ครั้งเดียว — ติดตั้ง Chromium
+npm run scrape:install
+
+# รัน scrape
+npm run scrape
+
+# ถ้าตั้งเวลา Windows
+schtasks /create /tn "PropertyLead-Scrape" /tr "npm run scrape" /sc daily /st 13:00
 ```
 
 ---
