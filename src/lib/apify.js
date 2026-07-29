@@ -1,5 +1,14 @@
 const APIFY_BASE = 'https://api.apify.com/v2';
 
+async function safeJson(res) {
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`Apify API returned non-JSON (${res.status}): ${text.slice(0, 200)}`);
+  }
+}
+
 export async function startActorRun(groupUrl, webhookUrl) {
   const actorId = process.env.APIFY_ACTOR_ID.replace('/', '~');
   const url = groupUrl.trim();
@@ -13,7 +22,11 @@ export async function startActorRun(groupUrl, webhookUrl) {
     },
   };
   if (webhookUrl) {
-    body.webhookUrls = [webhookUrl];
+    body.webhookUrls = [{
+      requestUrl: webhookUrl,
+      eventTypes: ['ACTOR.RUN.SUCCEEDED'],
+      data: { groupUrl: url },
+    }];
   }
 
   const res = await fetch(
@@ -29,7 +42,7 @@ export async function startActorRun(groupUrl, webhookUrl) {
     throw new Error(`Apify run failed (${res.status}): ${await res.text()}`);
   }
 
-  return res.json();
+  return safeJson(res);
 }
 
 export async function getDatasetItems(datasetId) {
@@ -41,19 +54,7 @@ export async function getDatasetItems(datasetId) {
     throw new Error(`Apify dataset fetch failed (${res.status})`);
   }
 
-  return res.json();
-}
-
-export async function getRunInput(runId) {
-  const res = await fetch(
-    `${APIFY_BASE}/actor-runs/${runId}/input?token=${process.env.APIFY_API_KEY}`,
-  );
-
-  if (!res.ok) {
-    throw new Error(`Apify run input fetch failed (${res.status}): ${await res.text()}`);
-  }
-
-  return res.json();
+  return safeJson(res);
 }
 
 export async function startAllRuns(groupUrls, webhookUrl) {
