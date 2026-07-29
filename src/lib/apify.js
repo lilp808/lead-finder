@@ -14,12 +14,10 @@ export async function startActorRun(groupUrl, webhookUrl) {
   const url = groupUrl.trim();
 
   const body = {
-    input: {
-      startUrls: [{ url }],
-      resultsLimit: 10,
-      proxy: { useApifyProxy: true },
-      extractPostDates: true,
-    },
+    startUrls: [{ url }],
+    resultsLimit: 10,
+    proxy: { useApifyProxy: true },
+    extractPostDates: true,
   };
   if (webhookUrl) {
     body.webhookUrls = [{
