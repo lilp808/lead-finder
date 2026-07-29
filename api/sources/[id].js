@@ -16,6 +16,8 @@ export default async function handler(req, res) {
       if (req.body.results_limit !== undefined) updates.results_limit = req.body.results_limit;
       if (req.body.active !== undefined) updates.active = req.body.active;
       if (req.body.platform !== undefined) updates.platform = req.body.platform;
+      if (req.body.model_provider !== undefined) updates.model_provider = req.body.model_provider;
+      if (req.body.model_name !== undefined) updates.model_name = req.body.model_name;
       updates.updated_at = new Date().toISOString();
 
       if (Object.keys(updates).length <= 1) {

@@ -9,7 +9,7 @@ import {
 const BATCH_SIZE = 5;
 const TIME_LIMIT_SEC = 50;
 
-async function processOneItem(item, sourceUrl, supabase) {
+async function processOneItem(item, sourceUrl, supabase, modelOptions = {}) {
   const postUrl = item.url || item.postUrl;
   if (!postUrl) return null;
 
@@ -23,7 +23,7 @@ async function processOneItem(item, sourceUrl, supabase) {
     return { postUrl, status: 'duplicate' };
   }
 
-  const extraction = await extractProperty(item.text || '');
+  const extraction = await extractProperty(item.text || '', modelOptions);
 
   if ((extraction.confidence_score ?? 0) < 0.3) {
     return { postUrl, status: 'low_confidence', score: extraction.confidence_score };
@@ -81,7 +81,7 @@ async function processOneItem(item, sourceUrl, supabase) {
   }
 }
 
-async function processItems(items, sourceUrl, supabase) {
+async function processItems(items, sourceUrl, supabase, modelOptions = {}) {
   const startTime = Date.now();
   const results = [];
   let skipped = 0;
@@ -95,7 +95,7 @@ async function processItems(items, sourceUrl, supabase) {
 
     const batch = items.slice(i, i + BATCH_SIZE);
     const batchResults = await Promise.all(
-      batch.map(item => processOneItem(item, sourceUrl, supabase))
+      batch.map(item => processOneItem(item, sourceUrl, supabase, modelOptions))
     );
 
     for (const r of batchResults) {

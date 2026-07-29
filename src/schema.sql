@@ -76,9 +76,15 @@ create table if not exists source_configs (
   source_url     text not null,
   results_limit  int not null default 5,
   active         boolean default true,
+  model_provider text not null default 'typhoon',
+  model_name     text not null default 'typhoon-v2.5-30b-a3b-instruct',
   created_at     timestamptz default now(),
   updated_at     timestamptz default now()
 );
+
+-- Migration for existing DBs (columns added after table creation)
+alter table source_configs add column if not exists model_provider text not null default 'typhoon';
+alter table source_configs add column if not exists model_name text not null default 'typhoon-v2.5-30b-a3b-instruct';
 
 -- Cron schedules (web-managed, overrides vercel.json cron)
 create table if not exists cron_schedules (

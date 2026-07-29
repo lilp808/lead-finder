@@ -26,7 +26,7 @@ function mapApifyItem(item) {
   };
 }
 
-async function processOneItem(item, sourceUrl, supabase) {
+async function processOneItem(item, sourceUrl, supabase, modelOptions = {}) {
   const postUrl = item.url;
   if (!postUrl) return null;
 
@@ -40,7 +40,7 @@ async function processOneItem(item, sourceUrl, supabase) {
     return { postUrl, status: 'duplicate' };
   }
 
-  const extraction = await extractProperty(item.text || '');
+  const extraction = await extractProperty(item.text || '', modelOptions);
 
   if ((extraction.confidence_score ?? 0) < 0.3) {
     return { postUrl, status: 'low_confidence', score: extraction.confidence_score };
@@ -98,7 +98,7 @@ async function processOneItem(item, sourceUrl, supabase) {
   }
 }
 
-async function processItems(items, sourceUrl, supabase, steps) {
+async function processItems(items, sourceUrl, supabase, steps, modelOptions = {}) {
   const startTime = Date.now();
   const results = [];
   let skipped = 0;
@@ -115,7 +115,7 @@ async function processItems(items, sourceUrl, supabase, steps) {
     steps.push({ type: 'batch_progress', status: 'processing', batch: Math.floor(i / BATCH_SIZE) + 1, total: Math.ceil(items.length / BATCH_SIZE) });
 
     const batchResults = await Promise.all(
-      batch.map(item => processOneItem(item, sourceUrl, supabase))
+      batch.map(item => processOneItem(item, sourceUrl, supabase, modelOptions))
     );
 
     for (const r of batchResults) {
@@ -211,7 +211,8 @@ export default async function handler(req, res) {
       try {
         const items = await processSource(source, steps);
         steps.push({ type: 'fetch', status: 'ok', count: items.length, label: source.label });
-        const { results, skipped } = await processItems(items, source.source_url, supabase, steps);
+        const modelOptions = { provider: source.model_provider, model: source.model_name };
+        const { results, skipped } = await processItems(items, source.source_url, supabase, steps, modelOptions);
         allResults.push(...results);
         totalSkipped += skipped;
       } catch (err) {

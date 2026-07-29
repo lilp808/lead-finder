@@ -94,6 +94,14 @@
         <input type="number" id="newLimit" value="10" min="1" max="100">
         <span style="font-size:0.8rem;color:#999">โพสต์/ครั้ง</span>
       </div>
+      <div class="form-row">
+        <label>AI Model</label>
+        <select id="newProvider" onchange="updateModelOptions()" style="width:120px">
+          <option value="typhoon">Typhoon</option>
+          <option value="groq">Groq</option>
+        </select>
+        <select id="newModel" style="width:220px"></select>
+      </div>
       <button onclick="addSource()" style="margin-top:4px">💾 บันทึก</button>
       <button class="outline" onclick="toggleAddForm()" style="margin-top:4px">ยกเลิก</button>
     </div>
@@ -159,8 +167,34 @@ function populateTimeSelects() {
   }
 }
 
+const MODELS = {
+  typhoon: [
+    { value: 'typhoon-v2.5-30b-a3b-instruct', label: 'Typhoon v2.5 30B' },
+    { value: 'typhoon-v2.5-7b-instruct', label: 'Typhoon v2.5 7B' },
+  ],
+  groq: [
+    { value: 'llama-3.3-70b-versatile', label: 'Llama 3.3 70B' },
+    { value: 'llama-3.1-8b-instant', label: 'Llama 3.1 8B (fast)' },
+  ],
+};
+
+function updateModelOptions() {
+  const provider = document.getElementById('newProvider').value;
+  const modelSel = document.getElementById('newModel');
+  const models = MODELS[provider] || [];
+  modelSel.innerHTML = '';
+  models.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.value;
+    opt.textContent = m.label;
+    if (opt.value === 'typhoon-v2.5-30b-a3b-instruct') opt.selected = true;
+    modelSel.appendChild(opt);
+  });
+}
+
 window.onload = function() {
   populateTimeSelects();
+  updateModelOptions();
   loadSources();
   loadSchedules();
 };
@@ -198,7 +232,8 @@ async function loadSources() {
         <th style="width:36px">#</th>
         <th>ชื่อ</th>
         <th>URL</th>
-        <th style="width:80px">โพสต์</th>
+        <th style="width:60px">โพสต์</th>
+        <th style="width:90px">Model</th>
         <th style="width:70px">สถานะ</th>
         <th style="width:120px">จัดการ</th>
       </tr></thead><tbody>`;
@@ -206,11 +241,13 @@ async function loadSources() {
     data.forEach((s, i) => {
       const active = s.active ? 'on' : 'off';
       const activeLabel = s.active ? 'เปิด' : 'ปิด';
+      const modelLabel = (s.model_provider || 'typhoon') === 'typhoon' ? 'Typhoon' : 'Groq';
       html += `<tr>
         <td>${i + 1}</td>
         <td><strong>${esc(s.label)}</strong></td>
-        <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(s.source_url)}">${esc(s.source_url)}</td>
+        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(s.source_url)}">${esc(s.source_url)}</td>
         <td>${s.results_limit}</td>
+        <td style="font-size:0.8rem">${modelLabel}</td>
         <td><span class="badge ${active}" onclick="toggleSource('${s.id}', ${!s.active})" style="cursor:pointer">${activeLabel}</span></td>
         <td>
           <div class="actions">
@@ -237,6 +274,8 @@ async function addSource() {
   const label = document.getElementById('newLabel').value.trim();
   const source_url = document.getElementById('newUrl').value.trim();
   const results_limit = parseInt(document.getElementById('newLimit').value) || 5;
+  const model_provider = document.getElementById('newProvider').value;
+  const model_name = document.getElementById('newModel').value;
 
   if (!label) { alert('กรุณากรอกชื่อ'); return; }
   if (!source_url) { alert('กรุณากรอก URL'); return; }
@@ -245,7 +284,7 @@ async function addSource() {
     const res = await fetch(API_BASE + '/api/sources', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ label, source_url, results_limit }),
+      body: JSON.stringify({ label, source_url, results_limit, model_provider, model_name }),
     });
 
     if (!res.ok) {

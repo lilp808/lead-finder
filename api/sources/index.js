@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-      const { platform, label, source_url, results_limit } = req.body || {};
+      const { platform, label, source_url, results_limit, model_provider, model_name } = req.body || {};
 
       if (!label || !source_url) {
         return res.status(400).json({ error: 'label and source_url are required' });
@@ -29,6 +29,8 @@ export default async function handler(req, res) {
           source_url,
           results_limit: results_limit ?? 5,
           active: true,
+          model_provider: model_provider || 'typhoon',
+          model_name: model_name || 'typhoon-v2.5-30b-a3b-instruct',
         })
         .select('*')
         .single();
