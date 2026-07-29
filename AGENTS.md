@@ -1,82 +1,39 @@
 # Property Lead Intelligence Platform
 
-## Status
-
-Phase 1 in progress. Scraper ใช้ Apify (facebook-groups-scraper), API + AI pipeline อยู่บน Vercel.
-
-## Tech Stack
-
-| Layer | Choice |
-|---|---|
-| Runtime | Node.js (ESM) — Vercel Serverless + Local script |
-| Scraper | Apify `facebook-groups-scraper` (`scripts/scrape.mjs` triggers runs) |
-| LLM | Groq (llama-3.3-70b-versatile) |
-| Database | Supabase Postgres (`leads` table) |
-| Image Storage | Supabase Storage (bucket: `lead-images`, public) |
-
-## Architecture Flow
-
-```
-Local machine → npm run scrape
-  └─ Apify API → trigger facebook-groups-scraper run
-       └─ Apify → scrapes Facebook Group → POST → Vercel /api/webhook
-            ├─ Check duplicate (post_url unique in leads table)
-            ├─ Groq → extract structured property data
-            ├─ Download images → Supabase Storage (lead-images/{leadId}/)
-            └─ Insert row → Supabase leads table
-```
-
-## File Structure
-
-```
-api/
-  index.js       — Root test dashboard
-  collect.js     — (legacy) Apify cron trigger
-  webhook.js     — Callback: Groq extract + image upload + DB insert
-src/
-  lib/
-    apify.js     — Apify API (start runs, fetch datasets, get run input)
-    groq.js      — Groq property extraction (Thai prompts)
-    supabase.js  — Supabase client, image upload, insert lead
-  schema.sql     — DDL for leads table
-scripts/
-  scrape.mjs     — Apify trigger script (main entry)
-  dev.mjs        — Local dev server
-  setup.mjs      — Create storage bucket
-  test.html      — Test dashboard HTML
-```
-
-## Setup
-
-```bash
-npm install
-cp .env.example .env.local   # fill in all values
-# 1. Run src/schema.sql in Supabase SQL Editor
-npm run setup:db              # create Supabase storage bucket
-# 2. Set env vars in Vercel dashboard
-```
-
 ## Commands
 
 | Command | What |
 |---|---|
-| `npm run scrape` | Trigger Apify facebook-groups-scraper runs |
-| `npm run dev` | Local dev server (http://localhost:3000) |
-| `npm run setup:db` | Create Supabase storage bucket |
+| `npm run scrape` | Trigger Apify facebook-groups-scraper runs for all GROUP_URLS |
+| `npm run dev` | Dev server at localhost:3000 with `--watch` hot reload |
+| `npm run setup:db` | Create Supabase `lead-images` storage bucket |
+
+All scripts load env from `.env.local` via `--env-file .env.local` (not dotenv).
+
+## Pipeline
+
+```
+npm run scrape
+  └─ Apify API → start facebook-groups-scraper run per group URL
+       └─ Apify scrapes → POSTs to /api/webhook (Vercel)
+            ├─ Dedup by post_url (unique constraint in DB)
+            ├─ Groq (llama-3.3-70b-versatile) extract Thai property data
+            ├─ Download ≤10 images → Supabase Storage lead-images/{leadId}/
+            └─ Insert row → leads table
+```
 
 ## Key Details
 
-- **Dedup key:** `post_url` (unique constraint in DB). Skips if already exists.
-- **Groq prompt** expects Thai property posts. Rejects non-property posts via `confidence_score < 0.3`.
-- **Image download limit** — max 10 images per post, 15s timeout each.
-- **Scraper:** ใช้ Apify `facebook-groups-scraper`, กำหนดค่า Facebook Cookie/Session ใน Apify Console
-- **Env vars:** `APIFY_API_KEY`, `APIFY_ACTOR_ID`, `GROQ_API_KEY`, `SUPABASE_URL` (or `NEXT_PUBLIC_SUPABASE_URL`), `SUPABASE_SERVICE_ROLE_KEY`, `GROUP_URLS` (JSON array), `VERCEL_WEBHOOK_URL`. Auto-loaded via `--env-file .env.local`.
-- **Webhook URL:** Set `VERCEL_WEBHOOK_URL` in `.env.local` ถึง `https://lead-finder-systems.vercel.app/api/webhook`.
-
-## Future Phases
-
-Phase 2: Multi-source → Phase 3: CRM Dashboard → Phase 4: LINE Notifications → Phase 5: AI Calling → Phase 6: Satellite/Warehouse Detection
+- **Webhook payload**: Apify sends `webhook.data.groupUrl` in callback body. Webhook reads `req.body.webhook?.data?.groupUrl` for group_url — no extra API call.
+- **Apify webhook format** (`src/lib/apify.js`): `{ requestUrl, eventTypes: ['ACTOR.RUN.SUCCEEDED'], data: { groupUrl } }`. Do NOT send plain URL strings.
+- **Groq prompt** (`src/lib/groq.js`): Thai property extraction. Returns JSON. Posts with `confidence_score < 0.3` are dropped.
+- **Image timeout**: 15s per image, max 10 images per post.
+- **Env required**: `APIFY_API_KEY`, `APIFY_ACTOR_ID` (default `apify/facebook-groups-scraper`), `GROQ_API_KEY`, `SUPABASE_URL` (or `NEXT_PUBLIC_SUPABASE_URL`), `SUPABASE_SERVICE_ROLE_KEY`, `GROUP_URLS` (JSON array), `VERCEL_WEBHOOK_URL`.
+- **Facebook auth**: Cookie/session must be configured inside Apify Console actor input — not in env.
+- **No test/lint/typecheck framework** exists.
+- **Vercel**: Function maxDuration 60s. Cron `/api/collect` daily at 6 AM (`vercel.json`).
+- **ESM** throughout (`"type": "module"` in package.json).
 
 ## Constraint
 
-Property Lead Intelligence Platform — not a Facebook scraper. Facebook Groups is source #1; new sources must be pluggable without rewriting the pipeline.
+Platform is property-lead-intelligence, not a Facebook scraper. Facebook is source #1; new sources must be pluggable without pipeline rewrites.
