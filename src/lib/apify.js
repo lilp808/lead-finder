@@ -9,13 +9,13 @@ async function safeJson(res) {
   }
 }
 
-export async function startActorRun(groupUrl, webhookUrl) {
+export async function startActorRun(groupUrl, webhookUrl, resultsLimit) {
   const actorId = process.env.APIFY_ACTOR_ID.replace('/', '~');
   const url = groupUrl.trim();
 
   const body = {
     startUrls: [{ url }],
-    resultsLimit: 10,
+    resultsLimit: resultsLimit || 10,
     proxy: { useApifyProxy: true },
     extractPostDates: true,
   };
@@ -28,7 +28,7 @@ export async function startActorRun(groupUrl, webhookUrl) {
   }
 
   const res = await fetch(
-    `${APIFY_BASE}/acts/${actorId}/runs?token=${process.env.APIFY_API_KEY}`,
+    `${APIFY_BASE}/acts/${actorId}/runs?token=${process.env.APIFY_API_KEY}&memory=1024`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -55,6 +55,6 @@ export async function getDatasetItems(datasetId) {
   return safeJson(res);
 }
 
-export async function startAllRuns(groupUrls, webhookUrl) {
-  return Promise.all(groupUrls.map(url => startActorRun(url, webhookUrl)));
+export async function startAllRuns(groupUrls, webhookUrl, resultsLimit) {
+  return Promise.all(groupUrls.map(url => startActorRun(url, webhookUrl, resultsLimit)));
 }

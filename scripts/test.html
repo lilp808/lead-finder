@@ -44,7 +44,11 @@
     <p style="font-size:0.85rem;color:#666;margin-bottom:12px">
       ต้องตั้งค่า env ครบ (<code>APIFY_API_KEY</code>, <code>GROUP_URLS</code> ฯลฯ) ใน <code>.env.local</code>
     </p>
-    <button id="btnCollect" onclick="testCollect()">▶ เรียก Collect</button>
+    <div class="row" style="margin-bottom:8px">
+      <label style="font-size:0.85rem">จำนวนโพสต์:</label>
+      <input type="number" id="postLimit" value="5" min="1" max="50" style="width:70px;padding:6px 8px;border:1px solid #ddd;border-radius:6px;font-size:0.9rem">
+      <button id="btnCollect" onclick="testCollect()">▶ เรียก Collect</button>
+    </div>
     <div id="collectResult" style="margin-top:12px"></div>
   </div>
 
@@ -107,7 +111,8 @@ async function testCollect() {
   resultDiv.innerHTML = '<span class="loading"></span> กำลังเรียก...';
 
   try {
-    const res = await fetch(API_BASE + '/api/collect');
+    const limit = document.getElementById('postLimit').value;
+    const res = await fetch(API_BASE + '/api/collect?limit=' + limit);
     const data = await res.json();
     resultDiv.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
   } catch (err) {

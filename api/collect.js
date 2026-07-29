@@ -16,16 +16,19 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'No GROUP_URLS configured' });
     }
 
+    const limit = parseInt(req.query?.limit) || 10;
+
     const host = req.headers.host || process.env.VERCEL_URL;
     const baseUrl = process.env.SITE_URL || `https://${host}`;
 
     const webhookUrl = `${baseUrl}/api/webhook`;
 
-    const runs = await startAllRuns(groups, webhookUrl);
+    const runs = await startAllRuns(groups, webhookUrl, limit);
 
     return res.status(200).json({
       ok: true,
       groupsTriggered: groups.length,
+      limit,
       webhookUrl,
     });
   } catch (err) {

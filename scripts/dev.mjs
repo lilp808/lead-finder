@@ -68,6 +68,8 @@ const server = http.createServer(async (req, res) => {
     req.body = {};
   }
 
+  req.query = Object.fromEntries(url.searchParams.entries());
+
   const mockRes = createMockRes(res);
 
   try {
