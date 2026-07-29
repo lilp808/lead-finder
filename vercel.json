@@ -6,7 +6,8 @@
     }
   ],
   "rewrites": [
-    { "source": "/", "destination": "/api/index" }
+    { "source": "/", "destination": "/api/index" },
+    { "source": "/lead", "destination": "/api/lead-page" }
   ],
   "functions": {
     "api/*.js": {

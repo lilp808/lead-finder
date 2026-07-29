@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>FindProperty — Dashboard</title>
+<title>FindProperty — Config</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -38,91 +38,45 @@
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
   --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
   --transition: 200ms ease;
-  --sidebar-w: 280px;
 }
-
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { font-size: 15px; }
 body {
   font-family: var(--font-family);
   background: var(--color-bg);
   color: var(--color-text);
-  display: flex;
-  min-height: 100vh;
+  padding: var(--space-8) var(--space-6);
+  max-width: 960px;
+  margin: 0 auto;
 }
 
-/* ─── Sidebar ──────────────────────────── */
-.sidebar {
-  width: var(--sidebar-w);
-  min-height: 100vh;
-  background: var(--color-surface);
-  border-right: 1px solid var(--color-border);
-  padding: var(--space-6) var(--space-4);
-  display: flex;
-  flex-direction: column;
-  position: fixed;
-  top: 0; left: 0;
-  z-index: 100;
-}
-.sidebar-logo {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--color-text);
-  padding: 0 var(--space-3);
-  margin-bottom: var(--space-8);
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-.sidebar-logo span { color: var(--color-primary); }
-.sidebar-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  height: 44px;
-  padding: 0 var(--space-4);
-  border-radius: var(--radius-md);
-  font-size: 0.9rem;
-  font-weight: 500;
+.nav { display: flex; gap: var(--space-1); margin-bottom: var(--space-5); border-bottom: 2px solid var(--color-border); padding-bottom: 0; }
+.nav a {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  text-decoration: none; font-weight: 500; font-size: 0.9rem;
   color: var(--color-text-secondary);
-  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
   transition: all var(--transition);
-  cursor: pointer;
-  border: none;
-  background: none;
-  width: 100%;
-  text-align: left;
 }
-.nav-item:hover { background: #FAF7F0; color: var(--color-text); }
-.nav-item.active { background: var(--color-primary-bg); color: var(--color-text); font-weight: 600; }
-.nav-item.active i { color: var(--color-primary); }
-.nav-item i { width: 20px; height: 20px; flex-shrink: 0; }
-.sidebar-footer {
-  margin-top: auto;
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--color-border-light);
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  padding-left: var(--space-3);
-}
+.nav a.active { color: var(--color-primary); border-bottom-color: var(--color-primary); }
+.nav a:hover:not(.active) { color: var(--color-text); }
 
-/* ─── Main ─────────────────────────────── */
-.main {
-  margin-left: var(--sidebar-w);
-  flex: 1;
-  padding: var(--space-8) var(--space-8) var(--space-10);
-  max-width: 100%;
-}
 .page-title {
   font-size: 1.5rem;
   font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
   margin-bottom: var(--space-1);
 }
+.page-title span { color: var(--color-primary); }
 .page-subtitle {
   font-size: 0.9rem;
   color: var(--color-text-secondary);
   margin-bottom: var(--space-8);
+  margin-left: calc(24px + var(--space-3));
 }
 
 /* ─── Cards ─────────────────────────────── */
@@ -142,14 +96,15 @@ body {
   flex-wrap: wrap;
   gap: var(--space-3);
 }
-.card-header h2 {
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
   font-size: 1.15rem;
   font-weight: 600;
 }
-.card-header p {
-  font-size: 0.85rem;
-  color: var(--color-text-secondary);
-}
+.card-title i { color: var(--color-primary); width: 22px; height: 22px; }
+.card-desc { font-size: 0.85rem; color: var(--color-text-secondary); margin-top: 2px; margin-left: calc(22px + var(--space-3)); }
 
 /* ─── Card List ─────────────────────────── */
 .card-list { }
@@ -165,7 +120,6 @@ body {
 .card-row:hover { background: #FCFCFC; border-radius: var(--radius-sm); }
 .card-row:last-child { border-bottom: none; }
 .card-row-label { font-weight: 600; font-size: 0.9rem; min-width: 120px; }
-.card-row-url { font-size: 0.8rem; color: var(--color-text-secondary); flex: 1; min-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .card-row-meta { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
 .card-row-actions { display: flex; gap: var(--space-1); margin-left: auto; }
 .card-row-actions button { flex-shrink: 0; }
@@ -199,7 +153,7 @@ body {
 .btn-danger { background: transparent; color: var(--color-danger); padding: 0 var(--space-2); height: 36px; }
 .btn-danger:hover:not(:disabled) { background: #FEF2F2; }
 .btn-sm { height: 36px; padding: 0 var(--space-4); font-size: 0.85rem; }
-.btn-icon { width: 38px; height: 38px; padding: 0; border-radius: var(--radius-md); display: inline-flex; align-items: center; justify-content: center; }
+.btn-icon { width: 38px; height: 38px; padding: 0; border-radius: var(--radius-md); display: inline-flex; align-items: center; justify-content: center; border: none; cursor: pointer; transition: all var(--transition); }
 
 /* ─── Inputs ────────────────────────────── */
 .input {
@@ -230,7 +184,6 @@ select.input { cursor: pointer; }
   font-size: 0.78rem;
   font-weight: 600;
   line-height: 1.4;
-  cursor: default;
 }
 .badge-clickable { cursor: pointer; }
 .badge-on { background: var(--color-success-bg); color: var(--color-success); }
@@ -238,7 +191,6 @@ select.input { cursor: pointer; }
 .badge-green { background: var(--color-success-bg); color: var(--color-success); }
 .badge-blue { background: var(--color-info-bg); color: var(--color-info); }
 .badge-gold { background: var(--color-primary-bg); color: var(--color-primary); }
-.badge-warning { background: var(--color-warning-bg); color: var(--color-warning); }
 
 /* ─── Form ──────────────────────────────── */
 .add-form {
@@ -261,13 +213,12 @@ select.input { cursor: pointer; }
 .log { margin-top: var(--space-4); }
 .log-step { display: flex; align-items: flex-start; gap: var(--space-2); padding: 4px 0; border-bottom: 1px solid var(--color-border-light); font-size: 0.82rem; line-height: 1.6; font-family: var(--font-family); }
 .log-step:last-child { border-bottom: none; }
-.log-icon { flex-shrink: 0; width: 20px; text-align: center; }
+.log-icon { flex-shrink: 0; width: 20px; text-align: center; display: inline-flex; align-items: center; justify-content: center; }
 .log-ok .log-icon { color: var(--color-success); }
 .log-running .log-icon { color: var(--color-info); }
 .log-error .log-icon { color: var(--color-danger); }
 .log-duplicate .log-icon { color: var(--color-warning); }
 .log-skip .log-icon { color: #9333ea; }
-.log-text { word-break: break-word; }
 .summary-card { background: var(--color-success-bg); border: 1px solid var(--color-success); border-radius: var(--radius-md); padding: var(--space-4); margin-top: var(--space-3); display: flex; gap: var(--space-5); flex-wrap: wrap; }
 .summary-item { text-align: center; }
 .summary-item .num { font-size: 1.25rem; font-weight: 700; display: block; }
@@ -278,176 +229,143 @@ select.input { cursor: pointer; }
 .summary-item.err .num { color: var(--color-danger); }
 .summary-item.skp .num { color: #d97706; }
 
-/* ─── Empty / Loading ────────────────────── */
 .empty-state { text-align: center; padding: var(--space-10) var(--space-4); color: var(--color-text-muted); font-size: 0.9rem; }
 .loading { color: var(--color-text-muted); font-size: 0.85rem; padding: var(--space-4) 0; }
+.notice { background: var(--color-warning-bg); color: #92400e; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); font-size: 0.82rem; margin-bottom: var(--space-4); display: flex; align-items: center; gap: var(--space-2); }
 
-/* ─── Notice ─────────────────────────────── */
-.notice { background: var(--color-warning-bg); color: #92400e; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); font-size: 0.82rem; margin-bottom: var(--space-4); }
-
-/* ─── Responsive ─────────────────────────── */
-@media (max-width: 1024px) {
-  .sidebar { width: 64px; padding: var(--space-4) var(--space-2); }
-  .sidebar-logo span, .nav-item span { display: none; }
-  .sidebar-logo { justify-content: center; }
-  .nav-item { justify-content: center; padding: 0; }
-  .sidebar-footer { display: none; }
-  .main { margin-left: 64px; padding: var(--space-6) var(--space-5); }
-}
 @media (max-width: 768px) {
-  .sidebar { width: 64px; }
-  .main { padding: var(--space-4) var(--space-4); }
+  body { padding: var(--space-4); }
   .card-row { flex-direction: column; align-items: flex-start; gap: var(--space-2); }
   .card-row-actions { margin-left: 0; width: 100%; justify-content: flex-end; }
   .form-inline { flex-direction: column; }
   .form-inline .field { width: 100%; }
 }
-@media (max-width: 480px) {
-  .sidebar { display: none; }
-  .main { margin-left: 0; }
-}
 </style>
 </head>
 <body>
 
-<!-- ═══ Sidebar ═══ -->
-<aside class="sidebar">
-  <div class="sidebar-logo">
-    <span style="font-size:1.5rem">🏠</span>
-    <span>Find<span>Property</span></span>
-  </div>
-  <nav class="sidebar-nav">
-    <button class="nav-item active" data-page="sources" onclick="switchPage('sources')">
-      <i data-lucide="database"></i><span>แหล่งข้อมูล</span>
-    </button>
-    <button class="nav-item" data-page="schedules" onclick="switchPage('schedules')">
-      <i data-lucide="clock"></i><span>ตารางเวลา</span>
-    </button>
-    <button class="nav-item" data-page="collect" onclick="switchPage('collect')">
-      <i data-lucide="play-circle"></i><span>Collect</span>
-    </button>
-  </nav>
-  <div class="sidebar-footer">FindProperty v2</div>
-</aside>
+<div class="nav">
+  <a href="/" class="active"><i data-lucide="settings-2" style="width:16px;height:16px"></i> Config</a>
+  <a href="/lead"><i data-lucide="users" style="width:16px;height:16px"></i> Leads</a>
+</div>
 
-<!-- ═══ Main Content ═══ -->
-<main class="main">
+<h1 class="page-title">
+  <i data-lucide="settings-2" style="width:24px;height:24px;color:var(--color-primary)"></i>
+  Find<span>Property</span> — Config
+</h1>
+<p class="page-subtitle">จัดการแหล่งข้อมูล ตารางเวลา และรัน Collect</p>
 
-  <h1 class="page-title">ตั้งค่าระบบ</h1>
-  <p class="page-subtitle">จัดการแหล่งข้อมูลและตารางเวลาการรันอัตโนมัติ</p>
-
-  <!-- ─── Page: Sources ─── -->
-  <div id="page-sources" class="page-section">
-    <div class="card">
-      <div class="card-header">
-        <div>
-          <h2>📋 แหล่งข้อมูล</h2>
-          <p>Facebook groups ที่จะเก็บข้อมูล — เปิด/ปิด, ตั้งค่าจำนวนโพสต์และ AI Model</p>
-        </div>
-        <div style="display:flex;gap:var(--space-2)">
-          <button class="btn btn-secondary btn-sm" onclick="loadSources()">
-            <i data-lucide="refresh-cw" style="width:16px;height:16px"></i> โหลดใหม่
-          </button>
-          <button class="btn btn-primary" onclick="toggleAddForm()">
-            <i data-lucide="plus" style="width:18px;height:18px"></i> เพิ่มแหล่ง
-          </button>
-        </div>
+<!-- ═══ Sources ═══ -->
+<div class="card">
+  <div class="card-header">
+    <div>
+      <div class="card-title">
+        <i data-lucide="folder-kanban"></i> แหล่งข้อมูล
       </div>
-      <div id="sourcesTable"><div class="loading">กำลังโหลด...</div></div>
-
-      <div id="addForm" class="add-form">
-        <div class="form-row">
-          <label>ชื่อแหล่ง</label>
-          <input class="input" type="text" id="newLabel" placeholder="เช่น บ้านเดี่ยว 1">
-        </div>
-        <div class="form-row">
-          <label>URL กลุ่ม Facebook</label>
-          <input class="input" type="text" id="newUrl" placeholder="https://facebook.com/groups/...">
-        </div>
-        <div class="form-inline">
-          <div class="field">
-            <label>จำนวนโพสต์</label>
-            <input class="input" type="number" id="newLimit" value="10" min="1" max="100" style="width:100px">
-          </div>
-          <div class="field">
-            <label>AI Provider</label>
-            <select class="input" id="newProvider" onchange="updateModelOptions()" style="width:140px">
-              <option value="typhoon">Typhoon</option>
-              <option value="groq">Groq</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Model</label>
-            <select class="input" id="newModel" style="width:200px"></select>
-          </div>
-        </div>
-        <div class="form-actions">
-          <button class="btn btn-primary" onclick="addSource()">💾 บันทึก</button>
-          <button class="btn btn-secondary" onclick="toggleAddForm()">ยกเลิก</button>
-        </div>
-      </div>
+      <div class="card-desc">Facebook groups ที่จะเก็บข้อมูล — เปิด/ปิด, ตั้งค่าจำนวนโพสต์และ AI Model</div>
+    </div>
+    <div style="display:flex;gap:var(--space-2)">
+      <button class="btn btn-secondary btn-sm" onclick="loadSources()">
+        <i data-lucide="refresh-cw" style="width:16px;height:16px"></i> โหลดใหม่
+      </button>
+      <button class="btn btn-primary" onclick="toggleAddForm()">
+        <i data-lucide="plus" style="width:18px;height:18px"></i> เพิ่มแหล่ง
+      </button>
     </div>
   </div>
+  <div id="sourcesTable"><div class="loading">กำลังโหลด...</div></div>
 
-  <!-- ─── Page: Schedules ─── -->
-  <div id="page-schedules" class="page-section" style="display:none">
-    <div class="card">
-      <div class="card-header">
-        <div>
-          <h2>⏰ ตารางเวลารันอัตโนมัติ</h2>
-          <p>ระบบจะ Collect อัตโนมัติตามเวลาที่ตั้งไว้ (ⓘ Hobby: วันละ 1 ครั้ง)</p>
-        </div>
-        <button class="btn btn-primary" onclick="toggleAddSchedule()">
-          <i data-lucide="plus" style="width:18px;height:18px"></i> เพิ่มเวลา
-        </button>
+  <div id="addForm" class="add-form">
+    <div class="form-row">
+      <label>ชื่อแหล่ง</label>
+      <input class="input" type="text" id="newLabel" placeholder="เช่น บ้านเดี่ยว 1">
+    </div>
+    <div class="form-row">
+      <label>URL กลุ่ม Facebook</label>
+      <input class="input" type="text" id="newUrl" placeholder="https://facebook.com/groups/...">
+    </div>
+    <div class="form-inline">
+      <div class="field">
+        <label>จำนวนโพสต์</label>
+        <input class="input" type="number" id="newLimit" value="10" min="1" max="100" style="width:100px">
       </div>
-      <div class="notice">
-        แผน Hobby รันได้วันละ 1 ครั้ง เวลา <strong>06:00 UTC</strong> (13:00 ไทย) — อัปเกรดเป็น Pro เพื่อให้หลายเวลาได้
+      <div class="field">
+        <label>AI Provider</label>
+        <select class="input" id="newProvider" onchange="updateModelOptions()" style="width:140px">
+          <option value="typhoon">Typhoon</option>
+          <option value="groq">Groq</option>
+        </select>
       </div>
-      <div id="schedulesTable"><div class="loading">กำลังโหลด...</div></div>
-
-      <div id="addScheduleForm" class="add-form">
-        <div class="form-inline">
-          <div class="field">
-            <label>เวลา (UTC)</label>
-            <div style="display:flex;gap:var(--space-2);align-items:center">
-              <select class="input" id="newHour" style="width:80px"></select>
-              <span>:</span>
-              <select class="input" id="newMinute" style="width:80px">
-                <option value="0">00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option>
-              </select>
-            </div>
-          </div>
-          <div class="field">
-            <label>ชื่อ</label>
-            <input class="input" type="text" id="newScheduleLabel" placeholder="เช่น เช้า 06:00" style="width:200px">
-          </div>
-        </div>
-        <div class="form-actions">
-          <button class="btn btn-primary" onclick="addSchedule()">💾 บันทึก</button>
-          <button class="btn btn-secondary" onclick="toggleAddSchedule()">ยกเลิก</button>
-        </div>
+      <div class="field">
+        <label>Model</label>
+        <select class="input" id="newModel" style="width:200px"></select>
       </div>
     </div>
-  </div>
-
-  <!-- ─── Page: Collect ─── -->
-  <div id="page-collect" class="page-section" style="display:none">
-    <div class="card">
-      <div class="card-header">
-        <div>
-          <h2>⚡ รัน Collect</h2>
-          <p>ดึงข้อมูลจากแหล่งที่เปิด active ทั้งหมด → Groq/Typhoon วิเคราะห์ → บันทึก Supabase</p>
-        </div>
-        <button class="btn btn-primary" id="btnCollect" onclick="testCollect()">
-          <i data-lucide="play" style="width:18px;height:18px"></i> Collect Now
-        </button>
-      </div>
-      <div id="collectLog" class="log"></div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="addSource()"><i data-lucide="save" style="width:16px;height:16px"></i> บันทึก</button>
+      <button class="btn btn-secondary" onclick="toggleAddForm()">ยกเลิก</button>
     </div>
   </div>
+</div>
 
-</main>
+<!-- ═══ Schedules ═══ -->
+<div class="card">
+  <div class="card-header">
+    <div>
+      <div class="card-title">
+        <i data-lucide="clock"></i> ตารางเวลารันอัตโนมัติ
+      </div>
+      <div class="card-desc">ระบบจะ Collect อัตโนมัติตามเวลาที่ตั้งไว้</div>
+    </div>
+    <button class="btn btn-primary" onclick="toggleAddSchedule()">
+      <i data-lucide="plus" style="width:18px;height:18px"></i> เพิ่มเวลา
+    </button>
+  </div>
+  <div class="notice">
+    <i data-lucide="info" style="width:16px;height:16px;flex-shrink:0"></i>
+    แผน Hobby รันได้วันละ 1 ครั้ง เวลา <strong>06:00 UTC</strong> (13:00 ไทย) — อัปเกรดเป็น Pro เพื่อให้หลายเวลาได้
+  </div>
+  <div id="schedulesTable"><div class="loading">กำลังโหลด...</div></div>
+
+  <div id="addScheduleForm" class="add-form">
+    <div class="form-inline">
+      <div class="field">
+        <label>เวลา (UTC)</label>
+        <div style="display:flex;gap:var(--space-2);align-items:center">
+          <select class="input" id="newHour" style="width:80px"></select>
+          <span>:</span>
+          <select class="input" id="newMinute" style="width:80px">
+            <option value="0">00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>ชื่อ</label>
+        <input class="input" type="text" id="newScheduleLabel" placeholder="เช่น เช้า 06:00" style="width:200px">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="addSchedule()"><i data-lucide="save" style="width:16px;height:16px"></i> บันทึก</button>
+      <button class="btn btn-secondary" onclick="toggleAddSchedule()">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Collect ═══ -->
+<div class="card">
+  <div class="card-header">
+    <div>
+      <div class="card-title">
+        <i data-lucide="zap"></i> รัน Collect
+      </div>
+      <div class="card-desc">ดึงข้อมูลจากแหล่งที่เปิด active ทั้งหมด → AI วิเคราะห์ → บันทึก Supabase</div>
+    </div>
+    <button class="btn btn-primary" id="btnCollect" onclick="testCollect()">
+      <i data-lucide="play" style="width:18px;height:18px"></i> Collect Now
+    </button>
+  </div>
+  <div id="collectLog" class="log"></div>
+</div>
 
 <script>
 const API_BASE = '';
@@ -462,15 +380,6 @@ const MODELS = {
   ],
 };
 
-// ─── Navigation ─────────────────────────────
-function switchPage(page) {
-  document.querySelectorAll('.page-section').forEach(el => el.style.display = 'none');
-  document.getElementById('page-' + page).style.display = 'block';
-  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-  document.querySelector(`.nav-item[data-page="${page}"]`).classList.add('active');
-}
-
-// ─── Init ────────────────────────────────────
 function populateTimeSelects() {
   const sel = document.getElementById('newHour');
   for (let h = 0; h < 24; h++) {
@@ -517,7 +426,7 @@ async function loadSources() {
   const div = document.getElementById('sourcesTable');
   try {
     const res = await fetch(API_BASE + '/api/sources');
-    if (!res.ok) { div.innerHTML = '<div class="empty-state">❌ โหลดไม่ได้</div>'; return; }
+    if (!res.ok) { div.innerHTML = '<div class="empty-state">โหลดข้อมูลไม่ได้</div>'; return; }
     const data = await res.json();
     if (!data || data.length === 0) {
       div.innerHTML = '<div class="empty-state">ยังไม่มีแหล่งข้อมูล — กด "เพิ่มแหล่ง" เพื่อเริ่ม</div>';
@@ -540,8 +449,8 @@ async function loadSources() {
           <span class="badge ${active} badge-clickable" onclick="toggleSource('${s.id}', ${!s.active})">${activeLabel}</span>
         </div>
         <div class="card-row-actions">
-          <button class="btn btn-ghost btn-icon" onclick="editSource('${s.id}')" title="แก้ไข"><i data-lucide="pencil" style="width:16px;height:16px"></i></button>
-          <button class="btn btn-danger btn-icon" onclick="deleteSource('${s.id}')" title="ลบ"><i data-lucide="trash-2" style="width:16px;height:16px"></i></button>
+          <button class="btn-icon btn-ghost" onclick="editSource('${s.id}')" title="แก้ไข"><i data-lucide="pencil" style="width:16px;height:16px"></i></button>
+          <button class="btn-icon btn-danger" onclick="deleteSource('${s.id}')" title="ลบ"><i data-lucide="trash-2" style="width:16px;height:16px"></i></button>
         </div>
       </div>`;
     });
@@ -549,7 +458,7 @@ async function loadSources() {
     div.innerHTML = html;
     lucide.createIcons();
   } catch (err) {
-    div.innerHTML = '<div class="empty-state">❌ Error: ' + err.message + '</div>';
+    div.innerHTML = '<div class="empty-state">Error: ' + err.message + '</div>';
   }
 }
 
@@ -605,7 +514,7 @@ async function loadSchedules() {
   const div = document.getElementById('schedulesTable');
   try {
     const res = await fetch(API_BASE + '/api/schedules');
-    if (!res.ok) { div.innerHTML = '<div class="empty-state">❌ โหลดไม่ได้</div>'; return; }
+    if (!res.ok) { div.innerHTML = '<div class="empty-state">โหลดไม่ได้</div>'; return; }
     const data = await res.json();
     if (!data || data.length === 0) {
       div.innerHTML = '<div class="empty-state">ยังไม่มีตารางเวลา — กด "เพิ่มเวลา" เพื่อตั้ง</div>';
@@ -619,14 +528,14 @@ async function loadSchedules() {
       html += `<div class="card-row">
         <span class="badge badge-gold" style="min-width:28px;justify-content:center">${i + 1}</span>
         <div style="flex:1;min-width:120px">
-          <div style="font-weight:600;font-size:1.1rem">${time}</div>
+          <div style="font-weight:600;font-size:1.1rem">${time} น.</div>
           <div style="font-size:0.82rem;color:var(--color-text-secondary)">${esc(s.label || '')}</div>
         </div>
         <div class="card-row-meta">
           <span class="badge ${active} badge-clickable" onclick="toggleSchedule('${s.id}', ${!s.active})">${activeLabel}</span>
         </div>
         <div class="card-row-actions">
-          <button class="btn btn-danger btn-icon" onclick="deleteSchedule('${s.id}')" title="ลบ"><i data-lucide="trash-2" style="width:16px;height:16px"></i></button>
+          <button class="btn-icon btn-danger" onclick="deleteSchedule('${s.id}')" title="ลบ"><i data-lucide="trash-2" style="width:16px;height:16px"></i></button>
         </div>
       </div>`;
     });
@@ -634,7 +543,7 @@ async function loadSchedules() {
     div.innerHTML = html;
     lucide.createIcons();
   } catch (err) {
-    div.innerHTML = '<div class="empty-state">❌ Error: ' + err.message + '</div>';
+    div.innerHTML = '<div class="empty-state">Error: ' + err.message + '</div>';
   }
 }
 
@@ -673,14 +582,26 @@ async function deleteSchedule(id) {
 }
 
 // ─── Collect ─────────────────────────────────
+let iconSvgCache = {};
+
+function iconSvg(name) {
+  if (!iconSvgCache[name]) {
+    const div = document.createElement('div');
+    div.innerHTML = `<i data-lucide="${name}" style="width:16px;height:16px"></i>`;
+    lucide.createIcons({ root: div });
+    iconSvgCache[name] = div.innerHTML;
+  }
+  return iconSvgCache[name];
+}
+
 function iconFor(s) {
-  if (s === 'ok' || s === 'inserted') return '✓';
-  if (s === 'running' || s === 'processing' || s === 'polling' || s === 'batch_progress') return '⏳';
-  if (s === 'error') return '✗';
-  if (s === 'duplicate') return '→';
-  if (s === 'low_confidence') return '△';
-  if (s === 'warning') return '⚠';
-  return '·';
+  if (s === 'ok' || s === 'inserted') return 'check-circle';
+  if (s === 'running' || s === 'processing' || s === 'polling' || s === 'batch_progress') return 'loader';
+  if (s === 'error') return 'x-circle';
+  if (s === 'duplicate') return 'arrow-right';
+  if (s === 'low_confidence') return 'triangle';
+  if (s === 'warning') return 'alert-triangle';
+  return 'minus';
 }
 function classFor(s) {
   if (s === 'ok' || s === 'inserted') return 'log-ok';
@@ -692,23 +613,23 @@ function classFor(s) {
 }
 function textFor(step) {
   switch (step.type) {
-    case 'source_start': return `▶ กำลัง scrap ${step.label || ''} (limit: ${step.limit})`;
+    case 'source_start': return `กำลัง scrap ${step.label || ''} (limit: ${step.limit})`;
     case 'poll':
-      if (step.status === 'ok') return `✓ ${step.label || ''} scrap เสร็จ (${step.elapsed} วิ)`;
-      return `⏳ รอ ${step.label || ''} scrap... (${step.elapsed} วิ)`;
-    case 'fetch': return `✓ ได้รับ ${step.count} โพสต์จาก ${step.label || ''}`;
-    case 'source_error': return `✗ ${step.label || ''} — ${step.error}`;
+      if (step.status === 'ok') return `${step.label || ''} scrap เสร็จ (${step.elapsed} วิ)`;
+      return `รอ ${step.label || ''} scrap... (${step.elapsed} วิ)`;
+    case 'fetch': return `ได้รับ ${step.count} โพสต์จาก ${step.label || ''}`;
+    case 'source_error': return `${step.label || ''} — ${step.error}`;
     case 'batch_progress': return `ประมวลผล batch ${step.batch}/${step.total}...`;
-    case 'time_limit': return `⚠ หมดเวลา — ประมวลผลแล้ว ${step.processed} รายการ, ข้าม ${step.skipped} รายการ (รอรอบหน้า)`;
+    case 'time_limit': return `หมดเวลา — ประมวลผลแล้ว ${step.processed} รายการ, ข้าม ${step.skipped} รายการ (รอรอบหน้า)`;
     case 'item_progress': return `กำลังดำเนินการโพสต์ ${step.index}/${step.total}...`;
     case 'item':
       if (step.status === 'inserted') return `บันทึกแล้ว — ${step.property_type || ''} (${(step.confidence * 100).toFixed(0)}%)`;
-      if (step.status === 'duplicate') return `ซ้ำ (มีใน DB แล้ว)`;
+      if (step.status === 'duplicate') return 'ซ้ำ (มีใน DB แล้ว)';
       if (step.status === 'low_confidence') return `ไม่ใช่ประกาศ (score: ${step.score})`;
       if (step.status === 'error') return `Error: ${step.error}`;
       return '';
     case 'summary': return '';
-    case 'error': return `❌ ${step.message}`;
+    case 'error': return step.message;
     default: return JSON.stringify(step);
   }
 }
@@ -717,13 +638,16 @@ async function testCollect() {
   const btn = document.getElementById('btnCollect');
   const logDiv = document.getElementById('collectLog');
   btn.disabled = true;
-  logDiv.innerHTML = '<div class="log-step log-running"><span class="log-icon">⏳</span><span class="log-text">กำลังเรียก Collect...</span></div>';
+  logDiv.innerHTML = `<div class="log-step log-running">
+    <span class="log-icon">${iconSvg('loader')}</span>
+    <span class="log-text">กำลังเรียก Collect...</span>
+  </div>`;
   try {
     const res = await fetch(API_BASE + '/api/collect');
     const data = await res.json();
     logDiv.innerHTML = '';
     if (!data.steps || data.steps.length === 0) {
-      logDiv.innerHTML = '<div class="log-step log-error"><span class="log-icon">✗</span><span class="log-text">ไม่มีข้อมูล</span></div>';
+      logDiv.innerHTML = `<div class="log-step log-error"><span class="log-icon">${iconSvg('x-circle')}</span><span class="log-text">ไม่มีข้อมูล</span></div>`;
       return;
     }
     for (const step of data.steps) {
@@ -740,11 +664,11 @@ async function testCollect() {
       const icon = iconFor(step.status);
       const cls = classFor(step.status);
       const txt = textFor(step);
-      logDiv.innerHTML += `<div class="log-step ${cls}"><span class="log-icon">${icon}</span><span class="log-text">${txt}</span></div>`;
+      logDiv.innerHTML += `<div class="log-step ${cls}"><span class="log-icon">${iconSvg(icon)}</span><span class="log-text">${txt}</span></div>`;
     }
     logDiv.scrollTop = logDiv.scrollHeight;
   } catch (err) {
-    logDiv.innerHTML = '<div class="log-step log-error"><span class="log-icon">✗</span><span class="log-text">Error: ' + err.message + '</span></div>';
+    logDiv.innerHTML = `<div class="log-step log-error"><span class="log-icon">${iconSvg('x-circle')}</span><span class="log-text">Error: ${err.message}</span></div>`;
   } finally {
     btn.disabled = false;
   }
