@@ -16,7 +16,7 @@ export async function startActorRun(groupUrl, webhookUrl, resultsLimit) {
   const body = {
     startUrls: [{ url }],
     resultsLimit: resultsLimit || 10,
-    proxy: { useApifyProxy: true },
+    proxy: { useApifyProxy: true, apifyProxyGroups: ["RESIDENTIAL"] },
     extractPostDates: true,
   };
   if (webhookUrl) {
