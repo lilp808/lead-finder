@@ -15,19 +15,28 @@
   button { background: #0066ff; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-size: 0.9rem; cursor: pointer; }
   button:hover { background: #0052cc; }
   button:disabled { opacity: 0.5; cursor: not-allowed; }
-  .btn-small { padding: 6px 12px; font-size: 0.8rem; }
-  textarea { width: 100%; min-height: 160px; font-family: monospace; font-size: 0.8rem; padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin: 8px 0; }
-  pre { background: #f0f0f0; padding: 12px; border-radius: 6px; font-size: 0.8rem; overflow-x: auto; white-space: pre-wrap; max-height: 400px; overflow-y: auto; }
   .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
-  .badge-ok { background: #d4edda; color: #155724; }
-  .badge-skip { background: #fff3cd; color: #856404; }
-  .badge-err { background: #f8d7da; color: #721c24; }
-  .sample-link { color: #0066ff; cursor: pointer; text-decoration: underline; font-size: 0.8rem; }
-  .sample-link:hover { color: #0052cc; }
-  .loading { display: inline-block; width: 14px; height: 14px; border: 2px solid #ccc; border-top-color: #0066ff; border-radius: 50%; animation: spin .6s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  input[type=number] { width: 70px; padding: 6px 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; }
   .env-warning { background: #fff3cd; color: #856404; padding: 10px 16px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 16px; }
+  .log { margin-top: 12px; max-height: 500px; overflow-y: auto; font-size: 0.82rem; line-height: 1.6; font-family: monospace; }
+  .log-step { display: flex; align-items: flex-start; gap: 6px; padding: 3px 0; border-bottom: 1px solid #f0f0f0; }
+  .log-step:last-child { border-bottom: none; }
+  .log-icon { flex-shrink: 0; width: 18px; text-align: center; }
+  .log-ok .log-icon { color: #16a34a; }
+  .log-running .log-icon { color: #2563eb; }
+  .log-error .log-icon { color: #dc2626; }
+  .log-duplicate .log-icon { color: #ca8a04; }
+  .log-skip .log-icon { color: #9333ea; }
+  .log-text { word-break: break-word; }
+  .log-time { color: #999; margin-left: 4px; font-size: 0.75rem; }
+  .summary-card { background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 12px; margin-top: 8px; display: flex; gap: 16px; flex-wrap: wrap; font-family: system-ui; }
+  .summary-item { text-align: center; }
+  .summary-item .num { font-size: 1.2rem; font-weight: 700; display: block; }
+  .summary-item .label { font-size: 0.75rem; color: #666; }
+  .summary-item.ok .num { color: #16a34a; }
+  .summary-item.dup .num { color: #ca8a04; }
+  .summary-item.skip .num { color: #9333ea; }
+  .summary-item.err .num { color: #dc2626; }
 </style>
 </head>
 <body>
@@ -40,51 +49,16 @@
   </div>
 
   <div class="card">
-    <h2>⚡ ทดสอบ /api/collect (เรียก Apify จริง)</h2>
+    <h2>⚡ Collect + วิเคราะห์ + บันทึก (Synchronous)</h2>
     <p style="font-size:0.85rem;color:#666;margin-bottom:12px">
-      ต้องตั้งค่า env ครบ (<code>APIFY_API_KEY</code>, <code>GROUP_URLS</code> ฯลฯ) ใน <code>.env.local</code>
+      กดปุ่มแล้วรอ — ระบบจะเรียก Apify → รอ scrap → Groq วิเคราะห์ → บันทึก Supabase ให้เห็นทุกขั้นตอน
     </p>
     <div class="row" style="margin-bottom:8px">
       <label style="font-size:0.85rem">จำนวนโพสต์:</label>
-      <input type="number" id="postLimit" value="5" min="1" max="50" style="width:70px;padding:6px 8px;border:1px solid #ddd;border-radius:6px;font-size:0.9rem">
-      <button id="btnCollect" onclick="testCollect()">▶ เรียก Collect</button>
+      <input type="number" id="postLimit" value="5" min="1" max="20">
+      <button id="btnCollect" onclick="testCollect()">▶ Collect</button>
     </div>
-    <div id="collectResult" style="margin-top:12px"></div>
-  </div>
-
-  <div class="card">
-    <h2>🧪 Simulate Webhook (ไม่ต้องพึ่ง Apify)</h2>
-    <p style="font-size:0.85rem;color:#666;margin-bottom:8px">
-      วาง JSON โพสต์จาก Facebook Group (จำลองข้อมูลที่ Apify ส่งมา) แล้วกด Test
-    </p>
-    <div class="row" style="margin-bottom:8px">
-      <span class="sample-link" onclick="loadSample()">📋 ใส่ตัวอย่างข้อมูล</span>
-    </div>
-    <textarea id="webhookBody" placeholder='{"url":"https://facebook.com/groups/...","text":"ขายบ้าน...","imageUrls":[],"authorName":"John"}'>{
-  "eventType": "ACTOR.RUN.SUCCEEDED",
-  "resource": {
-    "defaultDatasetId": "local-test"
-  }
-}</textarea>
-    <input type="hidden" id="mockItems" value="">
-    <div class="row">
-      <button onclick="testWebhook()">▶ Test Webhook</button>
-      <span id="webhookSpinner" style="display:none" class="loading"></span>
-    </div>
-    <div id="webhookResult" style="margin-top:12px"></div>
-  </div>
-
-  <div class="card">
-    <h2>📄 ตัวอย่างข้อมูลที่ Apify ส่งให้</h2>
-    <pre>{
-  "url": "https://facebook.com/groups/123/posts/456",
-  "text": "ขายบ้านเดี่ยว 2 ชั้น 50 ตรว. 3 ห้องนอน 2 ห้องน้ำ ใกล้ BTS บางนา ราคา 4.5 ล้าน สนใจติดต่อ 081-234-5678",
-  "imageUrls": ["https://scontent.xx.fbcdn.net/v/..."],
-  "authorName": "สมชาย ใจดี",
-  "authorUrl": "https://facebook.com/somchai",
-  "date": "2024-07-27T10:00:00.000Z",
-  "groupUrl": "https://facebook.com/groups/123"
-}</pre>
+    <div id="collectLog" class="log"></div>
   </div>
 </div>
 
@@ -104,80 +78,86 @@ function checkEnv() {
     .catch(() => {});
 }
 
+function iconFor(s) {
+  if (s === 'ok' || s === 'inserted') return '✓';
+  if (s === 'running' || s === 'processing' || s === 'polling') return '⏳';
+  if (s === 'error') return '✗';
+  if (s === 'duplicate') return '→';
+  if (s === 'low_confidence') return '△';
+  return '·';
+}
+
+function classFor(s) {
+  if (s === 'ok' || s === 'inserted') return 'log-ok';
+  if (s === 'running' || s === 'processing' || s === 'polling') return 'log-running';
+  if (s === 'error') return 'log-error';
+  if (s === 'duplicate') return 'log-duplicate';
+  if (s === 'low_confidence') return 'log-skip';
+  return '';
+}
+
+function textFor(step) {
+  switch (step.type) {
+    case 'run_start': return `เรียก Apify start run สำเร็จ (ID: ${step.runId})`;
+    case 'poll':
+      if (step.status === 'ok') return `Apify scrap เสร็จ (${step.elapsed} วิ)`;
+      return `รอ Apify scrap... (${step.elapsed} วิ)`;
+    case 'fetch': return `ได้รับ ${step.count} โพสต์จาก Apify dataset`;
+    case 'item_progress': return `กำลังดำเนินการโพสต์ ${step.index}/${step.total}...`;
+    case 'item':
+      if (step.status === 'inserted') return `บันทึกแล้ว — ${step.property_type || ''} (confidence: ${(step.confidence * 100).toFixed(0)}%) ${step.postUrl ? step.postUrl.slice(0, 50) + '...' : ''}`;
+      if (step.status === 'duplicate') return `ซ้ำ (มีใน DB แล้ว) ${step.postUrl ? step.postUrl.slice(0, 50) + '...' : ''}`;
+      if (step.status === 'low_confidence') return `ไม่ใช่ประกาศขาย/ให้เช่า (score: ${step.score})`;
+      if (step.status === 'error') return `Error: ${step.error}`;
+      return '';
+    case 'summary':
+      return '';
+    case 'error': return `❌ ${step.message}`;
+    default: return JSON.stringify(step);
+  }
+}
+
 async function testCollect() {
   const btn = document.getElementById('btnCollect');
-  const resultDiv = document.getElementById('collectResult');
+  const logDiv = document.getElementById('collectLog');
   btn.disabled = true;
-  resultDiv.innerHTML = '<span class="loading"></span> กำลังเรียก...';
+  logDiv.innerHTML = '<div class="log-step log-running"><span class="log-icon">⏳</span><span class="log-text">กำลังเรียก Collect...</span></div>';
 
   try {
     const limit = document.getElementById('postLimit').value;
     const res = await fetch(API_BASE + '/api/collect?limit=' + limit);
     const data = await res.json();
-    resultDiv.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
-  } catch (err) {
-    resultDiv.innerHTML = '<span class="badge badge-err">Error:</span> <pre>' + err.message + '</pre>';
-  } finally {
-    btn.disabled = false;
-  }
-}
 
-async function testWebhook() {
-  const btn = event.target;
-  const spinner = document.getElementById('webhookSpinner');
-  const resultDiv = document.getElementById('webhookResult');
-  const textarea = document.getElementById('webhookBody');
+    logDiv.innerHTML = '';
 
-  btn.disabled = true;
-  spinner.style.display = 'inline-block';
-  resultDiv.innerHTML = '';
-
-  try {
-    const body = JSON.parse(textarea.value);
-
-    const res = await fetch(API_BASE + '/api/webhook', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-
-    const data = await res.json();
-    resultDiv.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
-  } catch (err) {
-    resultDiv.innerHTML = '<span class="badge badge-err">Error:</span> <pre>' + err.message + '</pre>';
-  } finally {
-    btn.disabled = false;
-    spinner.style.display = 'none';
-  }
-}
-
-function loadSample() {
-  document.getElementById('webhookBody').value = JSON.stringify({
-  "eventType": "ACTOR.RUN.SUCCEEDED",
-  "resource": {
-    "defaultDatasetId": "local-test"
-  },
-  "_mockItems": [
-    {
-      "url": "https://facebook.com/groups/propertythailand/posts/123",
-      "text": "ขายบ้านเดี่ยว 2 ชั้น 50 ตรว. 3 ห้องนอน 2 ห้องน้ำ ใกล้ BTS บางนา ราคา 4.5 ล้าน สนใจติดต่อ 081-234-5678",
-      "imageUrls": [],
-      "authorName": "สมชาย ใจดี",
-      "authorUrl": "https://facebook.com/somchai",
-      "date": "2024-07-27T10:00:00.000Z",
-      "groupUrl": "https://facebook.com/groups/propertythailand"
-    },
-    {
-      "url": "https://facebook.com/groups/propertythailand/posts/789",
-      "text": "ให้เช่าคอนโด 1 ห้อง 30 ตรม. ชั้น 25 วิวเมือง แถวอโศก ราคา 15,000/เดือน สนใจทักไลน์ condo888",
-      "imageUrls": [],
-      "authorName": "ณัฐ ทรัพย์ทวี",
-      "authorUrl": "https://facebook.com/natt",
-      "date": "2024-07-27T11:00:00.000Z",
-      "groupUrl": "https://facebook.com/groups/propertythailand"
+    if (!data.steps || data.steps.length === 0) {
+      logDiv.innerHTML = '<div class="log-step log-error"><span class="log-icon">✗</span><span class="log-text">ไม่มีข้อมูล</span></div>';
+      return;
     }
-  ]
-}, null, 2);
+
+    for (const step of data.steps) {
+      if (step.type === 'summary') {
+        logDiv.innerHTML += `
+          <div class="summary-card">
+            <div class="summary-item ok"><span class="num">${step.inserted || 0}</span><span class="label">บันทึก</span></div>
+            <div class="summary-item dup"><span class="num">${step.duplicates || 0}</span><span class="label">ซ้ำ</span></div>
+            <div class="summary-item skip"><span class="num">${step.low_confidence || 0}</span><span class="label">ไม่เข้าเกณฑ์</span></div>
+            <div class="summary-item err"><span class="num">${step.errors || 0}</span><span class="label">Error</span></div>
+          </div>`;
+        continue;
+      }
+      const icon = iconFor(step.status);
+      const cls = classFor(step.status);
+      const txt = textFor(step);
+      logDiv.innerHTML += `<div class="log-step ${cls}"><span class="log-icon">${icon}</span><span class="log-text">${txt}</span></div>`;
+    }
+
+    logDiv.scrollTop = logDiv.scrollHeight;
+  } catch (err) {
+    logDiv.innerHTML = '<div class="log-step log-error"><span class="log-icon">✗</span><span class="log-text">Error: ' + err.message + '</span></div>';
+  } finally {
+    btn.disabled = false;
+  }
 }
 </script>
 </body>
