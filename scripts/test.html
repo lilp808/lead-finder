@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -64,59 +64,25 @@ body {
 .nav a:hover:not(.active) { color: var(--color-text); }
 
 .page-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
+  font-size: 1.5rem; font-weight: 700;
+  display: flex; align-items: center; gap: var(--space-3);
   margin-bottom: var(--space-1);
 }
 .page-title span { color: var(--color-primary); }
-.page-subtitle {
-  font-size: 0.9rem;
-  color: var(--color-text-secondary);
-  margin-bottom: var(--space-8);
-  margin-left: calc(24px + var(--space-3));
-}
+.page-subtitle { font-size: 0.9rem; color: var(--color-text-secondary); margin-bottom: var(--space-8); margin-left: calc(24px + var(--space-3)); }
 
-/* ─── Cards ─────────────────────────────── */
 .card {
-  background: var(--color-surface);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  padding: var(--space-5) var(--space-6);
-  margin-bottom: var(--space-6);
-  border: 1px solid var(--color-border);
+  background: var(--color-surface); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm); padding: var(--space-5) var(--space-6);
+  margin-bottom: var(--space-6); border: 1px solid var(--color-border);
 }
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-5);
-  flex-wrap: wrap;
-  gap: var(--space-3);
-}
-.card-title {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  font-size: 1.15rem;
-  font-weight: 600;
-}
+.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-5); flex-wrap: wrap; gap: var(--space-3); }
+.card-title { display: flex; align-items: center; gap: var(--space-3); font-size: 1.15rem; font-weight: 600; }
 .card-title i { color: var(--color-primary); width: 22px; height: 22px; }
 .card-desc { font-size: 0.85rem; color: var(--color-text-secondary); margin-top: 2px; margin-left: calc(22px + var(--space-3)); }
 
-/* ─── Card List ─────────────────────────── */
 .card-list { }
-.card-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-4) var(--space-1);
-  border-bottom: 1px solid var(--color-border-light);
-  transition: background var(--transition);
-  flex-wrap: wrap;
-}
+.card-row { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-4) var(--space-1); border-bottom: 1px solid var(--color-border-light); transition: background var(--transition); flex-wrap: wrap; }
 .card-row:hover { background: #FCFCFC; border-radius: var(--radius-sm); }
 .card-row:last-child { border-bottom: none; }
 .card-row-label { font-weight: 600; font-size: 0.9rem; min-width: 120px; }
@@ -124,24 +90,12 @@ body {
 .card-row-actions { display: flex; gap: var(--space-1); margin-left: auto; }
 .card-row-actions button { flex-shrink: 0; }
 
-/* ─── Buttons ───────────────────────────── */
 .btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  height: 42px;
-  padding: 0 var(--space-5);
-  border-radius: var(--radius-md);
-  font-family: var(--font-family);
-  font-size: 0.9rem;
-  font-weight: 600;
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: all var(--transition);
-  white-space: nowrap;
-  text-decoration: none;
-  line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  height: 42px; padding: 0 var(--space-5); border-radius: var(--radius-md);
+  font-family: var(--font-family); font-size: 0.9rem; font-weight: 600;
+  border: 1px solid transparent; cursor: pointer;
+  transition: all var(--transition); white-space: nowrap; text-decoration: none; line-height: 1;
 }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-primary { background: var(--color-primary); color: #fff; }
@@ -155,36 +109,18 @@ body {
 .btn-sm { height: 36px; padding: 0 var(--space-4); font-size: 0.85rem; }
 .btn-icon { width: 38px; height: 38px; padding: 0; border-radius: var(--radius-md); display: inline-flex; align-items: center; justify-content: center; border: none; cursor: pointer; transition: all var(--transition); }
 
-/* ─── Inputs ────────────────────────────── */
 .input {
-  height: 42px;
-  padding: 0 var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  font-family: var(--font-family);
-  font-size: 0.85rem;
-  color: var(--color-text);
-  background: var(--color-surface);
-  transition: all var(--transition);
-  outline: none;
-  width: 100%;
+  height: 42px; padding: 0 var(--space-3); border: 1px solid var(--color-border);
+  border-radius: var(--radius-md); font-family: var(--font-family); font-size: 0.85rem;
+  color: var(--color-text); background: var(--color-surface);
+  transition: all var(--transition); outline: none; width: 100%;
 }
 .input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 4px rgba(212,168,67,.15); }
 .input::placeholder { color: var(--color-text-muted); }
 .input-group { display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; }
 select.input { cursor: pointer; }
 
-/* ─── Badges ────────────────────────────── */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: 3px 12px;
-  border-radius: var(--radius-full);
-  font-size: 0.78rem;
-  font-weight: 600;
-  line-height: 1.4;
-}
+.badge { display: inline-flex; align-items: center; gap: var(--space-1); padding: 3px 12px; border-radius: var(--radius-full); font-size: 0.78rem; font-weight: 600; line-height: 1.4; }
 .badge-clickable { cursor: pointer; }
 .badge-on { background: var(--color-success-bg); color: var(--color-success); }
 .badge-off { background: #FEF2F2; color: var(--color-danger); }
@@ -192,15 +128,7 @@ select.input { cursor: pointer; }
 .badge-blue { background: var(--color-info-bg); color: var(--color-info); }
 .badge-gold { background: var(--color-primary-bg); color: var(--color-primary); }
 
-/* ─── Form ──────────────────────────────── */
-.add-form {
-  display: none;
-  margin-top: var(--space-4);
-  padding: var(--space-5);
-  background: var(--color-bg);
-  border-radius: var(--radius-md);
-  border: 1px dashed var(--color-border);
-}
+.add-form { display: none; margin-top: var(--space-4); padding: var(--space-5); background: var(--color-bg); border-radius: var(--radius-md); border: 1px dashed var(--color-border); }
 .add-form.show { display: block; }
 .form-row { margin-bottom: var(--space-3); }
 .form-row label { display: block; font-size: 0.82rem; font-weight: 500; color: var(--color-text-secondary); margin-bottom: var(--space-1); }
@@ -209,7 +137,6 @@ select.input { cursor: pointer; }
 .form-inline .field { display: flex; flex-direction: column; gap: var(--space-1); }
 .form-inline .field label { font-size: 0.78rem; font-weight: 500; color: var(--color-text-secondary); }
 
-/* ─── Collect Log ────────────────────────── */
 .log { margin-top: var(--space-4); }
 .log-step { display: flex; align-items: flex-start; gap: var(--space-2); padding: 4px 0; border-bottom: 1px solid var(--color-border-light); font-size: 0.82rem; line-height: 1.6; font-family: var(--font-family); }
 .log-step:last-child { border-bottom: none; }
@@ -253,40 +180,40 @@ select.input { cursor: pointer; }
   <i data-lucide="settings-2" style="width:24px;height:24px;color:var(--color-primary)"></i>
   Find<span>Property</span> — Config
 </h1>
-<p class="page-subtitle">จัดการแหล่งข้อมูล ตารางเวลา และรัน Collect</p>
+<p class="page-subtitle">Manage sources, schedules, and run Collect</p>
 
 <!-- ═══ Sources ═══ -->
 <div class="card">
   <div class="card-header">
     <div>
       <div class="card-title">
-        <i data-lucide="folder-kanban"></i> แหล่งข้อมูล
+        <i data-lucide="folder-kanban"></i> Sources
       </div>
-      <div class="card-desc">Facebook groups ที่จะเก็บข้อมูล — เปิด/ปิด, ตั้งค่าจำนวนโพสต์และ AI Model</div>
+      <div class="card-desc">Facebook groups to collect from — toggle on/off, set post limit and AI Model</div>
     </div>
     <div style="display:flex;gap:var(--space-2)">
       <button class="btn btn-secondary btn-sm" onclick="loadSources()">
-        <i data-lucide="refresh-cw" style="width:16px;height:16px"></i> โหลดใหม่
+        <i data-lucide="refresh-cw" style="width:16px;height:16px"></i> Refresh
       </button>
       <button class="btn btn-primary" onclick="toggleAddForm()">
-        <i data-lucide="plus" style="width:18px;height:18px"></i> เพิ่มแหล่ง
+        <i data-lucide="plus" style="width:18px;height:18px"></i> Add Source
       </button>
     </div>
   </div>
-  <div id="sourcesTable"><div class="loading">กำลังโหลด...</div></div>
+  <div id="sourcesTable"><div class="loading">Loading...</div></div>
 
   <div id="addForm" class="add-form">
     <div class="form-row">
-      <label>ชื่อแหล่ง</label>
-      <input class="input" type="text" id="newLabel" placeholder="เช่น บ้านเดี่ยว 1">
+      <label>Source Name</label>
+      <input class="input" type="text" id="newLabel" placeholder="e.g. House Group 1">
     </div>
     <div class="form-row">
-      <label>URL กลุ่ม Facebook</label>
+      <label>Facebook Group URL</label>
       <input class="input" type="text" id="newUrl" placeholder="https://facebook.com/groups/...">
     </div>
     <div class="form-inline">
       <div class="field">
-        <label>จำนวนโพสต์</label>
+        <label>Posts Limit</label>
         <input class="input" type="number" id="newLimit" value="10" min="1" max="100" style="width:100px">
       </div>
       <div class="field">
@@ -302,8 +229,8 @@ select.input { cursor: pointer; }
       </div>
     </div>
     <div class="form-actions">
-      <button class="btn btn-primary" onclick="addSource()"><i data-lucide="save" style="width:16px;height:16px"></i> บันทึก</button>
-      <button class="btn btn-secondary" onclick="toggleAddForm()">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="addSource()"><i data-lucide="save" style="width:16px;height:16px"></i> Save</button>
+      <button class="btn btn-secondary" onclick="toggleAddForm()">Cancel</button>
     </div>
   </div>
 </div>
@@ -313,24 +240,24 @@ select.input { cursor: pointer; }
   <div class="card-header">
     <div>
       <div class="card-title">
-        <i data-lucide="clock"></i> ตารางเวลารันอัตโนมัติ
+        <i data-lucide="clock"></i> Schedule
       </div>
-      <div class="card-desc">ระบบจะ Collect อัตโนมัติตามเวลาที่ตั้งไว้</div>
+      <div class="card-desc">Automatically collect leads at scheduled times</div>
     </div>
     <button class="btn btn-primary" onclick="toggleAddSchedule()">
-      <i data-lucide="plus" style="width:18px;height:18px"></i> เพิ่มเวลา
+      <i data-lucide="plus" style="width:18px;height:18px"></i> Add Schedule
     </button>
   </div>
   <div class="notice">
     <i data-lucide="info" style="width:16px;height:16px;flex-shrink:0"></i>
-    แผน Hobby รันได้วันละ 1 ครั้ง เวลา <strong>06:00 UTC</strong> (13:00 ไทย) — อัปเกรดเป็น Pro เพื่อให้หลายเวลาได้
+    Hobby plan: 1 run/day at <strong>06:00 UTC</strong> (13:00 ICT). Upgrade to Pro for multiple schedules.
   </div>
-  <div id="schedulesTable"><div class="loading">กำลังโหลด...</div></div>
+  <div id="schedulesTable"><div class="loading">Loading...</div></div>
 
   <div id="addScheduleForm" class="add-form">
     <div class="form-inline">
       <div class="field">
-        <label>เวลา (UTC)</label>
+        <label>Time (UTC)</label>
         <div style="display:flex;gap:var(--space-2);align-items:center">
           <select class="input" id="newHour" style="width:80px"></select>
           <span>:</span>
@@ -340,13 +267,13 @@ select.input { cursor: pointer; }
         </div>
       </div>
       <div class="field">
-        <label>ชื่อ</label>
-        <input class="input" type="text" id="newScheduleLabel" placeholder="เช่น เช้า 06:00" style="width:200px">
+        <label>Label</label>
+        <input class="input" type="text" id="newScheduleLabel" placeholder="e.g. Morning 06:00" style="width:200px">
       </div>
     </div>
     <div class="form-actions">
-      <button class="btn btn-primary" onclick="addSchedule()"><i data-lucide="save" style="width:16px;height:16px"></i> บันทึก</button>
-      <button class="btn btn-secondary" onclick="toggleAddSchedule()">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="addSchedule()"><i data-lucide="save" style="width:16px;height:16px"></i> Save</button>
+      <button class="btn btn-secondary" onclick="toggleAddSchedule()">Cancel</button>
     </div>
   </div>
 </div>
@@ -356,9 +283,9 @@ select.input { cursor: pointer; }
   <div class="card-header">
     <div>
       <div class="card-title">
-        <i data-lucide="zap"></i> รัน Collect
+        <i data-lucide="zap"></i> Collect
       </div>
-      <div class="card-desc">ดึงข้อมูลจากแหล่งที่เปิด active ทั้งหมด → AI วิเคราะห์ → บันทึก Supabase</div>
+      <div class="card-desc">Scrape active sources → AI extract → Save to Supabase</div>
     </div>
     <button class="btn btn-primary" id="btnCollect" onclick="testCollect()">
       <i data-lucide="play" style="width:18px;height:18px"></i> Collect Now
@@ -411,7 +338,6 @@ window.onload = function () {
   loadSchedules();
 };
 
-// ─── Sources ─────────────────────────────────
 function toggleAddForm() {
   const form = document.getElementById('addForm');
   form.classList.toggle('show');
@@ -426,16 +352,16 @@ async function loadSources() {
   const div = document.getElementById('sourcesTable');
   try {
     const res = await fetch(API_BASE + '/api/sources');
-    if (!res.ok) { div.innerHTML = '<div class="empty-state">โหลดข้อมูลไม่ได้</div>'; return; }
+    if (!res.ok) { div.innerHTML = '<div class="empty-state">Failed to load</div>'; return; }
     const data = await res.json();
     if (!data || data.length === 0) {
-      div.innerHTML = '<div class="empty-state">ยังไม่มีแหล่งข้อมูล — กด "เพิ่มแหล่ง" เพื่อเริ่ม</div>';
+      div.innerHTML = '<div class="empty-state">No sources yet — click "Add Source" to start</div>';
       return;
     }
     let html = '<div class="card-list">';
     data.forEach((s, i) => {
       const active = s.active ? 'on' : 'off';
-      const activeLabel = s.active ? 'เปิด' : 'ปิด';
+      const activeLabel = s.active ? 'On' : 'Off';
       const modelLabel = (s.model_provider || 'typhoon') === 'typhoon' ? 'Typhoon' : 'Groq';
       html += `<div class="card-row">
         <span class="badge badge-gold" style="min-width:28px;justify-content:center">${i + 1}</span>
@@ -444,13 +370,13 @@ async function loadSources() {
           <div style="font-size:0.78rem;color:var(--color-text-muted);word-break:break-all">${esc(s.source_url)}</div>
         </div>
         <div class="card-row-meta">
-          <span class="badge badge-blue">${s.results_limit} โพสต์</span>
+          <span class="badge badge-blue">${s.results_limit} posts</span>
           <span class="badge badge-gold">${modelLabel}</span>
           <span class="badge ${active} badge-clickable" onclick="toggleSource('${s.id}', ${!s.active})">${activeLabel}</span>
         </div>
         <div class="card-row-actions">
-          <button class="btn-icon btn-ghost" onclick="editSource('${s.id}')" title="แก้ไข"><i data-lucide="pencil" style="width:16px;height:16px"></i></button>
-          <button class="btn-icon btn-danger" onclick="deleteSource('${s.id}')" title="ลบ"><i data-lucide="trash-2" style="width:16px;height:16px"></i></button>
+          <button class="btn-icon btn-ghost" onclick="editSource('${s.id}')" title="Edit"><i data-lucide="pencil" style="width:16px;height:16px"></i></button>
+          <button class="btn-icon btn-danger" onclick="deleteSource('${s.id}')" title="Delete"><i data-lucide="trash-2" style="width:16px;height:16px"></i></button>
         </div>
       </div>`;
     });
@@ -470,7 +396,7 @@ async function addSource() {
   const results_limit = parseInt(document.getElementById('newLimit').value) || 5;
   const model_provider = document.getElementById('newProvider').value;
   const model_name = document.getElementById('newModel').value;
-  if (!label || !source_url) { alert('กรุณากรอกชื่อและ URL'); return; }
+  if (!label || !source_url) { alert('Please enter name and URL'); return; }
   try {
     const res = await fetch(API_BASE + '/api/sources', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -493,7 +419,7 @@ async function toggleSource(id, active) {
 }
 
 async function deleteSource(id) {
-  if (!confirm('ลบแหล่งข้อมูลนี้?')) return;
+  if (!confirm('Delete this source?')) return;
   try {
     const res = await fetch(API_BASE + '/api/sources/' + id, { method: 'DELETE' });
     if (!res.ok) { const e = await res.json(); alert('Error: ' + (e.error || res.statusText)); return; }
@@ -501,9 +427,8 @@ async function deleteSource(id) {
   } catch (err) { alert('Error: ' + err.message); }
 }
 
-function editSource(id) { alert('ฟังก์ชั่นแก้ไข (ยังไม่ implement)'); }
+function editSource(id) { alert('Edit function (not yet implemented)'); }
 
-// ─── Schedules ──────────────────────────────
 function toggleAddSchedule() {
   const form = document.getElementById('addScheduleForm');
   form.classList.toggle('show');
@@ -514,28 +439,28 @@ async function loadSchedules() {
   const div = document.getElementById('schedulesTable');
   try {
     const res = await fetch(API_BASE + '/api/schedules');
-    if (!res.ok) { div.innerHTML = '<div class="empty-state">โหลดไม่ได้</div>'; return; }
+    if (!res.ok) { div.innerHTML = '<div class="empty-state">Failed to load</div>'; return; }
     const data = await res.json();
     if (!data || data.length === 0) {
-      div.innerHTML = '<div class="empty-state">ยังไม่มีตารางเวลา — กด "เพิ่มเวลา" เพื่อตั้ง</div>';
+      div.innerHTML = '<div class="empty-state">No schedules yet — click "Add Schedule" to set one up</div>';
       return;
     }
     let html = '<div class="card-list">';
     data.forEach((s, i) => {
       const time = `${String(s.hour).padStart(2,'0')}:${String(s.minute).padStart(2,'0')}`;
       const active = s.active ? 'on' : 'off';
-      const activeLabel = s.active ? 'เปิด' : 'ปิด';
+      const activeLabel = s.active ? 'On' : 'Off';
       html += `<div class="card-row">
         <span class="badge badge-gold" style="min-width:28px;justify-content:center">${i + 1}</span>
         <div style="flex:1;min-width:120px">
-          <div style="font-weight:600;font-size:1.1rem">${time} น.</div>
+          <div style="font-weight:600;font-size:1.1rem">${time} UTC</div>
           <div style="font-size:0.82rem;color:var(--color-text-secondary)">${esc(s.label || '')}</div>
         </div>
         <div class="card-row-meta">
           <span class="badge ${active} badge-clickable" onclick="toggleSchedule('${s.id}', ${!s.active})">${activeLabel}</span>
         </div>
         <div class="card-row-actions">
-          <button class="btn-icon btn-danger" onclick="deleteSchedule('${s.id}')" title="ลบ"><i data-lucide="trash-2" style="width:16px;height:16px"></i></button>
+          <button class="btn-icon btn-danger" onclick="deleteSchedule('${s.id}')" title="Delete"><i data-lucide="trash-2" style="width:16px;height:16px"></i></button>
         </div>
       </div>`;
     });
@@ -573,7 +498,7 @@ async function toggleSchedule(id, active) {
 }
 
 async function deleteSchedule(id) {
-  if (!confirm('ลบตารางเวลานี้?')) return;
+  if (!confirm('Delete this schedule?')) return;
   try {
     const res = await fetch(API_BASE + '/api/schedules/' + id, { method: 'DELETE' });
     if (!res.ok) { const e = await res.json(); alert('Error: ' + (e.error || res.statusText)); return; }
@@ -581,7 +506,6 @@ async function deleteSchedule(id) {
   } catch (err) { alert('Error: ' + err.message); }
 }
 
-// ─── Collect ─────────────────────────────────
 let iconSvgCache = {};
 
 function iconSvg(name) {
@@ -613,19 +537,19 @@ function classFor(s) {
 }
 function textFor(step) {
   switch (step.type) {
-    case 'source_start': return `กำลัง scrap ${step.label || ''} (limit: ${step.limit})`;
+    case 'source_start': return `Scraping ${step.label || ''} (limit: ${step.limit})`;
     case 'poll':
-      if (step.status === 'ok') return `${step.label || ''} scrap เสร็จ (${step.elapsed} วิ)`;
-      return `รอ ${step.label || ''} scrap... (${step.elapsed} วิ)`;
-    case 'fetch': return `ได้รับ ${step.count} โพสต์จาก ${step.label || ''}`;
+      if (step.status === 'ok') return `${step.label || ''} scrape done (${step.elapsed}s)`;
+      return `Waiting for ${step.label || ''} scrape... (${step.elapsed}s)`;
+    case 'fetch': return `Got ${step.count} posts from ${step.label || ''}`;
     case 'source_error': return `${step.label || ''} — ${step.error}`;
-    case 'batch_progress': return `ประมวลผล batch ${step.batch}/${step.total}...`;
-    case 'time_limit': return `หมดเวลา — ประมวลผลแล้ว ${step.processed} รายการ, ข้าม ${step.skipped} รายการ (รอรอบหน้า)`;
-    case 'item_progress': return `กำลังดำเนินการโพสต์ ${step.index}/${step.total}...`;
+    case 'batch_progress': return `Processing batch ${step.batch}/${step.total}...`;
+    case 'time_limit': return `Time limit — processed ${step.processed} items, skipped ${step.skipped} (next round)`;
+    case 'item_progress': return `Processing post ${step.index}/${step.total}...`;
     case 'item':
-      if (step.status === 'inserted') return `บันทึกแล้ว — ${step.property_type || ''} (${(step.confidence * 100).toFixed(0)}%)`;
-      if (step.status === 'duplicate') return 'ซ้ำ (มีใน DB แล้ว)';
-      if (step.status === 'low_confidence') return `ไม่ใช่ประกาศ (score: ${step.score})`;
+      if (step.status === 'inserted') return `Saved — ${step.property_type || ''} (${(step.confidence * 100).toFixed(0)}%)`;
+      if (step.status === 'duplicate') return 'Duplicate (already in DB)';
+      if (step.status === 'low_confidence') return `Not a listing (score: ${step.score})`;
       if (step.status === 'error') return `Error: ${step.error}`;
       return '';
     case 'summary': return '';
@@ -640,24 +564,24 @@ async function testCollect() {
   btn.disabled = true;
   logDiv.innerHTML = `<div class="log-step log-running">
     <span class="log-icon">${iconSvg('loader')}</span>
-    <span class="log-text">กำลังเรียก Collect...</span>
+    <span class="log-text">Running Collect...</span>
   </div>`;
   try {
     const res = await fetch(API_BASE + '/api/collect');
     const data = await res.json();
     logDiv.innerHTML = '';
     if (!data.steps || data.steps.length === 0) {
-      logDiv.innerHTML = `<div class="log-step log-error"><span class="log-icon">${iconSvg('x-circle')}</span><span class="log-text">ไม่มีข้อมูล</span></div>`;
+      logDiv.innerHTML = `<div class="log-step log-error"><span class="log-icon">${iconSvg('x-circle')}</span><span class="log-text">No data returned</span></div>`;
       return;
     }
     for (const step of data.steps) {
       if (step.type === 'summary') {
         logDiv.innerHTML += `<div class="summary-card">
-          <div class="summary-item ok"><span class="num">${step.inserted || 0}</span><span class="label">บันทึก</span></div>
-          <div class="summary-item dup"><span class="num">${step.duplicates || 0}</span><span class="label">ซ้ำ</span></div>
-          <div class="summary-item skip"><span class="num">${step.low_confidence || 0}</span><span class="label">ไม่เข้าเกณฑ์</span></div>
-          <div class="summary-item err"><span class="num">${step.errors || 0}</span><span class="label">Error</span></div>
-          <div class="summary-item skp"><span class="num">${step.skipped || 0}</span><span class="label">จำกัดเวลา</span></div>
+          <div class="summary-item ok"><span class="num">${step.inserted || 0}</span><span class="label">Inserted</span></div>
+          <div class="summary-item dup"><span class="num">${step.duplicates || 0}</span><span class="label">Duplicates</span></div>
+          <div class="summary-item skip"><span class="num">${step.low_confidence || 0}</span><span class="label">Skipped</span></div>
+          <div class="summary-item err"><span class="num">${step.errors || 0}</span><span class="label">Errors</span></div>
+          <div class="summary-item skp"><span class="num">${step.skipped || 0}</span><span class="label">Time limit</span></div>
         </div>`;
         continue;
       }
