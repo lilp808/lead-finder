@@ -1,4 +1,4 @@
-import { getDatasetItems } from '../src/lib/apify.js';
+import { getDatasetItems, getRunInput } from '../src/lib/apify.js';
 import { extractProperty } from '../src/lib/groq.js';
 import {
   getClient,
@@ -37,6 +37,16 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true, message: 'no items' });
   }
 
+  let apifyGroupUrl = '';
+  if (!mockItems && resource?.id) {
+    try {
+      const runInput = await getRunInput(resource.id);
+      apifyGroupUrl = runInput?.startUrls?.[0]?.url || '';
+    } catch (err) {
+      console.error('Failed to fetch run input:', err.message);
+    }
+  }
+
   const supabase = getClient();
   const results = [];
 
@@ -67,7 +77,7 @@ export default async function handler(req, res) {
     const lead = {
       id: leadId,
       post_url: postUrl,
-      group_url: item.groupUrl || '',
+      group_url: item.groupUrl || apifyGroupUrl,
       author_name: item.authorName,
       author_url: item.authorUrl,
       posted_at: item.date || item.createdAt || null,

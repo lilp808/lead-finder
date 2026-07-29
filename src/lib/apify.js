@@ -4,21 +4,24 @@ export async function startActorRun(groupUrl, webhookUrl) {
   const actorId = process.env.APIFY_ACTOR_ID.replace('/', '~');
   const url = groupUrl.trim();
 
-  const input = {
-    startUrls: [{ url }],
-    resultsLimit: 10,
-    proxy: { useApifyProxy: true },
+  const body = {
+    input: {
+      startUrls: [{ url }],
+      resultsLimit: 10,
+      proxy: { useApifyProxy: true },
+      extractPostDates: true,
+    },
   };
+  if (webhookUrl) {
+    body.webhookUrls = [webhookUrl];
+  }
 
   const res = await fetch(
     `${APIFY_BASE}/acts/${actorId}/runs?token=${process.env.APIFY_API_KEY}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...input,
-        webhookUrls: [webhookUrl],
-      }),
+      body: JSON.stringify(body),
     },
   );
 
@@ -36,6 +39,18 @@ export async function getDatasetItems(datasetId) {
 
   if (!res.ok) {
     throw new Error(`Apify dataset fetch failed (${res.status})`);
+  }
+
+  return res.json();
+}
+
+export async function getRunInput(runId) {
+  const res = await fetch(
+    `${APIFY_BASE}/actor-runs/${runId}/input?token=${process.env.APIFY_API_KEY}`,
+  );
+
+  if (!res.ok) {
+    throw new Error(`Apify run input fetch failed (${res.status}): ${await res.text()}`);
   }
 
   return res.json();

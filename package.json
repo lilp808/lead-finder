@@ -6,14 +6,12 @@
   "scripts": {
     "setup:db": "node scripts/setup.mjs",
     "scrape": "node --env-file .env.local scripts/scrape.mjs",
-    "scrape:install": "npx playwright install chromium",
     "dev": "node --env-file .env.local --watch scripts/dev.mjs"
   },
   "devDependencies": {
     "vercel": "latest"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.45.0",
-    "playwright": "^1.62.0"
+    "@supabase/supabase-js": "^2.45.0"
   }
 }
