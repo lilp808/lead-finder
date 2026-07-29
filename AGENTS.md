@@ -23,8 +23,12 @@ All scripts load env from `.env.local` via `--env-file .env.local` (not dotenv).
 
 ### Async (via cron `vercel.json` 6 AM)
 ```
-/api/collect (cron) → same as sync, reads all active sources from DB
+/api/cron-check (cron 06:00 UTC daily)
+  └─ Check cron_schedules WHERE active=true
+       └─ If time matches → fetch /api/collect internally
 ```
+
+Note: Hobby plan = 1 cron/day at fixed time. Scheduler UI stores multiple schedules for future Pro upgrade.
 
 ### Alternative async (via CLI `npm run scrape`)
 ```
@@ -43,7 +47,7 @@ Read active sources from DB → start Apify runs with webhook URLs per source
 - **Env required**: `APIFY_API_KEY`, `APIFY_ACTOR_ID` (default `apify/facebook-groups-scraper`), `GROQ_API_KEY`, `SUPABASE_URL` (or `NEXT_PUBLIC_SUPABASE_URL`), `SUPABASE_SERVICE_ROLE_KEY`, `VERCEL_WEBHOOK_URL`.
 - **Facebook auth**: Cookie/session must be configured inside Apify Console actor input — not in env.
 - **No test/lint/typecheck framework** exists.
-- **Vercel**: Function maxDuration 60s. Cron `/api/collect` daily at 6 AM (`vercel.json`).
+- **Vercel**: Function maxDuration 60s. Cron `/api/cron-check` daily at 6 AM UTC (`vercel.json`).
 - **ESM** throughout (`"type": "module"` in package.json).
 
 ## Constraint

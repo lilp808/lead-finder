@@ -101,8 +101,12 @@
   <div class="card">
     <h2>⏰ ตารางเวลารันอัตโนมัติ</h2>
     <p style="font-size:0.85rem;color:#666;margin-bottom:12px">
-      ตั้งเวลาที่ระบบจะ Collect อัตโนมัติทุกวัน (Vercel cron รันทุก 30 นาที, เช็คเวลาจากตาราง)
+      ตั้งเวลาที่ระบบจะ Collect อัตโนมัติทุกวัน
     </p>
+    <div style="background:#fef3c7;color:#92400e;padding:8px 12px;border-radius:6px;font-size:0.8rem;margin-bottom:12px">
+      ⓘ แผน Hobby รันได้วันละ 1 ครั้ง เวลา <strong>06:00 UTC</strong> (13:00 ไทย)
+      — อัปเกรดเป็น Pro เพื่อให้หลายเวลาได้
+    </div>
     <div id="schedulesTable"><div class="loading">กำลังโหลด...</div></div>
     <div class="row" style="margin-top:8px">
       <button id="btnShowAddSchedule" class="outline" onclick="toggleAddSchedule()">+ เพิ่มเวลา</button>
