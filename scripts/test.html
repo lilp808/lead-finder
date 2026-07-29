@@ -3,21 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Property Lead — Test Dashboard</title>
+<title>Property Lead — Dashboard</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f5; padding: 24px; color: #222; }
-  .container { max-width: 800px; margin: 0 auto; }
+  .container { max-width: 860px; margin: 0 auto; }
   h1 { font-size: 1.5rem; margin-bottom: 4px; }
   .subtitle { color: #666; font-size: 0.9rem; margin-bottom: 24px; }
   .card { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
   .card h2 { font-size: 1rem; margin-bottom: 12px; }
-  button { background: #0066ff; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-size: 0.9rem; cursor: pointer; }
+  button { background: #0066ff; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-size: 0.85rem; cursor: pointer; }
   button:hover { background: #0052cc; }
   button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.small { padding: 4px 10px; font-size: 0.8rem; }
+  button.danger { background: #dc2626; }
+  button.danger:hover { background: #b91c1c; }
+  button.success { background: #16a34a; }
+  button.success:hover { background: #15803d; }
+  button.outline { background: transparent; color: #666; border: 1px solid #ddd; }
+  button.outline:hover { background: #f5f5f5; }
   .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  input[type=number] { width: 70px; padding: 6px 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem; }
+  input, select { padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.85rem; }
+  input[type=number] { width: 80px; }
+  input[type=text] { flex: 1; min-width: 150px; }
   .env-warning { background: #fff3cd; color: #856404; padding: 10px 16px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 16px; }
+  .info-bar { background: #e0f2fe; color: #0369a1; padding: 10px 16px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 16px; }
   .log { margin-top: 12px; max-height: 500px; overflow-y: auto; font-size: 0.82rem; line-height: 1.6; font-family: monospace; }
   .log-step { display: flex; align-items: flex-start; gap: 6px; padding: 3px 0; border-bottom: 1px solid #f0f0f0; }
   .log-step:last-child { border-bottom: none; }
@@ -37,27 +47,93 @@
   .summary-item.dup .num { color: #ca8a04; }
   .summary-item.skip .num { color: #9333ea; }
   .summary-item.err .num { color: #dc2626; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #eee; }
+  th { font-weight: 600; color: #555; font-size: 0.8rem; text-transform: uppercase; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 600; }
+  .badge.on { background: #dcfce7; color: #16a34a; }
+  .badge.off { background: #fef2f2; color: #dc2626; }
+  .empty { text-align: center; padding: 24px; color: #999; font-size: 0.9rem; }
+  .add-form { margin-top: 12px; padding: 12px; background: #fafafa; border-radius: 6px; border: 1px dashed #ddd; display: none; }
+  .add-form.show { display: block; }
+  .form-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+  .form-row label { font-size: 0.8rem; color: #666; min-width: 80px; }
+  .actions { display: flex; gap: 4px; }
+  .loading { color: #999; font-size: 0.85rem; padding: 12px 0; }
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>🏠 Property Lead Test Dashboard</h1>
-  <div class="subtitle">Phase 1 — Facebook Lead Collection MVP</div>
+  <h1>🏠 Property Lead Dashboard</h1>
+  <div class="subtitle">Phase 2 — Multi-Source Facebook Collection</div>
 
-  <div id="envWarning" class="env-warning" style="display:none">
-    ⚠️ env GROUP_URLS ไม่ได้ตั้งค่า — collect จะคืน error ถ้ากด
+  <div id="infoBar" class="info-bar" style="display:none"></div>
+
+  <div class="card">
+    <h2>📋 แหล่งข้อมูล</h2>
+    <p style="font-size:0.85rem;color:#666;margin-bottom:12px">
+      จัดการ Facebook groups ที่จะเก็บข้อมูล — เปิด/ปิด, ตั้งค่าจำนวนโพสต์ต่อครั้ง
+    </p>
+    <div id="sourcesTable"><div class="loading">กำลังโหลด...</div></div>
+    <div class="row" style="margin-top:8px">
+      <button id="btnShowAdd" class="outline" onclick="toggleAddForm()">+ เพิ่มแหล่งข้อมูล</button>
+      <button class="outline" onclick="loadSources()">⟳ โหลดใหม่</button>
+    </div>
+    <div id="addForm" class="add-form">
+      <div class="form-row">
+        <label>ชื่อ</label>
+        <input type="text" id="newLabel" placeholder="เช่น บ้านเดี่ยว 1">
+      </div>
+      <div class="form-row">
+        <label>URL</label>
+        <input type="text" id="newUrl" placeholder="https://facebook.com/groups/...">
+      </div>
+      <div class="form-row">
+        <label>จำนวนโพสต์</label>
+        <input type="number" id="newLimit" value="10" min="1" max="100">
+        <span style="font-size:0.8rem;color:#999">โพสต์/ครั้ง</span>
+      </div>
+      <button onclick="addSource()" style="margin-top:4px">💾 บันทึก</button>
+      <button class="outline" onclick="toggleAddForm()" style="margin-top:4px">ยกเลิก</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>⏰ ตารางเวลารันอัตโนมัติ</h2>
+    <p style="font-size:0.85rem;color:#666;margin-bottom:12px">
+      ตั้งเวลาที่ระบบจะ Collect อัตโนมัติทุกวัน (Vercel cron รันทุก 30 นาที, เช็คเวลาจากตาราง)
+    </p>
+    <div id="schedulesTable"><div class="loading">กำลังโหลด...</div></div>
+    <div class="row" style="margin-top:8px">
+      <button id="btnShowAddSchedule" class="outline" onclick="toggleAddSchedule()">+ เพิ่มเวลา</button>
+    </div>
+    <div id="addScheduleForm" class="add-form">
+      <div class="form-row" style="flex-wrap:nowrap">
+        <label>เวลา</label>
+        <select id="newHour" style="width:80px"></select>
+        <span>:</span>
+        <select id="newMinute" style="width:80px">
+          <option value="0">00</option>
+          <option value="15">15</option>
+          <option value="30">30</option>
+          <option value="45">45</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>ชื่อ</label>
+        <input type="text" id="newScheduleLabel" placeholder="เช่น เช้า 06:00">
+      </div>
+      <button onclick="addSchedule()" style="margin-top:4px">💾 บันทึก</button>
+      <button class="outline" onclick="toggleAddSchedule()" style="margin-top:4px">ยกเลิก</button>
+    </div>
   </div>
 
   <div class="card">
     <h2>⚡ Collect + วิเคราะห์ + บันทึก (Synchronous)</h2>
     <p style="font-size:0.85rem;color:#666;margin-bottom:12px">
-      กดปุ่มแล้วรอ — ระบบจะเรียก Apify → รอ scrap → Groq วิเคราะห์ → บันทึก Supabase ให้เห็นทุกขั้นตอน
+      ดึงข้อมูลจากแหล่งที่เปิด active ทั้งหมด → Groq วิเคราะห์ → บันทึก Supabase
     </p>
-    <div class="row" style="margin-bottom:8px">
-      <label style="font-size:0.85rem">จำนวนโพสต์:</label>
-      <input type="number" id="postLimit" value="5" min="1" max="20">
-      <button id="btnCollect" onclick="testCollect()">▶ Collect</button>
-    </div>
+    <button id="btnCollect" onclick="testCollect()">▶ Collect Now</button>
     <div id="collectLog" class="log"></div>
   </div>
 </div>
@@ -65,17 +141,261 @@
 <script>
 const API_BASE = '';
 
-window.onload = checkEnv;
+let editingId = null;
 
-function checkEnv() {
-  fetch(API_BASE + '/api/collect', { method: 'GET' })
-    .then(r => r.json())
-    .then(d => {
-      if (d.error && d.error.includes('GROUP_URLS')) {
-        document.getElementById('envWarning').style.display = 'block';
-      }
-    })
-    .catch(() => {});
+function populateTimeSelects() {
+  const hourSel = document.getElementById('newHour');
+  for (let h = 0; h < 24; h++) {
+    const opt = document.createElement('option');
+    opt.value = h;
+    opt.textContent = String(h).padStart(2, '0');
+    if (h === 6) opt.selected = true;
+    hourSel.appendChild(opt);
+  }
+}
+
+window.onload = function() {
+  populateTimeSelects();
+  loadSources();
+  loadSchedules();
+};
+
+function toggleAddForm() {
+  const form = document.getElementById('addForm');
+  form.classList.toggle('show');
+  if (!form.classList.contains('show')) {
+    editingId = null;
+    document.getElementById('btnShowAdd').textContent = '+ เพิ่มแหล่งข้อมูล';
+    document.getElementById('newLabel').value = '';
+    document.getElementById('newUrl').value = '';
+    document.getElementById('newLimit').value = '10';
+  }
+}
+
+async function loadSources() {
+  const tbody = document.getElementById('sourcesTable');
+
+  try {
+    const res = await fetch(API_BASE + '/api/sources');
+    if (!res.ok) {
+      tbody.innerHTML = '<div class="empty">❌ โหลดข้อมูลไม่ได้ (ดู console)</div>';
+      return;
+    }
+    const data = await res.json();
+
+    if (!data || data.length === 0) {
+      tbody.innerHTML = '<div class="empty">ยังไม่มีแหล่งข้อมูล — กด "เพิ่มแหล่งข้อมูล" เพื่อเริ่ม</div>';
+      return;
+    }
+
+    let html = `<table>
+      <thead><tr>
+        <th style="width:36px">#</th>
+        <th>ชื่อ</th>
+        <th>URL</th>
+        <th style="width:80px">โพสต์</th>
+        <th style="width:70px">สถานะ</th>
+        <th style="width:120px">จัดการ</th>
+      </tr></thead><tbody>`;
+
+    data.forEach((s, i) => {
+      const active = s.active ? 'on' : 'off';
+      const activeLabel = s.active ? 'เปิด' : 'ปิด';
+      html += `<tr>
+        <td>${i + 1}</td>
+        <td><strong>${esc(s.label)}</strong></td>
+        <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(s.source_url)}">${esc(s.source_url)}</td>
+        <td>${s.results_limit}</td>
+        <td><span class="badge ${active}" onclick="toggleSource('${s.id}', ${!s.active})" style="cursor:pointer">${activeLabel}</span></td>
+        <td>
+          <div class="actions">
+            <button class="small outline" onclick="editSource('${s.id}')">✎</button>
+            <button class="small danger" onclick="deleteSource('${s.id}')">✕</button>
+          </div>
+        </td>
+      </tr>`;
+    });
+
+    html += '</tbody></table>';
+    tbody.innerHTML = html;
+  } catch (err) {
+    tbody.innerHTML = '<div class="empty">❌ Error: ' + err.message + '</div>';
+  }
+}
+
+function esc(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function addSource() {
+  const label = document.getElementById('newLabel').value.trim();
+  const source_url = document.getElementById('newUrl').value.trim();
+  const results_limit = parseInt(document.getElementById('newLimit').value) || 5;
+
+  if (!label) { alert('กรุณากรอกชื่อ'); return; }
+  if (!source_url) { alert('กรุณากรอก URL'); return; }
+
+  try {
+    const res = await fetch(API_BASE + '/api/sources', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ label, source_url, results_limit }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      alert('Error: ' + (err.error || res.statusText));
+      return;
+    }
+
+    document.getElementById('newLabel').value = '';
+    document.getElementById('newUrl').value = '';
+    document.getElementById('newLimit').value = '10';
+    toggleAddForm();
+    loadSources();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+async function toggleSource(id, active) {
+  try {
+    const res = await fetch(API_BASE + '/api/sources/' + id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ active }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      alert('Error: ' + (err.error || res.statusText));
+      return;
+    }
+
+    loadSources();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+async function deleteSource(id) {
+  if (!confirm('ลบแหล่งข้อมูลนี้?')) return;
+
+  try {
+    const res = await fetch(API_BASE + '/api/sources/' + id, {
+      method: 'DELETE',
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      alert('Error: ' + (err.error || res.statusText));
+      return;
+    }
+
+    loadSources();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+function editSource(id) {
+  alert('แก้ไข: ยังไม่ implement');
+}
+
+// ─── Schedule functions ────────────────────────────────
+
+function toggleAddSchedule() {
+  const form = document.getElementById('addScheduleForm');
+  form.classList.toggle('show');
+  if (!form.classList.contains('show')) {
+    document.getElementById('newScheduleLabel').value = '';
+  }
+}
+
+async function loadSchedules() {
+  const div = document.getElementById('schedulesTable');
+  try {
+    const res = await fetch(API_BASE + '/api/schedules');
+    if (!res.ok) { div.innerHTML = '<div class="empty">❌ โหลดไม่ได้</div>'; return; }
+    const data = await res.json();
+
+    if (!data || data.length === 0) {
+      div.innerHTML = '<div class="empty">ยังไม่มีตารางเวลา — กด "เพิ่มเวลา" เพื่อตั้ง</div>';
+      return;
+    }
+
+    let html = `<table>
+      <thead><tr>
+        <th style="width:36px">#</th>
+        <th>เวลา (UTC)</th>
+        <th>ชื่อ</th>
+        <th style="width:70px">สถานะ</th>
+        <th style="width:80px">จัดการ</th>
+      </tr></thead><tbody>`;
+
+    data.forEach((s, i) => {
+      const time = `${String(s.hour).padStart(2,'0')}:${String(s.minute).padStart(2,'0')}`;
+      const active = s.active ? 'on' : 'off';
+      const activeLabel = s.active ? 'เปิด' : 'ปิด';
+      html += `<tr>
+        <td>${i + 1}</td>
+        <td><strong>${time}</strong></td>
+        <td>${esc(s.label || '')}</td>
+        <td><span class="badge ${active}" onclick="toggleSchedule('${s.id}', ${!s.active})" style="cursor:pointer">${activeLabel}</span></td>
+        <td><button class="small danger" onclick="deleteSchedule('${s.id}')">✕</button></td>
+      </tr>`;
+    });
+
+    html += '</tbody></table>';
+    div.innerHTML = html;
+  } catch (err) {
+    div.innerHTML = '<div class="empty">❌ Error: ' + err.message + '</div>';
+  }
+}
+
+async function addSchedule() {
+  const hour = parseInt(document.getElementById('newHour').value);
+  const minute = parseInt(document.getElementById('newMinute').value);
+  const label = document.getElementById('newScheduleLabel').value.trim() || `${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}`;
+
+  try {
+    const res = await fetch(API_BASE + '/api/schedules', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hour, minute, label }),
+    });
+    if (!res.ok) { const err = await res.json(); alert('Error: ' + (err.error || res.statusText)); return; }
+    toggleAddSchedule();
+    loadSchedules();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+async function toggleSchedule(id, active) {
+  try {
+    const res = await fetch(API_BASE + '/api/schedules/' + id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ active }),
+    });
+    if (!res.ok) { const err = await res.json(); alert('Error: ' + (err.error || res.statusText)); return; }
+    loadSchedules();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+async function deleteSchedule(id) {
+  if (!confirm('ลบตารางเวลานี้?')) return;
+  try {
+    const res = await fetch(API_BASE + '/api/schedules/' + id, { method: 'DELETE' });
+    if (!res.ok) { const err = await res.json(); alert('Error: ' + (err.error || res.statusText)); return; }
+    loadSchedules();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
 }
 
 function iconFor(s) {
@@ -90,7 +410,7 @@ function iconFor(s) {
 function classFor(s) {
   if (s === 'ok' || s === 'inserted') return 'log-ok';
   if (s === 'running' || s === 'processing' || s === 'polling') return 'log-running';
-  if (s === 'error') return 'log-error';
+  if (s === 'error' || s === 'source_error') return 'log-error';
   if (s === 'duplicate') return 'log-duplicate';
   if (s === 'low_confidence') return 'log-skip';
   return '';
@@ -98,11 +418,12 @@ function classFor(s) {
 
 function textFor(step) {
   switch (step.type) {
-    case 'run_start': return `เรียก Apify start run สำเร็จ (ID: ${step.runId})`;
+    case 'source_start': return `▶ กำลัง scrap ${step.label || ''} (limit: ${step.limit})`;
     case 'poll':
-      if (step.status === 'ok') return `Apify scrap เสร็จ (${step.elapsed} วิ)`;
-      return `รอ Apify scrap... (${step.elapsed} วิ)`;
-    case 'fetch': return `ได้รับ ${step.count} โพสต์จาก Apify dataset`;
+      if (step.status === 'ok') return `✓ ${step.label || ''} scrap เสร็จ (${step.elapsed} วิ)`;
+      return `⏳ รอ ${step.label || ''} scrap... (${step.elapsed} วิ)`;
+    case 'fetch': return `✓ ได้รับ ${step.count} โพสต์จาก ${step.label || ''}`;
+    case 'source_error': return `✗ ${step.label || ''} — ${step.error}`;
     case 'item_progress': return `กำลังดำเนินการโพสต์ ${step.index}/${step.total}...`;
     case 'item':
       if (step.status === 'inserted') return `บันทึกแล้ว — ${step.property_type || ''} (confidence: ${(step.confidence * 100).toFixed(0)}%) ${step.postUrl ? step.postUrl.slice(0, 50) + '...' : ''}`;
@@ -124,8 +445,7 @@ async function testCollect() {
   logDiv.innerHTML = '<div class="log-step log-running"><span class="log-icon">⏳</span><span class="log-text">กำลังเรียก Collect...</span></div>';
 
   try {
-    const limit = document.getElementById('postLimit').value;
-    const res = await fetch(API_BASE + '/api/collect?limit=' + limit);
+    const res = await fetch(API_BASE + '/api/collect');
     const data = await res.json();
 
     logDiv.innerHTML = '';

@@ -69,7 +69,8 @@ export default async function handler(req, res) {
     const lead = {
       id: leadId,
       post_url: postUrl,
-      group_url: item.groupUrl || apifyGroupUrl,
+      source_url: item.groupUrl || apifyGroupUrl,
+      source_platform: 'facebook',
       author_name: item.authorName,
       author_url: item.authorUrl,
       posted_at: item.date || item.createdAt || null,
@@ -90,6 +91,7 @@ export default async function handler(req, res) {
       wechat: extraction.wechat,
       owner_or_agent: extraction.owner_or_agent,
       image_urls: imageUrls,
+      screenshot_urls: [],
       raw_post_text: item.text,
       ai_summary: extraction.ai_summary,
       ai_tags: extraction.ai_tags,

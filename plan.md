@@ -1,108 +1,292 @@
-# Property Lead Intelligence Platform
+# AI Agent Coder - Property Lead Automation System
 
-## Phase 1 — Facebook Lead Collection MVP
+## Objective
 
-### Stack
+Automate the property sourcing workflow to reduce or eliminate repetitive admin work while keeping human involvement only for relationship-building tasks.
 
-| Layer | Choice |
-|---|---|
-| Runtime | Node.js (ESM) — Vercel Serverless + Local script |
-| Scraper | Playwright Chromium (`scripts/scrape.mjs`) |
-| LLM | Groq (llama-3.3-70b-versatile) |
-| Database | Supabase Postgres (`leads` table) |
-| Image Storage | Supabase Storage (bucket: `lead-images`, public) |
+---
 
-### Architecture
+# Current Workflow
+
+## 1. Find Property Leads
+
+Sources:
+
+- Facebook Marketplace
+- DDProperty
+- LivingInsider
+- Agent Websites
+- Developer Websites
+- Google Search
+
+Target:
+
+- Warehouses
+- Factories
+- Land
+- Industrial Property
+
+Admin currently:
+
+- Browses websites manually
+- Takes screenshots
+- Copies property information
+- Records into LINE Notes
+- Records into Google Sheets
+- Assigns salesperson
+
+---
+
+## 2. Roof Hunting
+
+Admin manually uses Google Satellite to locate warehouse/factory roofs.
+
+Then records:
+
+- GPS
+- Screenshot
+- Estimated address
+- Google Maps Link
+
+---
+
+## 3. Contact Landlord
+
+Admin
+
+- Calls landlord
+- Introduces company
+- Confirms availability
+- Requests LINE / WhatsApp / WeChat
+- Creates communication group with salesperson
+
+Sometimes admin also calls owners periodically to check availability.
+
+---
+
+# Proposed Architecture
 
 ```
-Local machine (manual / Task Scheduler)
-  └─ npm run scrape
-       └─ Playwright → เปิด Facebook Group → scroll → extract 10 posts
-            └─ POST → Vercel /api/webhook
-                 ├─ Check duplicate (post_url)
-                 ├─ Groq → extract structured data
-                 ├─ Download images → Supabase Storage
-                 └─ Insert → Supabase `leads` table
+Multiple Property Sources
+        │
+        ▼
+Web Scraper / Browser Automation
+        │
+        ▼
+AI Extraction
+        │
+        ▼
+Duplicate Detection
+        │
+        ▼
+Master Database (Supabase)
+        │
+        ├────────► Google Sheets (Reporting)
+        │
+        ├────────► CRM
+        │
+        └────────► LINE Notification
 ```
 
 ---
 
-## Status Checklist
+# Important Design Decision
 
-### ✅ Done
+## LINE Notes should NOT be the master database.
 
-- [x] Code structure: `api/`, `src/lib/`, `scripts/`
-- [x] GitHub repo: `lilp808/lead-finder`
-- [x] Deployed to Vercel: `https://lead-finder-systems.vercel.app`
-- [x] Playwright installed + Chromium ready
-- [x] `scripts/scrape.mjs` — Playwright scraper (headless: false)
-- [x] `/api/webhook` — Groq extract + image upload + DB insert
-- [x] Test Webhook → data เข้า `leads` table ได้จริง
+Instead:
 
-### ⬜ Must Do
+Supabase (or CRM) becomes the source of truth.
 
-- [ ] Run `npm run scrape` ครั้งแรก → ดู data เข้า Supabase
-- [ ] Verify Groq extraction quality (ปรับ prompt ถ้าข้อมูลไม่ตรง)
-- [ ] Add `SITE_URL` ใน Vercel env (optional)
-
-### 🔜 Next
-
-- [ ] ตั้ง Windows Task Scheduler ให้รันอัตโนมัติทุกวัน
-- [ ] เพิ่ม Group URL อื่นๆ ใน `GROUP_URLS`
-- [ ] ถ้า scrape ได้ดี → ปิด Apify (เลิกจ่ายค่า Apify)
+LINE is only used for communication.
 
 ---
 
-## Flow Detail
+# Screenshot Requirement
+
+The company still requires screenshots because salespeople need visual references from:
+
+- Facebook
+- DDProperty
+- Developer websites
+- Agent websites
+
+Therefore:
+
+Each property record must store:
+
+- Original URL
+- Multiple screenshots
+- Listing images
+- AI summary
+- Source platform
+
+Screenshots should be uploaded into cloud storage.
+
+Example:
 
 ```
-npm run scrape
-  │
-  ▼
-scripts/scrape.mjs (Playwright)
-  ├─ headless: false — เปิด Chromium ให้เห็น
-  ├─ ไป GROUP_URLS[0]
-  ├─ รอโพสต์โหลด
-  ├─ scroll + extract (สูงสุด 10 โพสต์)
-  └─ สร้าง JSON array → POST
-       │
-       ▼
-Vercel /api/webhook
-  ├─ เช็ค duplicate (post_url)
-  ├─ Groq extract ข้อมูลทรัพย์ + contact
-  ├─ Download รูป → Supabase Storage
-  └─ Insert → Supabase `leads` table
+Property
+ ├── Details
+ ├── Screenshots
+ ├── Images
+ ├── Google Maps
+ ├── Contact
+ ├── Source URL
 ```
 
 ---
 
-## วิธีใช้
+# Recommended Workflow
 
-```bash
-# ครั้งเดียว — ติดตั้ง Chromium
-npm run scrape:install
-
-# รัน scrape
-npm run scrape
-
-# ถ้าตั้งเวลา Windows
-schtasks /create /tn "PropertyLead-Scrape" /tr "npm run scrape" /sc daily /st 13:00
+```
+Website
+     │
+     ▼
+Take Screenshot
+     │
+     ▼
+Upload to Storage
+     │
+     ▼
+AI Extract Information
+     │
+     ▼
+Save Property + Screenshot Links
+     │
+     ▼
+Notify LINE Group
 ```
 
----
+Salespeople can immediately view:
 
-## Future Phases
-
-| Phase | What |
-|---|---|
-| 2 | Multi-source (DDProperty, LivingInsider, agent/dev sites) |
-| 3 | CRM Dashboard (search, filters, assignment, follow-up) |
-| 4 | LINE Notifications + reminders |
-| 5 | AI Calling Assistant |
-| 6 | Satellite/Warehouse Detection |
+- Summary
+- Screenshots
+- Original listing
+- Contact
+- Google Maps
 
 ---
 
-## Constraint
+# Instead of LINE Notes
 
-Property Lead Intelligence Platform — not a Facebook scraper. Facebook Groups is source #1; new sources must be pluggable without rewriting the pipeline.
+Create an internal "Lead Card".
+
+Each Lead Card contains:
+
+- Property ID
+- Property Type
+- Rent / Sale
+- Area
+- Province
+- District
+- Coordinates
+- Google Maps
+- Original Listing URL
+- Source Website
+- Contact Number
+- LINE
+- WhatsApp
+- WeChat
+- Screenshots
+- Property Photos
+- AI Summary
+- Assignment
+- Follow-up Status
+- Call History
+- Appointment History
+
+This becomes the permanent record.
+
+---
+
+# LINE Integration
+
+Instead of storing information in LINE Notes forever:
+
+When a new lead is created:
+
+```
+New Lead
+    │
+    ▼
+LINE Group
+
+🏭 Warehouse
+📍 Bang Phli
+💰 Rent 250,000
+
+📸 Screenshots Attached
+
+🔗 Open Lead Card
+```
+
+Salespeople discuss inside LINE.
+
+The CRM stores the permanent history.
+
+---
+
+# Automation Opportunities
+
+## Fully Automatable
+
+- Website scraping
+- Screenshot capture
+- AI information extraction
+- Duplicate detection
+- Database recording
+- Google Sheets synchronization
+- Lead assignment
+- LINE notifications
+- Monthly reminder messages
+
+Estimated automation:
+
+90-100%
+
+---
+
+## Partially Automatable
+
+- Detect warehouse roofs from satellite images
+- AI phone calls for availability confirmation
+- AI conversation summaries
+
+Requires human verification.
+
+Estimated automation:
+
+60-80%
+
+---
+
+## Human Required
+
+Relationship building
+
+Examples:
+
+- Introduce company
+- Build trust
+- Negotiate listing
+- Schedule appointments
+- Persuade landlord
+
+These activities should remain with salespeople.
+
+---
+
+# Final Recommendation
+
+Keep LINE as the team's communication platform, but **do not use LINE Notes as the primary database**.
+
+Instead:
+
+- Store every property in Supabase/CRM.
+- Upload all screenshots and images to cloud storage.
+- Associate screenshots with each property record.
+- Send a LINE notification containing the screenshots and a link to the Lead Card.
+- Let salespeople discuss the lead in LINE while the CRM maintains the permanent, searchable record.
+
+This architecture scales efficiently to tens of thousands of property leads while preserving the team's existing workflow and minimizing manual administration.

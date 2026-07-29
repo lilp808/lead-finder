@@ -13,6 +13,9 @@ const routes = {
   '/': ROOT,
   '/api/collect': () => import('../api/collect.js').then(m => m.default),
   '/api/webhook': () => import('../api/webhook.js').then(m => m.default),
+  '/api/sources': () => import('../api/sources/index.js').then(m => m.default),
+  '/api/cron-check': () => import('../api/cron-check.js').then(m => m.default),
+  '/api/schedules': () => import('../api/schedules/index.js').then(m => m.default),
 };
 
 function createMockRes(realRes) {
@@ -40,21 +43,45 @@ function createMockRes(realRes) {
   };
 }
 
+function matchRoute(pathname) {
+  if (routes[pathname]) return { handler: routes[pathname], params: {} };
+
+  let m;
+
+  m = pathname.match(/^\/api\/sources\/([^/]+)$/);
+  if (m) {
+    return {
+      handler: () => import('../api/sources/[id].js').then(m => m.default),
+      params: { id: m[1] },
+    };
+  }
+
+  m = pathname.match(/^\/api\/schedules\/([^/]+)$/);
+  if (m) {
+    return {
+      handler: () => import('../api/schedules/[id].js').then(m => m.default),
+      params: { id: m[1] },
+    };
+  }
+
+  return null;
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
-  const loadHandler = routes[url.pathname];
+  const match = matchRoute(url.pathname);
 
-  if (loadHandler === undefined) {
+  if (match === null) {
     res.writeHead(404, { 'Content-Type': 'application/json' });
     return res.end(JSON.stringify({ error: 'not found' }));
   }
 
-  if (loadHandler === ROOT) {
+  if (match.handler === ROOT) {
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     return res.end(html);
   }
 
-  const handler = await loadHandler();
+  const handler = await match.handler();
 
   const body = await new Promise(resolve => {
     let data = '';
@@ -68,7 +95,7 @@ const server = http.createServer(async (req, res) => {
     req.body = {};
   }
 
-  req.query = Object.fromEntries(url.searchParams.entries());
+  req.query = { ...Object.fromEntries(url.searchParams.entries()), ...match.params };
 
   const mockRes = createMockRes(res);
 
@@ -83,7 +110,10 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`Dev server: http://localhost:${PORT}`);
-  console.log(`  /              — Test dashboard`);
-  console.log(`  GET /api/collect  — Trigger Apify`);
-  console.log(`  POST /api/webhook — Receive Apify results`);
+  console.log(`  /                    — Test dashboard`);
+  console.log(`  GET /api/collect     — Trigger Apify`);
+  console.log(`  POST /api/webhook    — Receive Apify results`);
+  console.log(`  GET/POST /api/sources     — Manage sources`);
+  console.log(`  GET/POST /api/schedules   — Manage cron schedules`);
+  console.log(`  GET /api/cron-check       — Cron trigger`);
 });
