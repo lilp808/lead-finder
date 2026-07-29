@@ -1,172 +1,456 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Property Lead — Dashboard</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FindProperty — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest"></script>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: system-ui, -apple-system, sans-serif; background: #f5f5f5; padding: 24px; color: #222; }
-  .container { max-width: 860px; margin: 0 auto; }
-  h1 { font-size: 1.5rem; margin-bottom: 4px; }
-  .subtitle { color: #666; font-size: 0.9rem; margin-bottom: 24px; }
-  .card { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-  .card h2 { font-size: 1rem; margin-bottom: 12px; }
-  button { background: #0066ff; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-size: 0.85rem; cursor: pointer; }
-  button:hover { background: #0052cc; }
-  button:disabled { opacity: 0.5; cursor: not-allowed; }
-  button.small { padding: 4px 10px; font-size: 0.8rem; }
-  button.danger { background: #dc2626; }
-  button.danger:hover { background: #b91c1c; }
-  button.success { background: #16a34a; }
-  button.success:hover { background: #15803d; }
-  button.outline { background: transparent; color: #666; border: 1px solid #ddd; }
-  button.outline:hover { background: #f5f5f5; }
-  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  input, select { padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.85rem; }
-  input[type=number] { width: 80px; }
-  input[type=text] { flex: 1; min-width: 150px; }
-  .env-warning { background: #fff3cd; color: #856404; padding: 10px 16px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 16px; }
-  .info-bar { background: #e0f2fe; color: #0369a1; padding: 10px 16px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 16px; }
-  .log { margin-top: 12px; max-height: 500px; overflow-y: auto; font-size: 0.82rem; line-height: 1.6; font-family: monospace; }
-  .log-step { display: flex; align-items: flex-start; gap: 6px; padding: 3px 0; border-bottom: 1px solid #f0f0f0; }
-  .log-step:last-child { border-bottom: none; }
-  .log-icon { flex-shrink: 0; width: 18px; text-align: center; }
-  .log-ok .log-icon { color: #16a34a; }
-  .log-running .log-icon { color: #2563eb; }
-  .log-error .log-icon { color: #dc2626; }
-  .log-duplicate .log-icon { color: #ca8a04; }
-  .log-skip .log-icon { color: #9333ea; }
-  .log-text { word-break: break-word; }
-  .log-time { color: #999; margin-left: 4px; font-size: 0.75rem; }
-  .summary-card { background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 12px; margin-top: 8px; display: flex; gap: 16px; flex-wrap: wrap; font-family: system-ui; }
-  .summary-item { text-align: center; }
-  .summary-item .num { font-size: 1.2rem; font-weight: 700; display: block; }
-  .summary-item .label { font-size: 0.75rem; color: #666; }
-  .summary-item.ok .num { color: #16a34a; }
-  .summary-item.dup .num { color: #ca8a04; }
-  .summary-item.skip .num { color: #9333ea; }
-  .summary-item.err .num { color: #dc2626; }
+:root {
+  --font-family: 'Poppins', sans-serif;
+  --color-primary: #D4A843;
+  --color-primary-hover: #C8992F;
+  --color-primary-bg: #F8F3E8;
+  --color-bg: #FAFAFA;
+  --color-surface: #FFFFFF;
+  --color-text: #2F2F2F;
+  --color-text-secondary: #707070;
+  --color-text-muted: #A5A5A5;
+  --color-border: #ECECEC;
+  --color-border-light: #F3F3F3;
+  --color-success: #30C46C;
+  --color-info: #4E9EF7;
+  --color-warning: #E7B64A;
+  --color-danger: #E15D5D;
+  --color-success-bg: #ECFAF2;
+  --color-info-bg: #EDF5FF;
+  --color-warning-bg: #FFF7E8;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 999px;
+  --shadow-sm: 0 2px 10px rgba(0,0,0,.04);
+  --shadow-md: 0 6px 20px rgba(0,0,0,.05);
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+  --transition: 200ms ease;
+  --sidebar-w: 280px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; }
+body {
+  font-family: var(--font-family);
+  background: var(--color-bg);
+  color: var(--color-text);
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ─── Sidebar ──────────────────────────── */
+.sidebar {
+  width: var(--sidebar-w);
+  min-height: 100vh;
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  padding: var(--space-6) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0;
+  z-index: 100;
+}
+.sidebar-logo {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text);
+  padding: 0 var(--space-3);
+  margin-bottom: var(--space-8);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.sidebar-logo span { color: var(--color-primary); }
+.sidebar-nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: 44px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  transition: all var(--transition);
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+}
+.nav-item:hover { background: #FAF7F0; color: var(--color-text); }
+.nav-item.active { background: var(--color-primary-bg); color: var(--color-text); font-weight: 600; }
+.nav-item.active i { color: var(--color-primary); }
+.nav-item i { width: 20px; height: 20px; flex-shrink: 0; }
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border-light);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  padding-left: var(--space-3);
+}
+
+/* ─── Main ─────────────────────────────── */
+.main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  padding: var(--space-8) var(--space-8) var(--space-10);
+  max-width: 100%;
+}
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: var(--space-1);
+}
+.page-subtitle {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-8);
+}
+
+/* ─── Cards ─────────────────────────────── */
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-5) var(--space-6);
+  margin-bottom: var(--space-6);
+  border: 1px solid var(--color-border);
+}
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.card-header h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+.card-header p {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+/* ─── Card List ─────────────────────────── */
+.card-list { }
+.card-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-1);
+  border-bottom: 1px solid var(--color-border-light);
+  transition: background var(--transition);
+  flex-wrap: wrap;
+}
+.card-row:hover { background: #FCFCFC; border-radius: var(--radius-sm); }
+.card-row:last-child { border-bottom: none; }
+.card-row-label { font-weight: 600; font-size: 0.9rem; min-width: 120px; }
+.card-row-url { font-size: 0.8rem; color: var(--color-text-secondary); flex: 1; min-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card-row-meta { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.card-row-actions { display: flex; gap: var(--space-1); margin-left: auto; }
+.card-row-actions button { flex-shrink: 0; }
+
+/* ─── Buttons ───────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: 42px;
+  padding: 0 var(--space-5);
+  border-radius: var(--radius-md);
+  font-family: var(--font-family);
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+  text-decoration: none;
+  line-height: 1;
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary { background: var(--color-primary); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--color-primary-hover); }
+.btn-secondary { background: var(--color-surface); color: var(--color-text-secondary); border-color: var(--color-border); }
+.btn-secondary:hover:not(:disabled) { background: #FAFAFA; color: var(--color-text); }
+.btn-ghost { background: transparent; color: var(--color-text-secondary); padding: 0 var(--space-2); height: 36px; }
+.btn-ghost:hover:not(:disabled) { background: #F5F5F5; }
+.btn-danger { background: transparent; color: var(--color-danger); padding: 0 var(--space-2); height: 36px; }
+.btn-danger:hover:not(:disabled) { background: #FEF2F2; }
+.btn-sm { height: 36px; padding: 0 var(--space-4); font-size: 0.85rem; }
+.btn-icon { width: 38px; height: 38px; padding: 0; border-radius: var(--radius-md); display: inline-flex; align-items: center; justify-content: center; }
+
+/* ─── Inputs ────────────────────────────── */
+.input {
+  height: 42px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-family);
+  font-size: 0.85rem;
+  color: var(--color-text);
+  background: var(--color-surface);
+  transition: all var(--transition);
+  outline: none;
+  width: 100%;
+}
+.input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 4px rgba(212,168,67,.15); }
+.input::placeholder { color: var(--color-text-muted); }
+.input-group { display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; }
+select.input { cursor: pointer; }
+
+/* ─── Badges ────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 3px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.4;
+  cursor: default;
+}
+.badge-clickable { cursor: pointer; }
+.badge-on { background: var(--color-success-bg); color: var(--color-success); }
+.badge-off { background: #FEF2F2; color: var(--color-danger); }
+.badge-green { background: var(--color-success-bg); color: var(--color-success); }
+.badge-blue { background: var(--color-info-bg); color: var(--color-info); }
+.badge-gold { background: var(--color-primary-bg); color: var(--color-primary); }
+.badge-warning { background: var(--color-warning-bg); color: var(--color-warning); }
+
+/* ─── Form ──────────────────────────────── */
+.add-form {
+  display: none;
+  margin-top: var(--space-4);
+  padding: var(--space-5);
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--color-border);
+}
+.add-form.show { display: block; }
+.form-row { margin-bottom: var(--space-3); }
+.form-row label { display: block; font-size: 0.82rem; font-weight: 500; color: var(--color-text-secondary); margin-bottom: var(--space-1); }
+.form-actions { display: flex; gap: var(--space-3); margin-top: var(--space-4); }
+.form-inline { display: flex; gap: var(--space-3); align-items: flex-end; flex-wrap: wrap; }
+.form-inline .field { display: flex; flex-direction: column; gap: var(--space-1); }
+.form-inline .field label { font-size: 0.78rem; font-weight: 500; color: var(--color-text-secondary); }
+
+/* ─── Collect Log ────────────────────────── */
+.log { margin-top: var(--space-4); }
+.log-step { display: flex; align-items: flex-start; gap: var(--space-2); padding: 4px 0; border-bottom: 1px solid var(--color-border-light); font-size: 0.82rem; line-height: 1.6; font-family: var(--font-family); }
+.log-step:last-child { border-bottom: none; }
+.log-icon { flex-shrink: 0; width: 20px; text-align: center; }
+.log-ok .log-icon { color: var(--color-success); }
+.log-running .log-icon { color: var(--color-info); }
+.log-error .log-icon { color: var(--color-danger); }
+.log-duplicate .log-icon { color: var(--color-warning); }
+.log-skip .log-icon { color: #9333ea; }
+.log-text { word-break: break-word; }
+.summary-card { background: var(--color-success-bg); border: 1px solid var(--color-success); border-radius: var(--radius-md); padding: var(--space-4); margin-top: var(--space-3); display: flex; gap: var(--space-5); flex-wrap: wrap; }
+.summary-item { text-align: center; }
+.summary-item .num { font-size: 1.25rem; font-weight: 700; display: block; }
+.summary-item .label { font-size: 0.75rem; color: var(--color-text-secondary); white-space: nowrap; }
+.summary-item.ok .num { color: var(--color-success); }
+.summary-item.dup .num { color: var(--color-warning); }
+.summary-item.skip .num { color: #9333ea; }
+.summary-item.err .num { color: var(--color-danger); }
 .summary-item.skp .num { color: #d97706; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #eee; }
-  th { font-weight: 600; color: #555; font-size: 0.8rem; text-transform: uppercase; }
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; font-weight: 600; }
-  .badge.on { background: #dcfce7; color: #16a34a; }
-  .badge.off { background: #fef2f2; color: #dc2626; }
-  .empty { text-align: center; padding: 24px; color: #999; font-size: 0.9rem; }
-  .add-form { margin-top: 12px; padding: 12px; background: #fafafa; border-radius: 6px; border: 1px dashed #ddd; display: none; }
-  .add-form.show { display: block; }
-  .form-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
-  .form-row label { font-size: 0.8rem; color: #666; min-width: 80px; }
-  .actions { display: flex; gap: 4px; }
-  .loading { color: #999; font-size: 0.85rem; padding: 12px 0; }
+
+/* ─── Empty / Loading ────────────────────── */
+.empty-state { text-align: center; padding: var(--space-10) var(--space-4); color: var(--color-text-muted); font-size: 0.9rem; }
+.loading { color: var(--color-text-muted); font-size: 0.85rem; padding: var(--space-4) 0; }
+
+/* ─── Notice ─────────────────────────────── */
+.notice { background: var(--color-warning-bg); color: #92400e; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); font-size: 0.82rem; margin-bottom: var(--space-4); }
+
+/* ─── Responsive ─────────────────────────── */
+@media (max-width: 1024px) {
+  .sidebar { width: 64px; padding: var(--space-4) var(--space-2); }
+  .sidebar-logo span, .nav-item span { display: none; }
+  .sidebar-logo { justify-content: center; }
+  .nav-item { justify-content: center; padding: 0; }
+  .sidebar-footer { display: none; }
+  .main { margin-left: 64px; padding: var(--space-6) var(--space-5); }
+}
+@media (max-width: 768px) {
+  .sidebar { width: 64px; }
+  .main { padding: var(--space-4) var(--space-4); }
+  .card-row { flex-direction: column; align-items: flex-start; gap: var(--space-2); }
+  .card-row-actions { margin-left: 0; width: 100%; justify-content: flex-end; }
+  .form-inline { flex-direction: column; }
+  .form-inline .field { width: 100%; }
+}
+@media (max-width: 480px) {
+  .sidebar { display: none; }
+  .main { margin-left: 0; }
+}
 </style>
 </head>
 <body>
-<div class="container">
-  <h1>🏠 Property Lead Dashboard</h1>
-  <div class="subtitle">Phase 2 — Multi-Source Facebook Collection</div>
 
-  <div id="infoBar" class="info-bar" style="display:none"></div>
+<!-- ═══ Sidebar ═══ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span style="font-size:1.5rem">🏠</span>
+    <span>Find<span>Property</span></span>
+  </div>
+  <nav class="sidebar-nav">
+    <button class="nav-item active" data-page="sources" onclick="switchPage('sources')">
+      <i data-lucide="database"></i><span>แหล่งข้อมูล</span>
+    </button>
+    <button class="nav-item" data-page="schedules" onclick="switchPage('schedules')">
+      <i data-lucide="clock"></i><span>ตารางเวลา</span>
+    </button>
+    <button class="nav-item" data-page="collect" onclick="switchPage('collect')">
+      <i data-lucide="play-circle"></i><span>Collect</span>
+    </button>
+  </nav>
+  <div class="sidebar-footer">FindProperty v2</div>
+</aside>
 
-  <div class="card">
-    <h2>📋 แหล่งข้อมูล</h2>
-    <p style="font-size:0.85rem;color:#666;margin-bottom:12px">
-      จัดการ Facebook groups ที่จะเก็บข้อมูล — เปิด/ปิด, ตั้งค่าจำนวนโพสต์ต่อครั้ง
-    </p>
-    <div id="sourcesTable"><div class="loading">กำลังโหลด...</div></div>
-    <div class="row" style="margin-top:8px">
-      <button id="btnShowAdd" class="outline" onclick="toggleAddForm()">+ เพิ่มแหล่งข้อมูล</button>
-      <button class="outline" onclick="loadSources()">⟳ โหลดใหม่</button>
-    </div>
-    <div id="addForm" class="add-form">
-      <div class="form-row">
-        <label>ชื่อ</label>
-        <input type="text" id="newLabel" placeholder="เช่น บ้านเดี่ยว 1">
+<!-- ═══ Main Content ═══ -->
+<main class="main">
+
+  <h1 class="page-title">ตั้งค่าระบบ</h1>
+  <p class="page-subtitle">จัดการแหล่งข้อมูลและตารางเวลาการรันอัตโนมัติ</p>
+
+  <!-- ─── Page: Sources ─── -->
+  <div id="page-sources" class="page-section">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <h2>📋 แหล่งข้อมูล</h2>
+          <p>Facebook groups ที่จะเก็บข้อมูล — เปิด/ปิด, ตั้งค่าจำนวนโพสต์และ AI Model</p>
+        </div>
+        <div style="display:flex;gap:var(--space-2)">
+          <button class="btn btn-secondary btn-sm" onclick="loadSources()">
+            <i data-lucide="refresh-cw" style="width:16px;height:16px"></i> โหลดใหม่
+          </button>
+          <button class="btn btn-primary" onclick="toggleAddForm()">
+            <i data-lucide="plus" style="width:18px;height:18px"></i> เพิ่มแหล่ง
+          </button>
+        </div>
       </div>
-      <div class="form-row">
-        <label>URL</label>
-        <input type="text" id="newUrl" placeholder="https://facebook.com/groups/...">
+      <div id="sourcesTable"><div class="loading">กำลังโหลด...</div></div>
+
+      <div id="addForm" class="add-form">
+        <div class="form-row">
+          <label>ชื่อแหล่ง</label>
+          <input class="input" type="text" id="newLabel" placeholder="เช่น บ้านเดี่ยว 1">
+        </div>
+        <div class="form-row">
+          <label>URL กลุ่ม Facebook</label>
+          <input class="input" type="text" id="newUrl" placeholder="https://facebook.com/groups/...">
+        </div>
+        <div class="form-inline">
+          <div class="field">
+            <label>จำนวนโพสต์</label>
+            <input class="input" type="number" id="newLimit" value="10" min="1" max="100" style="width:100px">
+          </div>
+          <div class="field">
+            <label>AI Provider</label>
+            <select class="input" id="newProvider" onchange="updateModelOptions()" style="width:140px">
+              <option value="typhoon">Typhoon</option>
+              <option value="groq">Groq</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Model</label>
+            <select class="input" id="newModel" style="width:200px"></select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" onclick="addSource()">💾 บันทึก</button>
+          <button class="btn btn-secondary" onclick="toggleAddForm()">ยกเลิก</button>
+        </div>
       </div>
-      <div class="form-row">
-        <label>จำนวนโพสต์</label>
-        <input type="number" id="newLimit" value="10" min="1" max="100">
-        <span style="font-size:0.8rem;color:#999">โพสต์/ครั้ง</span>
-      </div>
-      <div class="form-row">
-        <label>AI Model</label>
-        <select id="newProvider" onchange="updateModelOptions()" style="width:120px">
-          <option value="typhoon">Typhoon</option>
-          <option value="groq">Groq</option>
-        </select>
-        <select id="newModel" style="width:220px"></select>
-      </div>
-      <button onclick="addSource()" style="margin-top:4px">💾 บันทึก</button>
-      <button class="outline" onclick="toggleAddForm()" style="margin-top:4px">ยกเลิก</button>
     </div>
   </div>
 
-  <div class="card">
-    <h2>⏰ ตารางเวลารันอัตโนมัติ</h2>
-    <p style="font-size:0.85rem;color:#666;margin-bottom:12px">
-      ตั้งเวลาที่ระบบจะ Collect อัตโนมัติทุกวัน
-    </p>
-    <div style="background:#fef3c7;color:#92400e;padding:8px 12px;border-radius:6px;font-size:0.8rem;margin-bottom:12px">
-      ⓘ แผน Hobby รันได้วันละ 1 ครั้ง เวลา <strong>06:00 UTC</strong> (13:00 ไทย)
-      — อัปเกรดเป็น Pro เพื่อให้หลายเวลาได้
-    </div>
-    <div id="schedulesTable"><div class="loading">กำลังโหลด...</div></div>
-    <div class="row" style="margin-top:8px">
-      <button id="btnShowAddSchedule" class="outline" onclick="toggleAddSchedule()">+ เพิ่มเวลา</button>
-    </div>
-    <div id="addScheduleForm" class="add-form">
-      <div class="form-row" style="flex-wrap:nowrap">
-        <label>เวลา</label>
-        <select id="newHour" style="width:80px"></select>
-        <span>:</span>
-        <select id="newMinute" style="width:80px">
-          <option value="0">00</option>
-          <option value="15">15</option>
-          <option value="30">30</option>
-          <option value="45">45</option>
-        </select>
+  <!-- ─── Page: Schedules ─── -->
+  <div id="page-schedules" class="page-section" style="display:none">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <h2>⏰ ตารางเวลารันอัตโนมัติ</h2>
+          <p>ระบบจะ Collect อัตโนมัติตามเวลาที่ตั้งไว้ (ⓘ Hobby: วันละ 1 ครั้ง)</p>
+        </div>
+        <button class="btn btn-primary" onclick="toggleAddSchedule()">
+          <i data-lucide="plus" style="width:18px;height:18px"></i> เพิ่มเวลา
+        </button>
       </div>
-      <div class="form-row">
-        <label>ชื่อ</label>
-        <input type="text" id="newScheduleLabel" placeholder="เช่น เช้า 06:00">
+      <div class="notice">
+        แผน Hobby รันได้วันละ 1 ครั้ง เวลา <strong>06:00 UTC</strong> (13:00 ไทย) — อัปเกรดเป็น Pro เพื่อให้หลายเวลาได้
       </div>
-      <button onclick="addSchedule()" style="margin-top:4px">💾 บันทึก</button>
-      <button class="outline" onclick="toggleAddSchedule()" style="margin-top:4px">ยกเลิก</button>
+      <div id="schedulesTable"><div class="loading">กำลังโหลด...</div></div>
+
+      <div id="addScheduleForm" class="add-form">
+        <div class="form-inline">
+          <div class="field">
+            <label>เวลา (UTC)</label>
+            <div style="display:flex;gap:var(--space-2);align-items:center">
+              <select class="input" id="newHour" style="width:80px"></select>
+              <span>:</span>
+              <select class="input" id="newMinute" style="width:80px">
+                <option value="0">00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>ชื่อ</label>
+            <input class="input" type="text" id="newScheduleLabel" placeholder="เช่น เช้า 06:00" style="width:200px">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" onclick="addSchedule()">💾 บันทึก</button>
+          <button class="btn btn-secondary" onclick="toggleAddSchedule()">ยกเลิก</button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="card">
-    <h2>⚡ Collect + วิเคราะห์ + บันทึก (Synchronous)</h2>
-    <p style="font-size:0.85rem;color:#666;margin-bottom:12px">
-      ดึงข้อมูลจากแหล่งที่เปิด active ทั้งหมด → Groq วิเคราะห์ → บันทึก Supabase
-    </p>
-    <button id="btnCollect" onclick="testCollect()">▶ Collect Now</button>
-    <div id="collectLog" class="log"></div>
+  <!-- ─── Page: Collect ─── -->
+  <div id="page-collect" class="page-section" style="display:none">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <h2>⚡ รัน Collect</h2>
+          <p>ดึงข้อมูลจากแหล่งที่เปิด active ทั้งหมด → Groq/Typhoon วิเคราะห์ → บันทึก Supabase</p>
+        </div>
+        <button class="btn btn-primary" id="btnCollect" onclick="testCollect()">
+          <i data-lucide="play" style="width:18px;height:18px"></i> Collect Now
+        </button>
+      </div>
+      <div id="collectLog" class="log"></div>
+    </div>
   </div>
-</div>
+
+</main>
 
 <script>
 const API_BASE = '';
-
-let editingId = null;
-
-function populateTimeSelects() {
-  const hourSel = document.getElementById('newHour');
-  for (let h = 0; h < 24; h++) {
-    const opt = document.createElement('option');
-    opt.value = h;
-    opt.textContent = String(h).padStart(2, '0');
-    if (h === 6) opt.selected = true;
-    hourSel.appendChild(opt);
-  }
-}
-
 const MODELS = {
   typhoon: [
     { value: 'typhoon-v2.5-30b-a3b-instruct', label: 'Typhoon v2.5 30B' },
@@ -178,33 +462,51 @@ const MODELS = {
   ],
 };
 
+// ─── Navigation ─────────────────────────────
+function switchPage(page) {
+  document.querySelectorAll('.page-section').forEach(el => el.style.display = 'none');
+  document.getElementById('page-' + page).style.display = 'block';
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelector(`.nav-item[data-page="${page}"]`).classList.add('active');
+}
+
+// ─── Init ────────────────────────────────────
+function populateTimeSelects() {
+  const sel = document.getElementById('newHour');
+  for (let h = 0; h < 24; h++) {
+    const opt = document.createElement('option');
+    opt.value = h;
+    opt.textContent = String(h).padStart(2, '0');
+    if (h === 6) opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
 function updateModelOptions() {
   const provider = document.getElementById('newProvider').value;
-  const modelSel = document.getElementById('newModel');
+  const sel = document.getElementById('newModel');
   const models = MODELS[provider] || [];
-  modelSel.innerHTML = '';
+  sel.innerHTML = '';
   models.forEach(m => {
     const opt = document.createElement('option');
     opt.value = m.value;
     opt.textContent = m.label;
-    if (opt.value === 'typhoon-v2.5-30b-a3b-instruct') opt.selected = true;
-    modelSel.appendChild(opt);
+    sel.appendChild(opt);
   });
 }
 
-window.onload = function() {
+window.onload = function () {
   populateTimeSelects();
   updateModelOptions();
+  lucide.createIcons();
   loadSources();
   loadSchedules();
 };
 
+// ─── Sources ─────────────────────────────────
 function toggleAddForm() {
   const form = document.getElementById('addForm');
   form.classList.toggle('show');
   if (!form.classList.contains('show')) {
-    editingId = null;
-    document.getElementById('btnShowAdd').textContent = '+ เพิ่มแหล่งข้อมูล';
     document.getElementById('newLabel').value = '';
     document.getElementById('newUrl').value = '';
     document.getElementById('newLimit').value = '10';
@@ -212,63 +514,46 @@ function toggleAddForm() {
 }
 
 async function loadSources() {
-  const tbody = document.getElementById('sourcesTable');
-
+  const div = document.getElementById('sourcesTable');
   try {
     const res = await fetch(API_BASE + '/api/sources');
-    if (!res.ok) {
-      tbody.innerHTML = '<div class="empty">❌ โหลดข้อมูลไม่ได้ (ดู console)</div>';
-      return;
-    }
+    if (!res.ok) { div.innerHTML = '<div class="empty-state">❌ โหลดไม่ได้</div>'; return; }
     const data = await res.json();
-
     if (!data || data.length === 0) {
-      tbody.innerHTML = '<div class="empty">ยังไม่มีแหล่งข้อมูล — กด "เพิ่มแหล่งข้อมูล" เพื่อเริ่ม</div>';
+      div.innerHTML = '<div class="empty-state">ยังไม่มีแหล่งข้อมูล — กด "เพิ่มแหล่ง" เพื่อเริ่ม</div>';
       return;
     }
-
-    let html = `<table>
-      <thead><tr>
-        <th style="width:36px">#</th>
-        <th>ชื่อ</th>
-        <th>URL</th>
-        <th style="width:60px">โพสต์</th>
-        <th style="width:90px">Model</th>
-        <th style="width:70px">สถานะ</th>
-        <th style="width:120px">จัดการ</th>
-      </tr></thead><tbody>`;
-
+    let html = '<div class="card-list">';
     data.forEach((s, i) => {
       const active = s.active ? 'on' : 'off';
       const activeLabel = s.active ? 'เปิด' : 'ปิด';
       const modelLabel = (s.model_provider || 'typhoon') === 'typhoon' ? 'Typhoon' : 'Groq';
-      html += `<tr>
-        <td>${i + 1}</td>
-        <td><strong>${esc(s.label)}</strong></td>
-        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(s.source_url)}">${esc(s.source_url)}</td>
-        <td>${s.results_limit}</td>
-        <td style="font-size:0.8rem">${modelLabel}</td>
-        <td><span class="badge ${active}" onclick="toggleSource('${s.id}', ${!s.active})" style="cursor:pointer">${activeLabel}</span></td>
-        <td>
-          <div class="actions">
-            <button class="small outline" onclick="editSource('${s.id}')">✎</button>
-            <button class="small danger" onclick="deleteSource('${s.id}')">✕</button>
-          </div>
-        </td>
-      </tr>`;
+      html += `<div class="card-row">
+        <span class="badge badge-gold" style="min-width:28px;justify-content:center">${i + 1}</span>
+        <div style="flex:1;min-width:120px">
+          <div style="font-weight:600;font-size:0.9rem">${esc(s.label)}</div>
+          <div style="font-size:0.78rem;color:var(--color-text-muted);word-break:break-all">${esc(s.source_url)}</div>
+        </div>
+        <div class="card-row-meta">
+          <span class="badge badge-blue">${s.results_limit} โพสต์</span>
+          <span class="badge badge-gold">${modelLabel}</span>
+          <span class="badge ${active} badge-clickable" onclick="toggleSource('${s.id}', ${!s.active})">${activeLabel}</span>
+        </div>
+        <div class="card-row-actions">
+          <button class="btn btn-ghost btn-icon" onclick="editSource('${s.id}')" title="แก้ไข"><i data-lucide="pencil" style="width:16px;height:16px"></i></button>
+          <button class="btn btn-danger btn-icon" onclick="deleteSource('${s.id}')" title="ลบ"><i data-lucide="trash-2" style="width:16px;height:16px"></i></button>
+        </div>
+      </div>`;
     });
-
-    html += '</tbody></table>';
-    tbody.innerHTML = html;
+    html += '</div>';
+    div.innerHTML = html;
+    lucide.createIcons();
   } catch (err) {
-    tbody.innerHTML = '<div class="empty">❌ Error: ' + err.message + '</div>';
+    div.innerHTML = '<div class="empty-state">❌ Error: ' + err.message + '</div>';
   }
 }
 
-function esc(s) {
-  if (!s) return '';
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+function esc(s) { if (!s) return ''; return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 async function addSource() {
   const label = document.getElementById('newLabel').value.trim();
@@ -276,125 +561,80 @@ async function addSource() {
   const results_limit = parseInt(document.getElementById('newLimit').value) || 5;
   const model_provider = document.getElementById('newProvider').value;
   const model_name = document.getElementById('newModel').value;
-
-  if (!label) { alert('กรุณากรอกชื่อ'); return; }
-  if (!source_url) { alert('กรุณากรอก URL'); return; }
-
+  if (!label || !source_url) { alert('กรุณากรอกชื่อและ URL'); return; }
   try {
     const res = await fetch(API_BASE + '/api/sources', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ label, source_url, results_limit, model_provider, model_name }),
     });
-
-    if (!res.ok) {
-      const err = await res.json();
-      alert('Error: ' + (err.error || res.statusText));
-      return;
-    }
-
-    document.getElementById('newLabel').value = '';
-    document.getElementById('newUrl').value = '';
-    document.getElementById('newLimit').value = '10';
-    toggleAddForm();
-    loadSources();
-  } catch (err) {
-    alert('Error: ' + err.message);
-  }
+    if (!res.ok) { const e = await res.json(); alert('Error: ' + (e.error || res.statusText)); return; }
+    toggleAddForm(); loadSources();
+  } catch (err) { alert('Error: ' + err.message); }
 }
 
 async function toggleSource(id, active) {
   try {
     const res = await fetch(API_BASE + '/api/sources/' + id, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ active }),
     });
-
-    if (!res.ok) {
-      const err = await res.json();
-      alert('Error: ' + (err.error || res.statusText));
-      return;
-    }
-
+    if (!res.ok) { const e = await res.json(); alert('Error: ' + (e.error || res.statusText)); return; }
     loadSources();
-  } catch (err) {
-    alert('Error: ' + err.message);
-  }
+  } catch (err) { alert('Error: ' + err.message); }
 }
 
 async function deleteSource(id) {
   if (!confirm('ลบแหล่งข้อมูลนี้?')) return;
-
   try {
-    const res = await fetch(API_BASE + '/api/sources/' + id, {
-      method: 'DELETE',
-    });
-
-    if (!res.ok) {
-      const err = await res.json();
-      alert('Error: ' + (err.error || res.statusText));
-      return;
-    }
-
+    const res = await fetch(API_BASE + '/api/sources/' + id, { method: 'DELETE' });
+    if (!res.ok) { const e = await res.json(); alert('Error: ' + (e.error || res.statusText)); return; }
     loadSources();
-  } catch (err) {
-    alert('Error: ' + err.message);
-  }
+  } catch (err) { alert('Error: ' + err.message); }
 }
 
-function editSource(id) {
-  alert('แก้ไข: ยังไม่ implement');
-}
+function editSource(id) { alert('ฟังก์ชั่นแก้ไข (ยังไม่ implement)'); }
 
-// ─── Schedule functions ────────────────────────────────
-
+// ─── Schedules ──────────────────────────────
 function toggleAddSchedule() {
   const form = document.getElementById('addScheduleForm');
   form.classList.toggle('show');
-  if (!form.classList.contains('show')) {
-    document.getElementById('newScheduleLabel').value = '';
-  }
+  if (!form.classList.contains('show')) document.getElementById('newScheduleLabel').value = '';
 }
 
 async function loadSchedules() {
   const div = document.getElementById('schedulesTable');
   try {
     const res = await fetch(API_BASE + '/api/schedules');
-    if (!res.ok) { div.innerHTML = '<div class="empty">❌ โหลดไม่ได้</div>'; return; }
+    if (!res.ok) { div.innerHTML = '<div class="empty-state">❌ โหลดไม่ได้</div>'; return; }
     const data = await res.json();
-
     if (!data || data.length === 0) {
-      div.innerHTML = '<div class="empty">ยังไม่มีตารางเวลา — กด "เพิ่มเวลา" เพื่อตั้ง</div>';
+      div.innerHTML = '<div class="empty-state">ยังไม่มีตารางเวลา — กด "เพิ่มเวลา" เพื่อตั้ง</div>';
       return;
     }
-
-    let html = `<table>
-      <thead><tr>
-        <th style="width:36px">#</th>
-        <th>เวลา (UTC)</th>
-        <th>ชื่อ</th>
-        <th style="width:70px">สถานะ</th>
-        <th style="width:80px">จัดการ</th>
-      </tr></thead><tbody>`;
-
+    let html = '<div class="card-list">';
     data.forEach((s, i) => {
       const time = `${String(s.hour).padStart(2,'0')}:${String(s.minute).padStart(2,'0')}`;
       const active = s.active ? 'on' : 'off';
       const activeLabel = s.active ? 'เปิด' : 'ปิด';
-      html += `<tr>
-        <td>${i + 1}</td>
-        <td><strong>${time}</strong></td>
-        <td>${esc(s.label || '')}</td>
-        <td><span class="badge ${active}" onclick="toggleSchedule('${s.id}', ${!s.active})" style="cursor:pointer">${activeLabel}</span></td>
-        <td><button class="small danger" onclick="deleteSchedule('${s.id}')">✕</button></td>
-      </tr>`;
+      html += `<div class="card-row">
+        <span class="badge badge-gold" style="min-width:28px;justify-content:center">${i + 1}</span>
+        <div style="flex:1;min-width:120px">
+          <div style="font-weight:600;font-size:1.1rem">${time}</div>
+          <div style="font-size:0.82rem;color:var(--color-text-secondary)">${esc(s.label || '')}</div>
+        </div>
+        <div class="card-row-meta">
+          <span class="badge ${active} badge-clickable" onclick="toggleSchedule('${s.id}', ${!s.active})">${activeLabel}</span>
+        </div>
+        <div class="card-row-actions">
+          <button class="btn btn-danger btn-icon" onclick="deleteSchedule('${s.id}')" title="ลบ"><i data-lucide="trash-2" style="width:16px;height:16px"></i></button>
+        </div>
+      </div>`;
     });
-
-    html += '</tbody></table>';
+    html += '</div>';
     div.innerHTML = html;
+    lucide.createIcons();
   } catch (err) {
-    div.innerHTML = '<div class="empty">❌ Error: ' + err.message + '</div>';
+    div.innerHTML = '<div class="empty-state">❌ Error: ' + err.message + '</div>';
   }
 }
 
@@ -402,46 +642,37 @@ async function addSchedule() {
   const hour = parseInt(document.getElementById('newHour').value);
   const minute = parseInt(document.getElementById('newMinute').value);
   const label = document.getElementById('newScheduleLabel').value.trim() || `${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}`;
-
   try {
     const res = await fetch(API_BASE + '/api/schedules', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ hour, minute, label }),
     });
-    if (!res.ok) { const err = await res.json(); alert('Error: ' + (err.error || res.statusText)); return; }
-    toggleAddSchedule();
-    loadSchedules();
-  } catch (err) {
-    alert('Error: ' + err.message);
-  }
+    if (!res.ok) { const e = await res.json(); alert('Error: ' + (e.error || res.statusText)); return; }
+    toggleAddSchedule(); loadSchedules();
+  } catch (err) { alert('Error: ' + err.message); }
 }
 
 async function toggleSchedule(id, active) {
   try {
     const res = await fetch(API_BASE + '/api/schedules/' + id, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ active }),
     });
-    if (!res.ok) { const err = await res.json(); alert('Error: ' + (err.error || res.statusText)); return; }
+    if (!res.ok) { const e = await res.json(); alert('Error: ' + (e.error || res.statusText)); return; }
     loadSchedules();
-  } catch (err) {
-    alert('Error: ' + err.message);
-  }
+  } catch (err) { alert('Error: ' + err.message); }
 }
 
 async function deleteSchedule(id) {
   if (!confirm('ลบตารางเวลานี้?')) return;
   try {
     const res = await fetch(API_BASE + '/api/schedules/' + id, { method: 'DELETE' });
-    if (!res.ok) { const err = await res.json(); alert('Error: ' + (err.error || res.statusText)); return; }
+    if (!res.ok) { const e = await res.json(); alert('Error: ' + (e.error || res.statusText)); return; }
     loadSchedules();
-  } catch (err) {
-    alert('Error: ' + err.message);
-  }
+  } catch (err) { alert('Error: ' + err.message); }
 }
 
+// ─── Collect ─────────────────────────────────
 function iconFor(s) {
   if (s === 'ok' || s === 'inserted') return '✓';
   if (s === 'running' || s === 'processing' || s === 'polling' || s === 'batch_progress') return '⏳';
@@ -451,7 +682,6 @@ function iconFor(s) {
   if (s === 'warning') return '⚠';
   return '·';
 }
-
 function classFor(s) {
   if (s === 'ok' || s === 'inserted') return 'log-ok';
   if (s === 'running' || s === 'processing' || s === 'polling' || s === 'batch_progress') return 'log-running';
@@ -460,7 +690,6 @@ function classFor(s) {
   if (s === 'low_confidence') return 'log-skip';
   return '';
 }
-
 function textFor(step) {
   switch (step.type) {
     case 'source_start': return `▶ กำลัง scrap ${step.label || ''} (limit: ${step.limit})`;
@@ -473,13 +702,12 @@ function textFor(step) {
     case 'time_limit': return `⚠ หมดเวลา — ประมวลผลแล้ว ${step.processed} รายการ, ข้าม ${step.skipped} รายการ (รอรอบหน้า)`;
     case 'item_progress': return `กำลังดำเนินการโพสต์ ${step.index}/${step.total}...`;
     case 'item':
-      if (step.status === 'inserted') return `บันทึกแล้ว — ${step.property_type || ''} (confidence: ${(step.confidence * 100).toFixed(0)}%) ${step.postUrl ? step.postUrl.slice(0, 50) + '...' : ''}`;
-      if (step.status === 'duplicate') return `ซ้ำ (มีใน DB แล้ว) ${step.postUrl ? step.postUrl.slice(0, 50) + '...' : ''}`;
-      if (step.status === 'low_confidence') return `ไม่ใช่ประกาศขาย/ให้เช่า (score: ${step.score})`;
+      if (step.status === 'inserted') return `บันทึกแล้ว — ${step.property_type || ''} (${(step.confidence * 100).toFixed(0)}%)`;
+      if (step.status === 'duplicate') return `ซ้ำ (มีใน DB แล้ว)`;
+      if (step.status === 'low_confidence') return `ไม่ใช่ประกาศ (score: ${step.score})`;
       if (step.status === 'error') return `Error: ${step.error}`;
       return '';
-    case 'summary':
-      return '';
+    case 'summary': return '';
     case 'error': return `❌ ${step.message}`;
     default: return JSON.stringify(step);
   }
@@ -490,28 +718,23 @@ async function testCollect() {
   const logDiv = document.getElementById('collectLog');
   btn.disabled = true;
   logDiv.innerHTML = '<div class="log-step log-running"><span class="log-icon">⏳</span><span class="log-text">กำลังเรียก Collect...</span></div>';
-
   try {
     const res = await fetch(API_BASE + '/api/collect');
     const data = await res.json();
-
     logDiv.innerHTML = '';
-
     if (!data.steps || data.steps.length === 0) {
       logDiv.innerHTML = '<div class="log-step log-error"><span class="log-icon">✗</span><span class="log-text">ไม่มีข้อมูล</span></div>';
       return;
     }
-
     for (const step of data.steps) {
       if (step.type === 'summary') {
-        logDiv.innerHTML += `
-          <div class="summary-card">
-            <div class="summary-item ok"><span class="num">${step.inserted || 0}</span><span class="label">บันทึก</span></div>
-            <div class="summary-item dup"><span class="num">${step.duplicates || 0}</span><span class="label">ซ้ำ</span></div>
-            <div class="summary-item skip"><span class="num">${step.low_confidence || 0}</span><span class="label">ไม่เข้าเกณฑ์</span></div>
-            <div class="summary-item err"><span class="num">${step.errors || 0}</span><span class="label">Error</span></div>
-            <div class="summary-item skp"><span class="num">${step.skipped || 0}</span><span class="label">จำกัดเวลา</span></div>
-          </div>`;
+        logDiv.innerHTML += `<div class="summary-card">
+          <div class="summary-item ok"><span class="num">${step.inserted || 0}</span><span class="label">บันทึก</span></div>
+          <div class="summary-item dup"><span class="num">${step.duplicates || 0}</span><span class="label">ซ้ำ</span></div>
+          <div class="summary-item skip"><span class="num">${step.low_confidence || 0}</span><span class="label">ไม่เข้าเกณฑ์</span></div>
+          <div class="summary-item err"><span class="num">${step.errors || 0}</span><span class="label">Error</span></div>
+          <div class="summary-item skp"><span class="num">${step.skipped || 0}</span><span class="label">จำกัดเวลา</span></div>
+        </div>`;
         continue;
       }
       const icon = iconFor(step.status);
@@ -519,7 +742,6 @@ async function testCollect() {
       const txt = textFor(step);
       logDiv.innerHTML += `<div class="log-step ${cls}"><span class="log-icon">${icon}</span><span class="log-text">${txt}</span></div>`;
     }
-
     logDiv.scrollTop = logDiv.scrollHeight;
   } catch (err) {
     logDiv.innerHTML = '<div class="log-step log-error"><span class="log-icon">✗</span><span class="log-text">Error: ' + err.message + '</span></div>';
