@@ -47,6 +47,7 @@
   .summary-item.dup .num { color: #ca8a04; }
   .summary-item.skip .num { color: #9333ea; }
   .summary-item.err .num { color: #dc2626; }
+.summary-item.skp .num { color: #d97706; }
   table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
   th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #eee; }
   th { font-weight: 600; color: #555; font-size: 0.8rem; text-transform: uppercase; }
@@ -404,16 +405,17 @@ async function deleteSchedule(id) {
 
 function iconFor(s) {
   if (s === 'ok' || s === 'inserted') return '✓';
-  if (s === 'running' || s === 'processing' || s === 'polling') return '⏳';
+  if (s === 'running' || s === 'processing' || s === 'polling' || s === 'batch_progress') return '⏳';
   if (s === 'error') return '✗';
   if (s === 'duplicate') return '→';
   if (s === 'low_confidence') return '△';
+  if (s === 'warning') return '⚠';
   return '·';
 }
 
 function classFor(s) {
   if (s === 'ok' || s === 'inserted') return 'log-ok';
-  if (s === 'running' || s === 'processing' || s === 'polling') return 'log-running';
+  if (s === 'running' || s === 'processing' || s === 'polling' || s === 'batch_progress') return 'log-running';
   if (s === 'error' || s === 'source_error') return 'log-error';
   if (s === 'duplicate') return 'log-duplicate';
   if (s === 'low_confidence') return 'log-skip';
@@ -428,6 +430,8 @@ function textFor(step) {
       return `⏳ รอ ${step.label || ''} scrap... (${step.elapsed} วิ)`;
     case 'fetch': return `✓ ได้รับ ${step.count} โพสต์จาก ${step.label || ''}`;
     case 'source_error': return `✗ ${step.label || ''} — ${step.error}`;
+    case 'batch_progress': return `ประมวลผล batch ${step.batch}/${step.total}...`;
+    case 'time_limit': return `⚠ หมดเวลา — ประมวลผลแล้ว ${step.processed} รายการ, ข้าม ${step.skipped} รายการ (รอรอบหน้า)`;
     case 'item_progress': return `กำลังดำเนินการโพสต์ ${step.index}/${step.total}...`;
     case 'item':
       if (step.status === 'inserted') return `บันทึกแล้ว — ${step.property_type || ''} (confidence: ${(step.confidence * 100).toFixed(0)}%) ${step.postUrl ? step.postUrl.slice(0, 50) + '...' : ''}`;
@@ -467,6 +471,7 @@ async function testCollect() {
             <div class="summary-item dup"><span class="num">${step.duplicates || 0}</span><span class="label">ซ้ำ</span></div>
             <div class="summary-item skip"><span class="num">${step.low_confidence || 0}</span><span class="label">ไม่เข้าเกณฑ์</span></div>
             <div class="summary-item err"><span class="num">${step.errors || 0}</span><span class="label">Error</span></div>
+            <div class="summary-item skp"><span class="num">${step.skipped || 0}</span><span class="label">จำกัดเวลา</span></div>
           </div>`;
         continue;
       }

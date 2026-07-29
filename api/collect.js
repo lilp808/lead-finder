@@ -8,6 +8,8 @@ import {
 
 const APIFY_BASE = 'https://api.apify.com/v2';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+const BATCH_SIZE = 5;
+const TIME_LIMIT_SEC = 50;
 
 function mapApifyItem(item) {
   const imageUrls = (item.attachments || [])
@@ -22,6 +24,116 @@ function mapApifyItem(item) {
     createdAt: item.time || null,
     groupUrl: item.inputUrl || item.facebookUrl || '',
   };
+}
+
+async function processOneItem(item, sourceUrl, supabase) {
+  const postUrl = item.url;
+  if (!postUrl) return null;
+
+  const { data: existing } = await supabase
+    .from('leads')
+    .select('id')
+    .eq('post_url', postUrl)
+    .maybeSingle();
+
+  if (existing) {
+    return { postUrl, status: 'duplicate' };
+  }
+
+  const extraction = await extractProperty(item.text || '');
+
+  if ((extraction.confidence_score ?? 0) < 0.3) {
+    return { postUrl, status: 'low_confidence', score: extraction.confidence_score };
+  }
+
+  const leadId = crypto.randomUUID();
+  let imageUrls = [];
+  try {
+    imageUrls = await downloadAndUploadImages(leadId, item.imageUrls);
+  } catch (err) {
+    console.error('Image upload failed:', err.message);
+  }
+
+  const lead = {
+    id: leadId,
+    post_url: postUrl,
+    source_url: sourceUrl,
+    source_platform: 'facebook',
+    author_name: item.authorName,
+    author_url: item.authorUrl,
+    posted_at: item.createdAt,
+    property_type: extraction.property_type,
+    listing_status: extraction.listing_status,
+    rent_price: extraction.rent_price,
+    sale_price: extraction.sale_price,
+    land_area: extraction.land_area,
+    building_area: extraction.building_area,
+    province: extraction.province,
+    district: extraction.district,
+    sub_district: extraction.sub_district,
+    address: extraction.address,
+    contact_name: extraction.contact_name,
+    phone_number: extraction.phone_number,
+    line_id: extraction.line_id,
+    whatsapp: extraction.whatsapp,
+    wechat: extraction.wechat,
+    owner_or_agent: extraction.owner_or_agent,
+    image_urls: imageUrls,
+    screenshot_urls: [],
+    raw_post_text: item.text,
+    ai_summary: extraction.ai_summary,
+    ai_tags: extraction.ai_tags,
+    confidence_score: extraction.confidence_score,
+    lead_score: extraction.lead_score ?? null,
+  };
+
+  try {
+    const inserted = await insertLead(lead);
+    return { postUrl, status: 'inserted', leadId: inserted.id, property_type: extraction.property_type, confidence: extraction.confidence_score };
+  } catch (err) {
+    if (err.message?.includes('duplicate key') || err.code === '23505') {
+      return { postUrl, status: 'duplicate' };
+    }
+    return { postUrl, status: 'error', error: err.message };
+  }
+}
+
+async function processItems(items, sourceUrl, supabase, steps) {
+  const startTime = Date.now();
+  const results = [];
+  let skipped = 0;
+
+  for (let i = 0; i < items.length; i += BATCH_SIZE) {
+    const elapsed = (Date.now() - startTime) / 1000;
+    if (elapsed > TIME_LIMIT_SEC) {
+      skipped = items.length - i;
+      steps.push({ type: 'time_limit', status: 'warning', processed: results.length, skipped });
+      break;
+    }
+
+    const batch = items.slice(i, i + BATCH_SIZE);
+    steps.push({ type: 'batch_progress', status: 'processing', batch: Math.floor(i / BATCH_SIZE) + 1, total: Math.ceil(items.length / BATCH_SIZE) });
+
+    const batchResults = await Promise.all(
+      batch.map(item => processOneItem(item, sourceUrl, supabase))
+    );
+
+    for (const r of batchResults) {
+      if (!r) continue;
+      results.push(r);
+      if (r.status === 'inserted') {
+        steps.push({ type: 'item', status: 'inserted', property_type: r.property_type, confidence: r.confidence, postUrl: (r.postUrl || '').slice(0, 80) });
+      } else if (r.status === 'duplicate') {
+        steps.push({ type: 'item', status: 'duplicate', postUrl: (r.postUrl || '').slice(0, 80) });
+      } else if (r.status === 'low_confidence') {
+        steps.push({ type: 'item', status: 'low_confidence', score: r.score, postUrl: (r.postUrl || '').slice(0, 80) });
+      } else if (r.status === 'error') {
+        steps.push({ type: 'item', status: 'error', error: r.error });
+      }
+    }
+  }
+
+  return { results, skipped };
 }
 
 async function processSource(source, steps) {
@@ -65,95 +177,6 @@ async function processSource(source, steps) {
   return (Array.isArray(rawItems) ? rawItems : []).map(mapApifyItem);
 }
 
-async function processItems(items, sourceUrl, supabase, steps) {
-  const results = [];
-
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i];
-    const postUrl = item.url;
-    if (!postUrl) continue;
-
-    steps.push({ type: 'item_progress', status: 'processing', index: i + 1, total: items.length });
-
-    const { data: existing } = await supabase
-      .from('leads')
-      .select('id')
-      .eq('post_url', postUrl)
-      .maybeSingle();
-
-    if (existing) {
-      results.push({ postUrl, status: 'duplicate' });
-      steps.push({ type: 'item', status: 'duplicate', postUrl: postUrl.slice(0, 80) });
-      continue;
-    }
-
-    const extraction = await extractProperty(item.text || '');
-
-    if ((extraction.confidence_score ?? 0) < 0.3) {
-      results.push({ postUrl, status: 'low_confidence', score: extraction.confidence_score });
-      steps.push({ type: 'item', status: 'low_confidence', postUrl: postUrl.slice(0, 80), score: extraction.confidence_score });
-      continue;
-    }
-
-    const leadId = crypto.randomUUID();
-    let imageUrls = [];
-    try {
-      imageUrls = await downloadAndUploadImages(leadId, item.imageUrls);
-    } catch (err) {
-      console.error('Image upload failed:', err.message);
-    }
-
-    const lead = {
-      id: leadId,
-      post_url: postUrl,
-      source_url: sourceUrl,
-      source_platform: 'facebook',
-      author_name: item.authorName,
-      author_url: item.authorUrl,
-      posted_at: item.createdAt,
-      property_type: extraction.property_type,
-      listing_status: extraction.listing_status,
-      rent_price: extraction.rent_price,
-      sale_price: extraction.sale_price,
-      land_area: extraction.land_area,
-      building_area: extraction.building_area,
-      province: extraction.province,
-      district: extraction.district,
-      sub_district: extraction.sub_district,
-      address: extraction.address,
-      contact_name: extraction.contact_name,
-      phone_number: extraction.phone_number,
-      line_id: extraction.line_id,
-      whatsapp: extraction.whatsapp,
-      wechat: extraction.wechat,
-      owner_or_agent: extraction.owner_or_agent,
-      image_urls: imageUrls,
-      screenshot_urls: [],
-      raw_post_text: item.text,
-      ai_summary: extraction.ai_summary,
-      ai_tags: extraction.ai_tags,
-      confidence_score: extraction.confidence_score,
-      lead_score: extraction.lead_score ?? null,
-    };
-
-    try {
-      const inserted = await insertLead(lead);
-      results.push({ postUrl, status: 'inserted', leadId: inserted.id });
-      steps.push({ type: 'item', status: 'inserted', property_type: extraction.property_type, confidence: extraction.confidence_score, postUrl: postUrl.slice(0, 80) });
-    } catch (err) {
-      if (err.message?.includes('duplicate key') || err.code === '23505') {
-        results.push({ postUrl, status: 'duplicate' });
-        steps.push({ type: 'item', status: 'duplicate', postUrl: postUrl.slice(0, 80) });
-      } else {
-        results.push({ postUrl, status: 'error', error: err.message });
-        steps.push({ type: 'item', status: 'error', error: err.message });
-      }
-    }
-  }
-
-  return results;
-}
-
 export default async function handler(req, res) {
   try {
     if (req.method !== 'GET' && req.method !== 'POST') {
@@ -182,13 +205,15 @@ export default async function handler(req, res) {
 
     const steps = [];
     const allResults = [];
+    let totalSkipped = 0;
 
     for (const source of sources) {
       try {
         const items = await processSource(source, steps);
         steps.push({ type: 'fetch', status: 'ok', count: items.length, label: source.label });
-        const results = await processItems(items, source.source_url, supabase, steps);
+        const { results, skipped } = await processItems(items, source.source_url, supabase, steps);
         allResults.push(...results);
+        totalSkipped += skipped;
       } catch (err) {
         steps.push({ type: 'source_error', status: 'error', label: source.label, error: err.message });
       }
@@ -199,6 +224,7 @@ export default async function handler(req, res) {
       duplicates: allResults.filter(r => r.status === 'duplicate').length,
       low_confidence: allResults.filter(r => r.status === 'low_confidence').length,
       errors: allResults.filter(r => r.status === 'error').length,
+      skipped: totalSkipped,
     };
     steps.push({ type: 'summary', ...summary });
 
