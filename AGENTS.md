@@ -42,7 +42,7 @@ Read active sources from DB → start Apify runs with webhook URLs per source
 - **Webhook payload**: Apify sends `webhook.data.groupUrl` in callback body. Webhook reads `req.body.webhook?.data?.groupUrl` for group_url — no extra API call.
 - **Apify webhook format** (`src/lib/apify.js`): `{ requestUrl, eventTypes: ['ACTOR.RUN.SUCCEEDED'], data: { groupUrl } }`. Do NOT send plain URL strings.
 - **Apify output mapping** (`api/collect.js`): `user.name→authorName`, `user.profilePic→authorUrl`, `attachments[].image.uri→imageUrls`, `time→createdAt`, `inputUrl→groupUrl`.
-- **Groq prompt** (`src/lib/groq.js`): Thai property extraction. Returns JSON. Posts with `confidence_score < 0.3` are dropped.
+- **Groq prompt** (`src/lib/prompts/extract-property.md`): Thai property extraction. Loaded in `src/lib/groq.js`. Returns JSON. Posts with `confidence_score < 0.3` are dropped.
 - **Image timeout**: 15s per image, max 10 images per post.
 - **Env required**: `APIFY_API_KEY`, `APIFY_ACTOR_ID` (default `apify/facebook-groups-scraper`), `SUPABASE_URL` (or `NEXT_PUBLIC_SUPABASE_URL`), `SUPABASE_SERVICE_ROLE_KEY`, `VERCEL_WEBHOOK_URL`. **AI**: `TYPHOON_API_KEY` (default) or `GROQ_API_KEY` (optional alternate).
 - **Facebook auth**: Cookie/session must be configured inside Apify Console actor input — not in env.

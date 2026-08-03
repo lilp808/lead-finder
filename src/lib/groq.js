@@ -1,36 +1,15 @@
+import { readFileSync } from 'node:fs';
+import { computePrices } from './pricing.js';
+
 const PROVIDERS = {
   groq: { baseURL: 'https://api.groq.com/openai/v1', jsonMode: true },
   typhoon: { baseURL: 'https://api.opentyphoon.ai/v1', jsonMode: false },
 };
 
-const SYSTEM_PROMPT = `You extract Thai property listing information from Facebook posts.
-
-Return ONLY valid JSON. No markdown, no extra text.
-
-Schema:
-{
-  "property_type": "บ้านเดี่ยว|ทาวน์เฮาส์|คอนโด|ที่ดิน|อาคารพาณิชย์|ห้องเช่า|อื่นๆ",
-  "listing_status": "rent|sale|both",
-  "rent_price": number or null,
-  "sale_price": number or null,
-  "land_area": "string or null",
-  "building_area": "string or null",
-  "province": "string or null",
-  "district": "string or null",
-  "sub_district": "string or null",
-  "address": "string or null",
-  "contact_name": "string or null",
-  "phone_number": "string or null",
-  "line_id": "string or null",
-  "whatsapp": "string or null",
-  "wechat": "string or null",
-  "owner_or_agent": "owner|agent|unknown",
-  "ai_summary": "1-2 sentence summary in Thai",
-  "ai_tags": ["tag1","tag2"],
-  "confidence_score": 0.0-1.0
-}
-
-If the post is not a property listing, set confidence_score to 0.`;
+const SYSTEM_PROMPT = readFileSync(
+  new URL('./prompts/extract-property.md', import.meta.url),
+  'utf8',
+).trim();
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -83,7 +62,8 @@ export async function extractProperty(postText, options = {}) {
     if (res.ok) {
       const data = await res.json();
       try {
-        return JSON.parse(data.choices[0].message.content);
+        const parsed = JSON.parse(data.choices[0].message.content);
+        return { ...parsed, ...computePrices(parsed) };
       } catch {
         return { confidence_score: 0, raw: data.choices[0].message.content };
       }

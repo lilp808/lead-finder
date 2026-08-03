@@ -327,13 +327,10 @@ select.input { cursor: pointer; }
       <label>Type</label>
       <select class="input" id="fType">
         <option value="">All</option>
-        <option value="บ้านเดี่ยว">House</option>
-        <option value="ทาวน์เฮ้าส์">Townhouse</option>
-        <option value="คอนโด">Condo</option>
-        <option value="ที่ดิน">Land</option>
-        <option value="อาคารพาณิชย์">Commercial</option>
-        <option value="อาคาร">Building</option>
-        <option value="other">Other</option>
+        <option value="Warehouse">Warehouse</option>
+        <option value="Factory">Factory</option>
+        <option value="Showroom & Commercial">Showroom & Commercial</option>
+        <option value="Other">Other</option>
       </select>
     </div>
     <div class="field">
@@ -519,6 +516,18 @@ function statusBadge(s) {
   return `<span class="${cls}">${esc(label)}</span>`;
 }
 
+function listingStatusLabel(s) {
+  if (!s) return '';
+  const map = { rent: 'For Rent', sale: 'For Sale', both: 'For Rent & For Sale' };
+  return map[s] || s;
+}
+
+function ownerLabel(s) {
+  if (!s) return '';
+  const map = { owner: 'Owner', agent: 'Agent', unknown: 'Unknown' };
+  return map[s] || s;
+}
+
 function renderLeadCard(l) {
   const thumbUrl = l.image_urls && l.image_urls.length > 0 ? l.image_urls[0] : null;
   const thumb = thumbUrl
@@ -626,7 +635,7 @@ function shareLead(id) {
     .then(r => r.json())
     .then(l => {
       const lines = [];
-      lines.push(`\uD83D\uDCCC ${l.property_type || 'Listing'}${l.listing_status === 'rent' ? ' For Rent' : l.listing_status === 'sale' ? ' For Sale' : ''}`);
+      lines.push(`\uD83D\uDCCC ${l.property_type || 'Listing'}${l.listing_status ? ' ' + listingStatusLabel(l.listing_status) : ''}`);
       if (l.sale_price) lines.push(`\uD83D\uDCB0 Sale: ฿${fmtPriceFull(l.sale_price)}`);
       if (l.rent_price) lines.push(`\uD83D\uDCB0 Rent: ฿${fmtPriceFull(l.rent_price)}/mo`);
       if (l.land_area) lines.push(`\uD83D\uDCD0 Land: ${l.land_area}`);
@@ -639,7 +648,7 @@ function shareLead(id) {
       if (l.line_id) contacts.push(`LINE: ${l.line_id}`);
       if (l.whatsapp) contacts.push(`WA: ${l.whatsapp}`);
       if (contacts.length) lines.push(contacts.join(' | '));
-      if (l.owner_or_agent) lines.push(`\uD83C\uDFE2 ${l.owner_or_agent === 'owner' ? 'Owner' : l.owner_or_agent === 'agent' ? 'Agent' : ''}`);
+      if (l.owner_or_agent) lines.push(`\uD83C\uDFE2 ${ownerLabel(l.owner_or_agent)}`);
       if (l.ai_summary) lines.push(`\uD83D\uDCAC ${l.ai_summary}`);
       lines.push('');
       lines.push(`\uD83D\uDD17 ${l.post_url || ''}`);
@@ -677,7 +686,7 @@ function detailLead(id) {
       let html = '';
       html += '<div class="detail-section"><h3>Listing Info</h3>';
       html += row('Type', l.property_type);
-      html += row('Status', l.listing_status === 'rent' ? 'For Rent' : l.listing_status === 'sale' ? 'For Sale' : l.listing_status);
+      html += row('Status', listingStatusLabel(l.listing_status));
       html += row('Sale Price', l.sale_price ? `฿${fmtPriceFull(l.sale_price)}` : '');
       html += row('Rent', l.rent_price ? `฿${fmtPriceFull(l.rent_price)}/mo` : '');
       html += row('Land Area', l.land_area);
@@ -692,7 +701,7 @@ function detailLead(id) {
       html += row('LINE', l.line_id);
       html += row('WhatsApp', l.whatsapp);
       html += row('WeChat', l.wechat);
-      html += row('Type', l.owner_or_agent === 'owner' ? 'Owner' : l.owner_or_agent === 'agent' ? 'Agent' : l.owner_or_agent);
+      html += row('Type', ownerLabel(l.owner_or_agent));
       html += '</div>';
       html += '<div class="detail-section"><h3>AI Analysis</h3>';
       html += row('Summary', l.ai_summary);
