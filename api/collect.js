@@ -9,7 +9,7 @@ import {
 const APIFY_BASE = 'https://api.apify.com/v2';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const BATCH_SIZE = 5;
-const TIME_LIMIT_SEC = 50;
+const TIME_LIMIT_SEC = 55;
 
 function mapApifyItem(item) {
   const imageUrls = (item.attachments || [])
@@ -115,7 +115,11 @@ async function processItems(items, sourceUrl, supabase, steps, modelOptions = {}
     steps.push({ type: 'batch_progress', status: 'processing', batch: Math.floor(i / BATCH_SIZE) + 1, total: Math.ceil(items.length / BATCH_SIZE) });
 
     const batchResults = await Promise.all(
-      batch.map(item => processOneItem(item, sourceUrl, supabase, modelOptions))
+      batch.map(item => processOneItem(item, sourceUrl, supabase, modelOptions).catch(err => ({
+        postUrl: item.url,
+        status: 'error',
+        error: err.message,
+      })))
     );
 
     for (const r of batchResults) {
@@ -154,8 +158,13 @@ async function processSource(source, steps) {
       `${APIFY_BASE}/actor-runs/${runId}?token=${process.env.APIFY_API_KEY}`,
     );
     if (!pollRes.ok) throw new Error(`Poll failed (${pollRes.status})`);
-    const pollData = await pollRes.json();
-    pollStatus = pollData.data.status;
+    let pollData;
+    try {
+      pollData = await pollRes.json();
+    } catch {
+      throw new Error(`Poll returned non-JSON for ${label}`);
+    }
+    pollStatus = pollData.data?.status;
 
     if (pollStatus === 'SUCCEEDED') {
       datasetId = pollData.data.defaultDatasetId;

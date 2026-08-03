@@ -7,7 +7,7 @@ import {
 } from '../src/lib/supabase.js';
 
 const BATCH_SIZE = 5;
-const TIME_LIMIT_SEC = 50;
+const TIME_LIMIT_SEC = 55;
 
 async function processOneItem(item, sourceUrl, supabase, modelOptions = {}) {
   const postUrl = item.url || item.postUrl;
@@ -95,7 +95,11 @@ async function processItems(items, sourceUrl, supabase, modelOptions = {}) {
 
     const batch = items.slice(i, i + BATCH_SIZE);
     const batchResults = await Promise.all(
-      batch.map(item => processOneItem(item, sourceUrl, supabase, modelOptions))
+      batch.map(item => processOneItem(item, sourceUrl, supabase, modelOptions).catch(err => ({
+        postUrl: item.url || item.postUrl,
+        status: 'error',
+        error: err.message,
+      })))
     );
 
     for (const r of batchResults) {

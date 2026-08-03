@@ -241,6 +241,50 @@ select.input { cursor: pointer; }
   color: var(--color-text); resize: vertical; outline: none;
 }
 .modal textarea:focus { border-color: var(--color-primary); }
+.modal-wide { max-width: 720px; }
+
+.modal-tabs { display: flex; gap: var(--space-2); margin-bottom: var(--space-4); border-bottom: 1px solid var(--color-border); }
+.modal-tab {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-2) var(--space-4); background: none; border: none;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  font-family: var(--font-family); font-size: 0.85rem; font-weight: 600;
+  color: var(--color-text-muted); cursor: pointer; transition: color var(--transition);
+}
+.modal-tab:hover { color: var(--color-text); }
+.modal-tab.active { color: var(--color-primary); border-bottom-color: var(--color-primary); }
+.modal-pane.hidden { display: none; }
+
+.slider { position: relative; border-radius: var(--radius-lg); overflow: hidden; background: #000; margin-bottom: var(--space-4); }
+.slider-viewport { overflow: hidden; }
+.slider-track { display: flex; transition: transform 250ms ease; }
+.slider-track img { width: 100%; flex-shrink: 0; max-height: 420px; object-fit: contain; background: #000; display: block; }
+.slider-btn {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 34px; height: 34px; border-radius: var(--radius-full);
+  border: none; background: rgba(255,255,255,.85); color: var(--color-text);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,.2); font-size: 1rem; line-height: 1;
+}
+.slider-btn:hover { background: #fff; }
+.slider-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.slider-prev { left: var(--space-3); }
+.slider-next { right: var(--space-3); }
+.slider-count {
+  position: absolute; bottom: var(--space-3); left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,.55); color: #fff; font-size: 0.78rem; font-weight: 600;
+  padding: 2px 10px; border-radius: var(--radius-full);
+}
+.slider-empty { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); padding: var(--space-10); color: var(--color-text-muted); }
+
+.post-text {
+  background: var(--color-bg); border: 1px solid var(--color-border);
+  border-radius: var(--radius-md); padding: var(--space-4);
+  font-size: 0.85rem; line-height: 1.6; color: var(--color-text);
+  white-space: pre-wrap; word-break: break-word;
+  max-height: 240px; overflow-y: auto; margin-bottom: var(--space-4);
+}
+.post-actions { display: flex; gap: var(--space-2); }
 .copy-btn {
   display: inline-flex; align-items: center; gap: var(--space-2);
   margin-top: var(--space-3); padding: var(--space-2) var(--space-4);
@@ -371,10 +415,15 @@ select.input { cursor: pointer; }
 </div>
 
 <div class="modal-overlay" id="detailModal">
-  <div class="modal">
+  <div class="modal modal-wide">
     <button class="modal-close" onclick="closeDetailModal()"><i data-lucide="x" style="width:20px;height:20px"></i></button>
     <h2 id="detailTitle">Details</h2>
-    <div id="detailBody"></div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" id="tabPost" onclick="switchModalView('post')"><i data-lucide="file-text" style="width:14px;height:14px"></i> Original Post</button>
+      <button class="modal-tab" id="tabDetail" onclick="switchModalView('detail')"><i data-lucide="info" style="width:14px;height:14px"></i> Details</button>
+    </div>
+    <div class="modal-pane" id="postPane"></div>
+    <div class="modal-pane hidden" id="detailPane"><div id="detailBody"></div></div>
   </div>
 </div>
 
@@ -390,6 +439,7 @@ const STATUS_MAP = {
 };
 
 let currentState = { page: 1 };
+let detailSliderIndex = 0;
 
 window.onload = function () {
   lucide.createIcons();
@@ -723,10 +773,61 @@ function detailLead(id) {
         html += '</div></div>';
       }
       document.getElementById('detailBody').innerHTML = html;
+      document.getElementById('postPane').innerHTML = buildPostPane(l);
+      detailSliderIndex = 0;
+      switchModalView('post');
       document.getElementById('detailModal').classList.add('show');
       lucide.createIcons();
     })
     .catch(e => showToast('Error: ' + e.message));
+}
+
+function buildPostPane(l) {
+  const imgs = l.image_urls || [];
+  let sliderHtml;
+  if (imgs.length === 0) {
+    sliderHtml = `<div class="slider slider-empty"><i data-lucide="image-off" style="width:28px;height:28px"></i><span>No images</span></div>`;
+  } else {
+    const imgsHtml = imgs.map(u => `<img src="${esc(u)}" alt="" loading="lazy" />`).join('');
+    const btn = imgs.length > 1
+      ? `<button class="slider-btn slider-prev" id="sliderPrev" onclick="sliderMove(-1)" disabled>&lsaquo;</button>
+         <button class="slider-btn slider-next" id="sliderNext" onclick="sliderMove(1)">&rsaquo;</button>
+         <div class="slider-count" id="sliderCount">1 / ${imgs.length}</div>`
+      : '';
+    sliderHtml = `<div class="slider">
+      <div class="slider-viewport"><div class="slider-track" id="sliderTrack">${imgsHtml}</div></div>
+      ${btn}
+    </div>`;
+  }
+  const text = l.raw_post_text
+    ? `<div class="post-text">${esc(l.raw_post_text)}</div>`
+    : `<div class="post-text" style="color:var(--color-text-muted)">No post text</div>`;
+  const openBtn = l.post_url
+    ? `<a class="btn btn-primary" href="${esc(l.post_url)}" target="_blank" rel="noopener"><i data-lucide="external-link" style="width:14px;height:14px"></i> Open Original Post</a>`
+    : '';
+  return sliderHtml + text + (openBtn ? `<div class="post-actions">${openBtn}</div>` : '');
+}
+
+function switchModalView(view) {
+  const isPost = view === 'post';
+  document.getElementById('tabPost').classList.toggle('active', isPost);
+  document.getElementById('tabDetail').classList.toggle('active', !isPost);
+  document.getElementById('postPane').classList.toggle('hidden', !isPost);
+  document.getElementById('detailPane').classList.toggle('hidden', isPost);
+}
+
+function sliderMove(dir) {
+  const track = document.getElementById('sliderTrack');
+  if (!track) return;
+  const total = track.children.length;
+  detailSliderIndex = Math.max(0, Math.min(total - 1, detailSliderIndex + dir));
+  track.style.transform = `translateX(-${detailSliderIndex * 100}%)`;
+  const count = document.getElementById('sliderCount');
+  if (count) count.textContent = `${detailSliderIndex + 1} / ${total}`;
+  const prev = document.getElementById('sliderPrev');
+  const next = document.getElementById('sliderNext');
+  if (prev) prev.disabled = detailSliderIndex === 0;
+  if (next) next.disabled = detailSliderIndex === total - 1;
 }
 
 function closeDetailModal() { document.getElementById('detailModal').classList.remove('show'); }

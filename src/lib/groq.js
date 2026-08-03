@@ -59,23 +59,44 @@ export async function extractProperty(postText, options = {}) {
       body: JSON.stringify(body),
     });
 
-    if (res.ok) {
-      const data = await res.json();
-      try {
-        const parsed = JSON.parse(data.choices[0].message.content);
-        return { ...parsed, ...computePrices(parsed) };
-      } catch {
-        return { confidence_score: 0, raw: data.choices[0].message.content };
+    const text = await res.text();
+
+    if (!res.ok) {
+      const retryable = res.status === 429 || res.status >= 500;
+      if (retryable && attempt < maxRetries - 1) {
+        console.warn(`${providerName}: API ${res.status}, retrying in 5s... (attempt ${attempt + 1}/${maxRetries})`);
+        await sleep(5000);
+        continue;
       }
+      throw new Error(`${providerName} API error (${res.status}): ${text.slice(0, 200)}`);
     }
 
-    if (res.status === 429 && attempt < maxRetries - 1) {
-      console.warn(`${providerName}: rate limited, retrying in 5s... (attempt ${attempt + 1}/${maxRetries})`);
-      await sleep(5000);
-      continue;
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      if (attempt < maxRetries - 1) {
+        console.warn(`${providerName}: non-JSON response, retrying in 5s... (attempt ${attempt + 1}/${maxRetries})`);
+        await sleep(5000);
+        continue;
+      }
+      return { confidence_score: 0, raw: text.slice(0, 200) };
     }
 
-    throw new Error(`${providerName} API error (${res.status}): ${await res.text()}`);
+    const content = data?.choices?.[0]?.message?.content;
+    if (!content) {
+      return { confidence_score: 0 };
+    }
+
+    try {
+      const parsed = JSON.parse(content);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        return { confidence_score: 0, raw: content.slice(0, 200) };
+      }
+      return { ...parsed, ...computePrices(parsed) };
+    } catch {
+      return { confidence_score: 0, raw: content.slice(0, 200) };
+    }
   }
 
   throw new Error(`${providerName}: max retries exceeded`);
