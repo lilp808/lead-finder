@@ -19,8 +19,15 @@ create table if not exists leads (
   listing_status  text,
   rent_price      numeric,
   sale_price      numeric,
+  rent_price_raw  numeric,
+  sale_price_raw  numeric,
+  rent_price_unit text,
+  sale_price_unit text,
+  pricing_area_sqm numeric,
   land_area       text,
+  land_area_sqm   numeric,
   building_area   text,
+  building_area_sqm numeric,
   province        text,
   district        text,
   sub_district    text,
@@ -63,6 +70,15 @@ create table if not exists leads (
 
 create index if not exists idx_leads_post_url on leads(post_url);
 create index if not exists idx_leads_status on leads(lead_status);
+
+-- Migration for existing DBs (pricing audit fields)
+alter table leads add column if not exists rent_price_raw numeric;
+alter table leads add column if not exists sale_price_raw numeric;
+alter table leads add column if not exists rent_price_unit text;
+alter table leads add column if not exists sale_price_unit text;
+alter table leads add column if not exists pricing_area_sqm numeric;
+alter table leads add column if not exists land_area_sqm numeric;
+alter table leads add column if not exists building_area_sqm numeric;
 
 -- Storage bucket: create via Dashboard > Storage > Create Bucket
 -- Name: lead-images

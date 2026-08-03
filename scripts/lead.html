@@ -560,6 +560,11 @@ function fmtPriceFull(v) {
   return Number(v).toLocaleString('en-US');
 }
 
+function priceBreakdown(raw, unit, area) {
+  if (unit !== 'per_sqm' || !raw || !area) return '';
+  return ` <span style="color:var(--color-text-muted);font-size:0.72rem">(${fmtPriceFull(raw)} ฿/ตรม × ${fmtPriceFull(area)} ตรม)</span>`;
+}
+
 function statusBadge(s) {
   const label = STATUS_MAP[s] || s || 'New';
   const cls = 'badge badge-' + (s || 'new');
@@ -737,8 +742,8 @@ function detailLead(id) {
       html += '<div class="detail-section"><h3>Listing Info</h3>';
       html += row('Type', l.property_type);
       html += row('Status', listingStatusLabel(l.listing_status));
-      html += row('Sale Price', l.sale_price ? `฿${fmtPriceFull(l.sale_price)}` : '');
-      html += row('Rent', l.rent_price ? `฿${fmtPriceFull(l.rent_price)}/mo` : '');
+      html += row('Sale Price', l.sale_price ? `฿${fmtPriceFull(l.sale_price)}${priceBreakdown(l.sale_price_raw, l.sale_price_unit, l.pricing_area_sqm)}` : '');
+      html += row('Rent', l.rent_price ? `฿${fmtPriceFull(l.rent_price)}/mo${priceBreakdown(l.rent_price_raw, l.rent_price_unit, l.pricing_area_sqm)}` : '');
       html += row('Land Area', l.land_area);
       html += row('Building Area', l.building_area);
       html += row('Address', [l.address, l.sub_district, l.district, l.province].filter(Boolean).join(' '));

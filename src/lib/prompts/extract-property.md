@@ -6,7 +6,7 @@ Pricing rules:
 - A price may be quoted as a total, OR per square meter (per sqm). Example: "ค่าเช่า 108 บาท/ตรม/เดือน" means rent of 108 baht per sqm per month — it is NOT the total rent.
 - NEVER treat a per-sqm price as the total price.
 - If the price is per sqm: set rent_price_unit/sale_price_unit to "per_sqm", put the raw number into rent_price_raw/sale_price_raw, and set pricing_area_sqm to the area (in square meters) the price applies to — building area for warehouses/factories/showrooms, land area for land plots. Decide from context.
-- If the price is a total: set the unit to "total" and put the total into rent_price/sale_price directly.
+- If the price is a total: set the unit to "total" and put the total into rent_price/sale_price directly. Also put the same number into rent_price_raw/sale_price_raw.
 - When the price is per sqm, leave rent_price/sale_price as null — the system computes the total from raw × pricing_area_sqm.
 - For rent, assume the per-sqm rate is monthly unless the post states annual.
 - land_area/building_area are for display; also fill land_area_sqm/building_area_sqm as numbers when the area is given in square meters.
