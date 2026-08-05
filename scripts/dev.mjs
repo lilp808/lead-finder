@@ -1,20 +1,10 @@
 import http from 'node:http';
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 const PORT = process.env.PORT || 3000;
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const html = fs.readFileSync(path.join(__dirname, 'test.html'), 'utf-8');
-const leadHtml = fs.readFileSync(path.join(__dirname, 'lead.html'), 'utf-8');
-
-const ROOT = Symbol('root');
-
-const LEAD = Symbol('lead');
 
 const routes = {
-  '/': ROOT,
-  '/lead': LEAD,
+  '/': () => import('../api/index.js').then(m => m.default),
+  '/lead': () => import('../api/index.js').then(m => m.default),
   '/api/collect': () => import('../api/collect.js').then(m => m.default),
   '/api/dd-collect': () => import('../api/dd-collect.js').then(m => m.default),
   '/api/webhook': () => import('../api/webhook.js').then(m => m.default),
@@ -47,6 +37,14 @@ function createMockRes(realRes) {
       });
       realRes.end(body);
     },
+    send(body) {
+      realRes.writeHead(state.statusCode, {
+        ...state.headers,
+        'Content-Type': state.headers['content-type'] || 'text/html; charset=utf-8',
+        'Access-Control-Allow-Origin': '*',
+      });
+      realRes.end(body);
+    },
   };
 }
 
@@ -58,7 +56,7 @@ function matchRoute(pathname) {
   m = pathname.match(/^\/api\/sources\/([^/]+)$/);
   if (m) {
     return {
-      handler: () => import('../api/sources/[id].js').then(m => m.default),
+      handler: () => import('../api/sources/index.js').then(m => m.default),
       params: { id: m[1] },
     };
   }
@@ -66,7 +64,7 @@ function matchRoute(pathname) {
   m = pathname.match(/^\/api\/schedules\/([^/]+)$/);
   if (m) {
     return {
-      handler: () => import('../api/schedules/[id].js').then(m => m.default),
+      handler: () => import('../api/schedules/index.js').then(m => m.default),
       params: { id: m[1] },
     };
   }
@@ -89,16 +87,6 @@ const server = http.createServer(async (req, res) => {
   if (match === null) {
     res.writeHead(404, { 'Content-Type': 'application/json' });
     return res.end(JSON.stringify({ error: 'not found' }));
-  }
-
-  if (match.handler === ROOT) {
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-    return res.end(html);
-  }
-
-  if (match.handler === LEAD) {
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-    return res.end(leadHtml);
   }
 
   const handler = await match.handler();

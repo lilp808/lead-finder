@@ -7,7 +7,9 @@
   ],
   "rewrites": [
     { "source": "/", "destination": "/api/index" },
-    { "source": "/lead", "destination": "/api/lead-page" }
+    { "source": "/lead", "destination": "/api/index?view=lead" },
+    { "source": "/api/sources/:id", "destination": "/api/sources?id=:id" },
+    { "source": "/api/schedules/:id", "destination": "/api/schedules?id=:id" }
   ],
   "functions": {
     "api/*.js": {
