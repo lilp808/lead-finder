@@ -1,5 +1,6 @@
 import { startActorRun, getDatasetItems } from '../src/lib/apify.js';
 import { extractProperty } from '../src/lib/groq.js';
+import { runDDSources } from './dd-collect.js';
 import {
   getClient,
   downloadAndUploadImages,
@@ -199,31 +200,33 @@ export default async function handler(req, res) {
       return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    if (!process.env.APIFY_API_KEY) {
-      return res.status(500).json({ error: 'Missing APIFY_API_KEY in env' });
-    }
-
     const supabase = getClient();
 
     const { data: sources, error: sourcesError } = await supabase
       .from('source_configs')
       .select('*')
-      .eq('active', true)
-      .eq('platform', 'facebook');
+      .eq('active', true);
 
     if (sourcesError) {
       throw new Error(`Failed to load sources: ${sourcesError.message}`);
     }
 
-    if (!sources || sources.length === 0) {
-      return res.status(400).json({ error: 'No active Facebook sources configured. Add one in Sources settings.' });
+    const fbSources = (sources || []).filter(s => s.platform === 'facebook');
+    const ddSources = (sources || []).filter(s => s.platform === 'ddproperty');
+
+    if (fbSources.length === 0 && ddSources.length === 0) {
+      return res.status(400).json({ error: 'No active sources configured. Add one in Sources settings.' });
+    }
+
+    if (fbSources.length > 0 && !process.env.APIFY_API_KEY) {
+      return res.status(500).json({ error: 'Missing APIFY_API_KEY in env' });
     }
 
     const steps = [];
     const allResults = [];
     let totalSkipped = 0;
 
-    for (const source of sources) {
+    for (const source of fbSources) {
       try {
         const items = await processSource(source, steps);
         steps.push({ type: 'fetch', status: 'ok', count: items.length, label: source.label });
@@ -234,6 +237,11 @@ export default async function handler(req, res) {
       } catch (err) {
         steps.push({ type: 'source_error', status: 'error', label: source.label, error: err.message });
       }
+    }
+
+    if (ddSources.length > 0) {
+      const dd = await runDDSources(supabase, ddSources, steps, { pushSummary: false });
+      allResults.push(...dd.results);
     }
 
     const summary = {

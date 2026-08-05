@@ -127,6 +127,8 @@ select.input { cursor: pointer; }
 .badge-green { background: var(--color-success-bg); color: var(--color-success); }
 .badge-blue { background: var(--color-info-bg); color: var(--color-info); }
 .badge-gold { background: var(--color-primary-bg); color: var(--color-primary); }
+.badge-fb { background: #E8F0FE; color: #1877F2; }
+.badge-dd { background: #FFF4E5; color: #B45309; }
 
 .add-form { display: none; margin-top: var(--space-4); padding: var(--space-5); background: var(--color-bg); border-radius: var(--radius-md); border: 1px dashed var(--color-border); }
 .add-form.show { display: block; }
@@ -362,7 +364,10 @@ async function loadSources() {
     data.forEach((s, i) => {
       const active = s.active ? 'on' : 'off';
       const activeLabel = s.active ? 'On' : 'Off';
+      const platform = s.platform === 'ddproperty' ? 'ddproperty' : 'facebook';
+      const platformBadge = `<span class="badge ${platform === 'ddproperty' ? 'badge-dd' : 'badge-fb'}">${platform === 'ddproperty' ? 'DDProperty' : 'Facebook'}</span>`;
       const modelLabel = (s.model_provider || 'typhoon') === 'typhoon' ? 'Typhoon' : 'Groq';
+      const modelBadge = platform === 'ddproperty' ? '' : `<span class="badge badge-gold">${modelLabel}</span>`;
       html += `<div class="card-row">
         <span class="badge badge-gold" style="min-width:28px;justify-content:center">${i + 1}</span>
         <div style="flex:1;min-width:120px">
@@ -370,8 +375,9 @@ async function loadSources() {
           <div style="font-size:0.78rem;color:var(--color-text-muted);word-break:break-all">${esc(s.source_url)}</div>
         </div>
         <div class="card-row-meta">
+          ${platformBadge}
           <span class="badge badge-blue">${s.results_limit} posts</span>
-          <span class="badge badge-gold">${modelLabel}</span>
+          ${modelBadge}
           <span class="badge ${active} badge-clickable" onclick="toggleSource('${s.id}', ${!s.active})">${activeLabel}</span>
         </div>
         <div class="card-row-actions">
@@ -537,17 +543,23 @@ function classFor(s) {
 }
 function textFor(step) {
   switch (step.type) {
-    case 'source_start': return `Scraping ${step.label || ''} (limit: ${step.limit})`;
+    case 'source_start': return `Scraping ${step.label || ''} (limit: ${step.limit ?? step.quota})`;
     case 'poll':
       if (step.status === 'ok') return `${step.label || ''} scrape done (${step.elapsed}s)`;
       return `Waiting for ${step.label || ''} scrape... (${step.elapsed}s)`;
-    case 'fetch': return `Got ${step.count} posts from ${step.label || ''}`;
+    case 'fetch':
+      if (step.label) return `Got ${step.count} posts from ${step.label}`;
+      return `Got ${step.count} posts (page ${step.page} of ${step.totalPages})`;
+    case 'fetched': return `DDProperty done — ${step.inserted} new, ${step.duplicates} dup, ${step.pagesRead} pages`;
     case 'source_error': return `${step.label || ''} — ${step.error}`;
     case 'batch_progress': return `Processing batch ${step.batch}/${step.total}...`;
     case 'time_limit': return `Time limit — processed ${step.processed} items, skipped ${step.skipped} (next round)`;
     case 'item_progress': return `Processing post ${step.index}/${step.total}...`;
     case 'item':
-      if (step.status === 'inserted') return `Saved — ${step.property_type || ''} (${(step.confidence * 100).toFixed(0)}%)`;
+      if (step.status === 'inserted') {
+        if (step.property_type) return `Saved — ${step.property_type} (${(step.confidence * 100).toFixed(0)}%)`;
+        return `Saved — ${step.title || ''}${step.price ? ' · ' + step.price : ''}${step.images ? ` · ${step.images} imgs` : ''}`;
+      }
       if (step.status === 'duplicate') return 'Duplicate (already in DB)';
       if (step.status === 'low_confidence') return `Not a listing (score: ${step.score})`;
       if (step.status === 'error') return `Error: ${step.error}`;

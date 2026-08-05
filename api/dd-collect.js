@@ -159,22 +159,7 @@ async function processSource(source, supabase, steps) {
   return results;
 }
 
-export async function collectSources(supabase) {
-  const { data: sources, error: sourcesError } = await supabase
-    .from('source_configs')
-    .select('*')
-    .eq('active', true)
-    .eq('platform', 'ddproperty');
-
-  if (sourcesError) {
-    throw new Error(`Failed to load sources: ${sourcesError.message}`);
-  }
-
-  if (!sources || sources.length === 0) {
-    throw new Error('No active DDProperty sources configured.');
-  }
-
-  const steps = [];
+export async function runDDSources(supabase, sources, steps, opts = {}) {
   const allResults = [];
 
   for (const source of sources) {
@@ -191,9 +176,31 @@ export async function collectSources(supabase) {
     duplicates: allResults.filter(r => r.status === 'duplicate').length,
     errors: allResults.filter(r => r.status === 'error').length,
   };
-  steps.push({ type: 'summary', ...summary });
+  if (opts.pushSummary !== false) {
+    steps.push({ type: 'summary', ...summary });
+  }
 
-  return { steps, summary, results: allResults };
+  return { summary, results: allResults };
+}
+
+export async function collectSources(supabase) {
+  const { data: sources, error: sourcesError } = await supabase
+    .from('source_configs')
+    .select('*')
+    .eq('active', true)
+    .eq('platform', 'ddproperty');
+
+  if (sourcesError) {
+    throw new Error(`Failed to load sources: ${sourcesError.message}`);
+  }
+
+  if (!sources || sources.length === 0) {
+    throw new Error('No active DDProperty sources configured.');
+  }
+
+  const steps = [];
+  const { summary, results } = runDDSources(supabase, sources, steps);
+  return { steps, summary, results };
 }
 
 export default async function handler(req, res) {
