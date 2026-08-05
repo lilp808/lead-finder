@@ -7,8 +7,8 @@ const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
 const SEC_CH_UA = '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"';
 
 export const DD_DEFAULT_PAGE_SIZE = 20;
-export const DD_FETCH_RETRIES = 3;
-export const DD_RETRY_DELAY_MS = 1500;
+export const DD_FETCH_RETRIES = 4;
+export const DD_RETRY_DELAY_MS = 3000;
 
 export function buildSearchUrl(baseUrl, page) {
   if (!baseUrl) throw new Error('Missing DDProperty search URL');

@@ -162,12 +162,16 @@ async function processSource(source, supabase, steps) {
 export async function runDDSources(supabase, sources, steps, opts = {}) {
   const allResults = [];
 
-  for (const source of sources) {
+  for (let i = 0; i < sources.length; i++) {
+    const source = sources[i];
     try {
       const sourceResults = await processSource(source, supabase, steps);
       allResults.push(...sourceResults);
     } catch (err) {
       steps.push({ type: 'source_error', status: 'error', label: source.label, error: err.message });
+    }
+    if (i < sources.length - 1 && (opts.sourceGapMs ?? 0) > 0) {
+      await new Promise(r => setTimeout(r, opts.sourceGapMs));
     }
   }
 

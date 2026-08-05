@@ -240,7 +240,7 @@ export default async function handler(req, res) {
     }
 
     if (ddSources.length > 0) {
-      const dd = await runDDSources(supabase, ddSources, steps, { pushSummary: false });
+      const dd = await runDDSources(supabase, ddSources, steps, { pushSummary: false, sourceGapMs: 3000 });
       allResults.push(...dd.results);
     }
 
