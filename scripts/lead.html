@@ -80,7 +80,7 @@ body { font-family: var(--font-family); background: var(--color-bg); color: var(
   border-radius: var(--radius-lg); padding: var(--space-4) var(--space-5);
   margin-bottom: var(--space-5); box-shadow: var(--shadow-sm);
 }
-.filter-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: var(--space-3); align-items: end; }
+.filter-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr; gap: var(--space-3); align-items: end; }
 .filter-grid .field { display: flex; flex-direction: column; gap: var(--space-1); }
 .filter-grid .field label { font-size: 0.72rem; font-weight: 500; color: var(--color-text-secondary); }
 .filter-actions { display: flex; gap: var(--space-2); align-items: flex-end; }
@@ -178,6 +178,8 @@ body { font-family: var(--font-family); background: var(--color-bg); color: var(
 .badge-sold { background: #FCE4EC; color: #C62828; }
 .badge-rented { background: #E0F7FA; color: #00695C; }
 .badge-invalid { background: #F5F5F5; color: #9E9E9E; }
+.badge-fb { background: #E8F0FE; color: #1877F2; }
+.badge-dd { background: #FFF4E5; color: #B45309; }
 
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
@@ -378,6 +380,14 @@ select.input { cursor: pointer; }
       </select>
     </div>
     <div class="field">
+      <label>Source</label>
+      <select class="input" id="fPlatform">
+        <option value="">All</option>
+        <option value="facebook">Facebook</option>
+        <option value="ddproperty">DDProperty</option>
+      </select>
+    </div>
+    <div class="field">
       <label>Province</label>
       <input class="input" type="text" id="fProvince" placeholder="e.g. Bangkok" />
     </div>
@@ -438,6 +448,15 @@ const STATUS_MAP = {
   sold: 'Sold', rented: 'Rented', invalid: 'Invalid',
 };
 
+const PLATFORM_MAP = { facebook: 'Facebook', ddproperty: 'DDProperty' };
+
+const TYPE_LABEL_MAP = {
+  warehouse: 'Warehouse',
+  factory: 'Factory',
+  warehouse_factory: 'Warehouse/Factory',
+  'showroom & commercial': 'Showroom & Commercial',
+};
+
 let currentState = { page: 1 };
 let detailSliderIndex = 0;
 
@@ -471,6 +490,7 @@ function getFilters() {
     status: document.getElementById('fStatus').value,
     property_type: document.getElementById('fType').value,
     province: document.getElementById('fProvince').value.trim(),
+    source_platform: document.getElementById('fPlatform').value,
   };
 }
 
@@ -481,6 +501,7 @@ function getFilterParams() {
   if (f.status) p.set('status', f.status);
   if (f.property_type) p.set('property_type', f.property_type);
   if (f.province) p.set('province', f.province);
+  if (f.source_platform) p.set('source_platform', f.source_platform);
   p.set('page', String(currentState.page));
   p.set('limit', '20');
   return p;
@@ -492,6 +513,7 @@ function resetFilters() {
   document.getElementById('fStatus').value = '';
   document.getElementById('fType').value = '';
   document.getElementById('fProvince').value = '';
+  document.getElementById('fPlatform').value = '';
   currentState.page = 1;
   loadLeads();
 }
@@ -571,6 +593,18 @@ function statusBadge(s) {
   return `<span class="${cls}">${esc(label)}</span>`;
 }
 
+function platformBadge(p) {
+  const label = PLATFORM_MAP[p] || p || '';
+  if (!label) return '';
+  const cls = p === 'ddproperty' ? 'badge badge-dd' : 'badge badge-fb';
+  return `<span class="${cls}"><i data-lucide="${p === 'ddproperty' ? 'building-2' : 'facebook'}" style="width:11px;height:11px"></i>${esc(label)}</span>`;
+}
+
+function typeLabel(t) {
+  if (!t) return '';
+  return TYPE_LABEL_MAP[t] || TYPE_LABEL_MAP[String(t).toLowerCase()] || t;
+}
+
 function listingStatusLabel(s) {
   if (!s) return '';
   const map = { rent: 'For Rent', sale: 'For Sale', both: 'For Rent & For Sale' };
@@ -589,8 +623,8 @@ function renderLeadCard(l) {
     ? `<img src="${esc(thumbUrl)}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<span class=\\'no-img\\'><i data-lucide=\\'image-off\\' style=\\'width:20px;height:20px\\'></i><span>No img</span></span>'"/>`
     : `<span class="no-img"><i data-lucide="image-off" style="width:22px;height:22px"></i><span>No image</span></span>`;
 
-  const typeLabel = l.property_type ? l.property_type : '';
-  const typeHtml = typeLabel ? `<span class="lead-type">${esc(typeLabel)}</span>` : '';
+  const typeVal = typeLabel(l.property_type);
+  const typeHtml = typeVal ? `<span class="lead-type">${esc(typeVal)}</span>` : '';
 
   let priceHtml = '';
   if (l.sale_price) {
@@ -632,7 +666,7 @@ function renderLeadCard(l) {
     <div class="lead-card-inner">
       <div class="lead-thumb">${thumb}</div>
       <div class="lead-body">
-        <div class="lead-head">${typeHtml}${status}</div>
+        <div class="lead-head">${typeHtml}${platformBadge(l.source_platform)}${status}</div>
         ${priceSection}
         ${locHtml}
         ${contactHtml}
@@ -740,6 +774,7 @@ function detailLead(id) {
       document.getElementById('detailTitle').textContent = `\uD83D\uDCCB ${l.property_type || 'Listing'} #${l.id.slice(0, 8)}`;
       let html = '';
       html += '<div class="detail-section"><h3>Listing Info</h3>';
+      html += row('Platform', PLATFORM_MAP[l.source_platform] || l.source_platform);
       html += row('Type', l.property_type);
       html += row('Status', listingStatusLabel(l.listing_status));
       html += row('Sale Price', l.sale_price ? `฿${fmtPriceFull(l.sale_price)}${priceBreakdown(l.sale_price_raw, l.sale_price_unit, l.pricing_area_sqm)}` : '');

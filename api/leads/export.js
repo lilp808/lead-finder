@@ -39,7 +39,7 @@ export default async function handler(req, res) {
       return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { status, property_type, province, search, sort_by = 'collected_at', sort_order = 'desc' } = req.query;
+    const { status, property_type, province, search, source_platform, sort_by = 'collected_at', sort_order = 'desc' } = req.query;
 
     let query = supabase.from('leads').select('*');
 
@@ -53,6 +53,7 @@ export default async function handler(req, res) {
     }
     if (property_type) query = query.eq('property_type', property_type);
     if (province) query = query.ilike('province', `%${province}%`);
+    if (source_platform) query = query.eq('source_platform', source_platform);
     if (search) {
       query = query.or(
         `raw_post_text.ilike.%${search}%,author_name.ilike.%${search}%,contact_name.ilike.%${search}%,address.ilike.%${search}%,phone_number.ilike.%${search}%,line_id.ilike.%${search}%`
