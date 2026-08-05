@@ -604,6 +604,7 @@ function textFor(step) {
       if (step.status === 'ok') return `${step.label || ''} scrape done (${step.elapsed}s)`;
       return `Waiting for ${step.label || ''} scrape... (${step.elapsed}s)`;
     case 'fetch':
+      if (step.status === 'error') return `DDProperty fetch error (page ${step.page}): ${step.error}`;
       if (step.label) return `Got ${step.count} posts from ${step.label}`;
       const tp = Number(step.totalPages);
       if (tp > 0) return `Got ${step.count} posts (page ${step.page} of ${tp})`;

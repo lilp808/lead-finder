@@ -7,6 +7,8 @@ const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
 const SEC_CH_UA = '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"';
 
 export const DD_DEFAULT_PAGE_SIZE = 20;
+export const DD_FETCH_RETRIES = 3;
+export const DD_RETRY_DELAY_MS = 1500;
 
 export function buildSearchUrl(baseUrl, page) {
   if (!baseUrl) throw new Error('Missing DDProperty search URL');
@@ -61,13 +63,24 @@ async function fetchHtml(url) {
 
 export async function fetchSearchPage(searchUrl, page = 1) {
   const url = buildSearchUrl(searchUrl, page);
-  const html = await fetchHtml(url);
+  let lastErr;
 
-  if (html.includes('Just a moment...')) {
-    throw new Error(`DD Cloudflare challenge on page ${page}`);
+  for (let attempt = 1; attempt <= DD_FETCH_RETRIES; attempt++) {
+    try {
+      const html = await fetchHtml(url);
+      if (html.includes('Just a moment...')) {
+        throw new Error(`DD Cloudflare challenge on page ${page}`);
+      }
+      return parseSearchHtml(html);
+    } catch (err) {
+      lastErr = err;
+      if (attempt < DD_FETCH_RETRIES) {
+        await new Promise(r => setTimeout(r, DD_RETRY_DELAY_MS * attempt));
+      }
+    }
   }
 
-  return parseSearchHtml(html);
+  throw lastErr;
 }
 
 export function parseSearchHtml(html) {
