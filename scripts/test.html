@@ -605,7 +605,9 @@ function textFor(step) {
       return `Waiting for ${step.label || ''} scrape... (${step.elapsed}s)`;
     case 'fetch':
       if (step.label) return `Got ${step.count} posts from ${step.label}`;
-      return `Got ${step.count} posts (page ${step.page} of ${step.totalPages})`;
+      const tp = Number(step.totalPages);
+      if (tp > 0) return `Got ${step.count} posts (page ${step.page} of ${tp})`;
+      return `Got ${step.count} posts (page ${step.page})`;
     case 'fetched': return `DDProperty done — ${step.inserted} new, ${step.duplicates} dup, ${step.pagesRead} pages`;
     case 'source_error': return `${step.label || ''} — ${step.error}`;
     case 'batch_progress': return `Processing batch ${step.batch}/${step.total}...`;
