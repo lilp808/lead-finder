@@ -32,9 +32,10 @@ export default async function handler(req, res) {
     return res.status(200).json({ ok: true, message: 'no schedule matched current time' });
   }
 
-  console.log(`cron-check: schedule "${matched.label}" matched (${matched.hour}:${String(matched.minute).padStart(2, '0')} UTC), triggering collect`);
+  console.log(`cron-check: schedule "${matched.label}" matched (${matched.hour}:${String(matched.minute).padStart(2, '0')} UTC), triggering ${matched.endpoint}`);
 
-  const collectUrl = `https://${req.headers.host}/api/collect`;
+  const collectPath = matched.endpoint || '/api/collect';
+  const collectUrl = `https://${req.headers.host}${collectPath}`;
 
   try {
     const collectRes = await fetch(collectUrl, {

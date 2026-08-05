@@ -79,6 +79,9 @@ alter table leads add column if not exists sale_price_unit text;
 alter table leads add column if not exists pricing_area_sqm numeric;
 alter table leads add column if not exists land_area_sqm numeric;
 alter table leads add column if not exists building_area_sqm numeric;
+alter table leads add column if not exists bedrooms numeric;
+alter table leads add column if not exists bathrooms numeric;
+alter table leads add column if not exists tenure text;
 
 -- Storage bucket: create via Dashboard > Storage > Create Bucket
 -- Name: lead-images
@@ -109,8 +112,22 @@ create table if not exists cron_schedules (
   minute    int not null default 0 check (minute >= 0 and minute <= 59),
   label     text,
   active    boolean default true,
+  endpoint  text default '/api/collect',
   created_at timestamptz default now()
 );
 
 insert into cron_schedules (hour, minute, label, active) values
   (6, 0, 'เช้า 06:00', true);
+
+-- Migration for existing DBs
+alter table cron_schedules add column if not exists endpoint text default '/api/collect';
+
+-- DDProperty source (warehouse/factory for rent) — test quota 10/day
+insert into source_configs (platform, label, source_url, results_limit, active)
+values (
+  'ddproperty',
+  'DDProperty Warehouse/Rent (test 10)',
+  'https://www.ddproperty.com/en/property-for-rent?locale=th&listingType=rent&propertyTypeGroup=C&propertyTypeCode=WAR&isCommercial=true',
+  10,
+  true
+);

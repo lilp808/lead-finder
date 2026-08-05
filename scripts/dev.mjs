@@ -16,6 +16,7 @@ const routes = {
   '/': ROOT,
   '/lead': LEAD,
   '/api/collect': () => import('../api/collect.js').then(m => m.default),
+  '/api/dd-collect': () => import('../api/dd-collect.js').then(m => m.default),
   '/api/webhook': () => import('../api/webhook.js').then(m => m.default),
   '/api/sources': () => import('../api/sources/index.js').then(m => m.default),
   '/api/leads/export': () => import('../api/leads/export.js').then(m => m.default),
