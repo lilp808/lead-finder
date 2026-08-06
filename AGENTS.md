@@ -58,3 +58,17 @@ Read active sources from DB → start Apify runs with webhook URLs per source
 ## Constraint
 
 Platform is property-lead-intelligence, not a Facebook scraper. Facebook is source #1; new sources must be pluggable without pipeline rewrites.
+
+## Collector interface (`src/collectors/`)
+
+Each platform lives in one module with a uniform interface, registered in `src/collectors/index.js` (`collectors` map). Adding a platform = add one file + one registry line; `/api/collect` dispatches generically.
+
+- `platform` (string), `label` (string)
+- `isAvailable()` → boolean (env checks; e.g. facebook→`APIFY_API_KEY`, ddproperty→`DD_ENABLED==='1'`)
+- `disabledHint` (string) — shown in the `platform_skipped` log step when unavailable
+- `collect({ supabase, sources, steps, opts })` → `{ results, skipped }`
+  - Pushes its own log steps (`source_start`, `fetch`, `item`, `fetched`, `source_error`, …) into `steps`.
+  - Do NOT push a `summary` step — the dispatcher adds one combined summary.
+  - `results[]` items use `status: 'inserted' | 'duplicate' | 'error' | 'low_confidence'`.
+- Async path note: `api/webhook.js` reuses `facebook.processItems` (steps omitted). `api/collect.js` is the sync path.
+- Transport choice (e.g. future VPS proxy for DD) lives inside the collector / its lib — the dispatcher stays generic.
