@@ -6,7 +6,7 @@ const routes = {
   '/': () => import('../api/index.js').then(m => m.default),
   '/lead': () => import('../api/index.js').then(m => m.default),
   '/api/collect': () => import('../api/collect.js').then(m => m.default),
-  '/api/__ddtest': () => import('../api/__ddtest.js').then(m => m.default),
+  '/api/ddtest': () => import('../api/ddtest.js').then(m => m.default),
   '/api/dd-collect': () => import('../api/dd-collect.js').then(m => m.default),
   '/api/webhook': () => import('../api/webhook.js').then(m => m.default),
   '/api/sources': () => import('../api/sources/index.js').then(m => m.default),
