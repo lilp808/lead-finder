@@ -60,10 +60,40 @@ async function tryAxios() {
   }
 }
 
+async function probeUndici(url) {
+  try {
+    const res = await fetch(url, {
+      headers: { 'User-Agent': UA, 'Accept': 'application/json', 'Accept-Language': 'en-US,en;q=0.9' },
+      signal: AbortSignal.timeout(25000),
+    });
+    let body = '';
+    try { body = await res.text(); } catch {}
+    return { ok: true, status: res.status, size: body.length, classification: classify(body), first: body.slice(0, 80) };
+  } catch (err) {
+    return { ok: false, code: err.cause?.code || err.code || err.name, message: (err.message || '').slice(0, 160) };
+  }
+}
+
+async function probeAxios(url) {
+  try {
+    const res = await axios.get(url, { timeout: 25000, maxContentLength: 20 * 1024 * 1024, headers: { 'User-Agent': UA, 'Accept': 'application/json', 'Accept-Language': 'en-US,en;q=0.9' } });
+    const text = typeof res.data === 'string' ? res.data : JSON.stringify(res.data);
+    return { ok: true, status: res.status, size: text.length, classification: classify(text), first: text.slice(0, 80) };
+  } catch (err) {
+    return { ok: false, code: err.code || err.name, status: err.response?.status, message: (err.message || '').slice(0, 160) };
+  }
+}
+
 export default async function handler(req, res) {
-  const out = { url: TEST_URL, node: process.version, at: new Date().toISOString() };
-  out.curl = await tryCurl();
-  out.undici = await tryUndici();
-  out.axios = await tryAxios();
-  return res.status(200).json(out);
+  const hosts = [
+    'https://search-api.propertyguru.com',
+    'https://api-www.propertyguru.com',
+    'https://www.propertyguru.com.sg/api',
+    'https://api.propertyguru.com.sg/apigateway/property/sg/1/listing/list',
+  ];
+  const probes = {};
+  for (const h of hosts) {
+    probes[h] = { undici: await probeUndici(h), axios: await probeAxios(h) };
+  }
+  return res.status(200).json({ at: new Date().toISOString(), node: process.version, probes });
 }
