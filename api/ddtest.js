@@ -85,11 +85,14 @@ async function probeAxios(url) {
 }
 
 export default async function handler(req, res) {
+  const bid = 'consumerweb-search-aba73f1a84';
   const hosts = [
     'https://search-api.propertyguru.com',
     'https://api-www.propertyguru.com',
     'https://www.propertyguru.com.sg/api',
     'https://api.propertyguru.com.sg/apigateway/property/sg/1/listing/list',
+    `https://www.ddproperty.com/_next/data/${bid}/en/property-for-rent.json?listingType=rent&propertyTypeGroup=C&propertyTypeCode=WAR&isCommercial=true&locale=th&page=1`,
+    'https://www.ddproperty.com/api/listing/search?listingType=rent&propertyTypeGroup=C&propertyTypeCode=WAR&isCommercial=true&page=1',
   ];
   const probes = {};
   for (const h of hosts) {
