@@ -1,4 +1,5 @@
 import { fetchSearchPage, DD_DEFAULT_PAGE_SIZE } from '../src/lib/ddproperty.js';
+import { assignAgentTeam } from '../src/lib/agent-team.js';
 import {
   getClient,
   downloadAndUploadImages,
@@ -44,6 +45,11 @@ function buildLead(listing, source) {
     ai_summary: listing.title,
     ai_tags: listing.badges,
     confidence_score: 1,
+    agent_team: assignAgentTeam({
+      province: listing.province,
+      district: listing.district,
+      sub_district: listing.subDistCode,
+    }),
   };
 }
 

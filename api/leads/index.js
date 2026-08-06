@@ -6,7 +6,7 @@ export default async function handler(req, res) {
 
     if (req.method === 'GET') {
       const {
-        status, property_type, province, search, source_platform, source_name,
+        status, property_type, province, search, source_platform, source_name, agent_team,
         page = '1', limit = '20',
         sort_by = 'collected_at', sort_order = 'desc',
       } = req.query;
@@ -30,6 +30,13 @@ export default async function handler(req, res) {
       if (province) query = query.ilike('province', `%${province}%`);
       if (source_platform) query = query.eq('source_platform', source_platform);
       if (source_name) query = query.eq('source_name', source_name);
+      if (agent_team) {
+        if (agent_team === 'none' || agent_team === 'unassigned') {
+          query = query.is('agent_team', null);
+        } else {
+          query = query.eq('agent_team', agent_team);
+        }
+      }
       if (search) {
         query = query.or(
           `raw_post_text.ilike.%${search}%,author_name.ilike.%${search}%,contact_name.ilike.%${search}%,address.ilike.%${search}%,phone_number.ilike.%${search}%,line_id.ilike.%${search}%`
@@ -59,7 +66,7 @@ export default async function handler(req, res) {
       if (!updates || Object.keys(updates).length === 0) {
         return res.status(400).json({ error: 'updates object is required' });
       }
-      const allowed = ['lead_status', 'notes', 'assigned_to'];
+      const allowed = ['lead_status', 'notes', 'assigned_to', 'agent_team'];
       const clean = {};
       for (const key of allowed) {
         if (updates[key] !== undefined) clean[key] = updates[key];

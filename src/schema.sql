@@ -62,6 +62,7 @@ create table if not exists leads (
   assigned_at     timestamptz,
   call_history    jsonb,
   appointment_history jsonb,
+  agent_team      text,
 
   -- Roof hunting
   roof_gps        point,
@@ -127,6 +128,9 @@ alter table cron_schedules add column if not exists endpoint text default '/api/
 -- Migration for existing DBs (source attribution)
 alter table leads add column if not exists source_config_id uuid;
 alter table leads add column if not exists source_name text;
+
+-- Migration for existing DBs (agent team A/B/C)
+alter table leads add column if not exists agent_team text;
 
 -- DDProperty source (warehouse/factory for rent) — test quota 10/day
 insert into source_configs (platform, label, source_url, results_limit, active)

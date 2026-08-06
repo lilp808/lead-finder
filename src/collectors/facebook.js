@@ -1,5 +1,6 @@
 import { startActorRun, getDatasetItems } from '../lib/apify.js';
 import { extractProperty } from '../lib/groq.js';
+import { assignAgentTeam } from '../lib/agent-team.js';
 import {
   downloadAndUploadImages,
   insertLead,
@@ -103,6 +104,7 @@ export async function processOneItem(item, source, supabase, modelOptions = {}) 
     ai_tags: extraction.ai_tags,
     confidence_score: extraction.confidence_score,
     lead_score: extraction.lead_score ?? null,
+    agent_team: assignAgentTeam(extraction),
   };
 
   try {

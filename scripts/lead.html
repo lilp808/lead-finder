@@ -80,7 +80,7 @@ body { font-family: var(--font-family); background: var(--color-bg); color: var(
   border-radius: var(--radius-lg); padding: var(--space-4) var(--space-5);
   margin-bottom: var(--space-5); box-shadow: var(--shadow-sm);
 }
-.filter-grid { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr 1fr 1fr 1fr; gap: var(--space-3); align-items: end; }
+.filter-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr; gap: var(--space-3); align-items: end; }
 .filter-grid .field { display: flex; flex-direction: column; gap: var(--space-1); }
 .filter-grid .field label { font-size: 0.72rem; font-weight: 500; color: var(--color-text-secondary); }
 .filter-actions { display: flex; gap: var(--space-2); align-items: flex-end; }
@@ -180,6 +180,10 @@ body { font-family: var(--font-family); background: var(--color-bg); color: var(
 .badge-invalid { background: #F5F5F5; color: #9E9E9E; }
 .badge-fb { background: #E8F0FE; color: #1877F2; }
 .badge-dd { background: #FFF4E5; color: #B45309; }
+.badge-team-a { background: #E8F0FE; color: #1565C0; }
+.badge-team-b { background: #E8F5E9; color: #2E7D32; }
+.badge-team-c { background: #FFF4E5; color: #B45309; }
+.badge-team-none { background: #F5F5F5; color: #9E9E9E; }
 
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
@@ -394,6 +398,16 @@ select.input { cursor: pointer; }
       </select>
     </div>
     <div class="field">
+      <label>Agent Team</label>
+      <select class="input" id="fAgentTeam">
+        <option value="">All</option>
+        <option value="A">A</option>
+        <option value="B">B</option>
+        <option value="C">C</option>
+        <option value="unassigned">Unassigned</option>
+      </select>
+    </div>
+    <div class="field">
       <label>Province</label>
       <input class="input" type="text" id="fProvince" placeholder="e.g. Bangkok" />
     </div>
@@ -517,6 +531,7 @@ function getFilters() {
     province: document.getElementById('fProvince').value.trim(),
     source_platform: document.getElementById('fPlatform').value,
     source_name: document.getElementById('fSourceName').value,
+    agent_team: document.getElementById('fAgentTeam').value,
   };
 }
 
@@ -529,6 +544,7 @@ function getFilterParams() {
   if (f.province) p.set('province', f.province);
   if (f.source_platform) p.set('source_platform', f.source_platform);
   if (f.source_name) p.set('source_name', f.source_name);
+  if (f.agent_team) p.set('agent_team', f.agent_team);
   p.set('page', String(currentState.page));
   p.set('limit', '20');
   return p;
@@ -542,6 +558,7 @@ function resetFilters() {
   document.getElementById('fProvince').value = '';
   document.getElementById('fPlatform').value = '';
   document.getElementById('fSourceName').value = '';
+  document.getElementById('fAgentTeam').value = '';
   currentState.page = 1;
   loadLeads();
 }
@@ -633,6 +650,12 @@ function sourceNameBadge(name) {
   return `<span class="badge badge-gold" title="Source config">${esc(name)}</span>`;
 }
 
+function teamBadge(t) {
+  if (!t) return `<span class="badge badge-team-none" title="Needs review">No team</span>`;
+  const cls = t.toUpperCase() === 'A' ? 'badge-team-a' : t.toUpperCase() === 'B' ? 'badge-team-b' : 'badge-team-c';
+  return `<span class="badge ${cls}" title="Agent team">Team ${esc(t.toUpperCase())}</span>`;
+}
+
 function typeLabel(t) {
   if (!t) return '';
   return TYPE_LABEL_MAP[t] || TYPE_LABEL_MAP[String(t).toLowerCase()] || t;
@@ -699,7 +722,7 @@ function renderLeadCard(l) {
     <div class="lead-card-inner">
       <div class="lead-thumb">${thumb}</div>
       <div class="lead-body">
-        <div class="lead-head">${typeHtml}${platformBadge(l.source_platform)}${sourceNameBadge(l.source_name)}${status}</div>
+        <div class="lead-head">${typeHtml}${platformBadge(l.source_platform)}${sourceNameBadge(l.source_name)}${teamBadge(l.agent_team)}${status}</div>
         ${priceSection}
         ${locHtml}
         ${contactHtml}
@@ -834,6 +857,7 @@ function detailLead(id) {
       html += '</div>';
       html += '<div class="detail-section"><h3>Internal</h3>';
       html += row('Lead Status', STATUS_MAP[l.lead_status] || l.lead_status);
+      html += row('Agent Team', l.agent_team ? `Team ${l.agent_team.toUpperCase()}` : '');
       html += row('Notes', l.notes);
       html += row('Assigned To', l.assigned_to);
       html += row('Posted', l.posted_at ? new Date(l.posted_at).toLocaleString('en-US') : '');

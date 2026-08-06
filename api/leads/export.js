@@ -6,7 +6,7 @@ const CSV_COLS = [
   'province', 'district', 'sub_district', 'address',
   'contact_name', 'phone_number', 'line_id', 'whatsapp', 'owner_or_agent',
   'lead_status', 'confidence_score', 'lead_score', 'ai_summary',
-  'assigned_to',
+  'assigned_to', 'agent_team',
 ];
 
 function escapeCsv(val) {
@@ -39,7 +39,7 @@ export default async function handler(req, res) {
       return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { status, property_type, province, search, source_platform, sort_by = 'collected_at', sort_order = 'desc' } = req.query;
+    const { status, property_type, province, search, source_platform, source_name, agent_team, sort_by = 'collected_at', sort_order = 'desc' } = req.query;
 
     let query = supabase.from('leads').select('*');
 
@@ -54,6 +54,14 @@ export default async function handler(req, res) {
     if (property_type) query = query.eq('property_type', property_type);
     if (province) query = query.ilike('province', `%${province}%`);
     if (source_platform) query = query.eq('source_platform', source_platform);
+    if (source_name) query = query.eq('source_name', source_name);
+    if (agent_team) {
+      if (agent_team === 'none' || agent_team === 'unassigned') {
+        query = query.is('agent_team', null);
+      } else {
+        query = query.eq('agent_team', agent_team);
+      }
+    }
     if (search) {
       query = query.or(
         `raw_post_text.ilike.%${search}%,author_name.ilike.%${search}%,contact_name.ilike.%${search}%,address.ilike.%${search}%,phone_number.ilike.%${search}%,line_id.ilike.%${search}%`

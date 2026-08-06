@@ -72,3 +72,13 @@ Each platform lives in one module with a uniform interface, registered in `src/c
   - `results[]` items use `status: 'inserted' | 'duplicate' | 'error' | 'low_confidence'`.
 - Async path note: `api/webhook.js` reuses `facebook.processItems` (steps omitted). `api/collect.js` is the sync path.
 - Transport choice (e.g. future VPS proxy for DD) lives inside the collector / its lib — the dispatcher stays generic.
+
+## Agent Team (A/B/C)
+
+Leads get `agent_team` ('A'|'B'|'C'|null) via **deterministic rules** in `src/lib/agent-team.js` — never AI-classified, so no wrong assignment. Compute from `province`/`district` at insert time (facebook + ddproperty) and recompute in `api/leads/[id].js` when location is edited (unless `agent_team` is overridden manually).
+
+- **A**: Samut Prakan, Chachoengsao, Samut Sakhon + Bangkok (Bang Khun Thian, Bang Na, Lat Krabang, Lam Phak Chi, Phra Khanong, Prawet, Saphan Sung, Suan Luang)
+- **B**: Chonburi, Rayong
+- **C**: Ayutthaya, Pathum Thani, Nonthaburi, Nakhon Pathom + Bangkok (Bang Kapi, Bang Khen, Bueng Kum, Chatuchak, Don Mueang, Khan Na Yao, Khlong Sam Wa, Lak Si, Lat Phrao, Min Buri, Sai Mai, Wang Thonglang)
+- Lookup is English-first (DD) with Thai aliases (Facebook). Bangkok → match district list first; unknown Bangkok district or unknown province → `null` (needs review), never guessed.
+- Backfill existing rows: `node --env-file=.env.local scripts/backfill-agent-team.mjs`

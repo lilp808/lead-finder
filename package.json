@@ -6,6 +6,8 @@
   "scripts": {
     "setup:db": "node scripts/setup.mjs",
     "scrape": "node --env-file .env.local scripts/scrape.mjs",
+    "backfill:team": "node --env-file .env.local scripts/backfill-agent-team.mjs",
+    "test:team": "node scripts/agent-team.test.mjs",
     "dev": "node --env-file .env.local --watch scripts/dev.mjs"
   },
   "devDependencies": {
