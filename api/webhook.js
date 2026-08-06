@@ -34,10 +34,15 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, message: 'no items' });
     }
 
-    const sourceUrl = req.body?.webhook?.data?.groupUrl || '';
+    const webhookData = req.body?.webhook?.data || {};
+    const source = {
+      id: webhookData.sourceId || null,
+      label: webhookData.sourceName || null,
+      source_url: webhookData.groupUrl || '',
+    };
 
     const supabase = getClient();
-    const { results, skipped } = await processItems(items, sourceUrl, supabase);
+    const { results, skipped } = await processItems(items, source, supabase);
 
     return res.status(200).json({
       ok: true,

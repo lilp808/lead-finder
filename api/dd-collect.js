@@ -9,13 +9,15 @@ const BATCH_SIZE = 2;
 const TIME_LIMIT_SEC = 55;
 const IMAGES_PER_POST = 10;
 
-function buildLead(listing, sourceUrl) {
+function buildLead(listing, source) {
   const leadId = crypto.randomUUID();
   return {
     id: leadId,
     post_url: listing.url,
-    source_url: sourceUrl,
+    source_url: source.source_url,
     source_platform: 'ddproperty',
+    source_config_id: source.id || null,
+    source_name: source.label || null,
     posted_at: listing.postedAtUnix ? new Date(listing.postedAtUnix * 1000).toISOString() : null,
     property_type: listing.propertyType,
     listing_status: listing.statusCode === 'ACT' ? 'active' : listing.statusCode || null,
@@ -53,7 +55,7 @@ function isDuplicateError(err) {
   return err?.message?.includes('duplicate key') || err?.code === '23505';
 }
 
-async function processOneListing(listing, sourceUrl, supabase) {
+async function processOneListing(listing, source, supabase) {
   if (!listing.url) return { id: listing.id, status: 'no_url' };
 
   const { data: existing } = await supabase
@@ -66,7 +68,7 @@ async function processOneListing(listing, sourceUrl, supabase) {
     return { id: listing.id, status: 'duplicate' };
   }
 
-  const lead = buildLead(listing, sourceUrl);
+  const lead = buildLead(listing, source);
 
   try {
     lead.image_urls = await downloadAndUploadImages(lead.id, listing.imageUrls.slice(0, IMAGES_PER_POST));
@@ -129,7 +131,7 @@ async function processSource(source, supabase, steps) {
 
       const batch = result.listings.slice(i, i + BATCH_SIZE);
       const batchResults = await Promise.all(
-        batch.map(listing => processOneListing(listing, source_url, supabase).catch(err => ({
+        batch.map(listing => processOneListing(listing, source, supabase).catch(err => ({
           id: listing.id,
           status: 'error',
           error: err.message,

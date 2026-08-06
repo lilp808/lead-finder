@@ -9,6 +9,8 @@ create table if not exists leads (
   post_url        text unique not null,
   source_url      text not null,
   source_platform text not null default 'facebook',
+  source_config_id uuid,
+  source_name     text,
   author_name     text,
   author_url      text,
   posted_at       timestamptz,
@@ -121,6 +123,10 @@ insert into cron_schedules (hour, minute, label, active) values
 
 -- Migration for existing DBs
 alter table cron_schedules add column if not exists endpoint text default '/api/collect';
+
+-- Migration for existing DBs (source attribution)
+alter table leads add column if not exists source_config_id uuid;
+alter table leads add column if not exists source_name text;
 
 -- DDProperty source (warehouse/factory for rent) — test quota 10/day
 insert into source_configs (platform, label, source_url, results_limit, active)

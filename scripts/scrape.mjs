@@ -31,13 +31,10 @@ async function main() {
     process.exit(1);
   }
 
-  const groupUrls = sources.map(s => s.source_url);
-  const resultsLimits = Object.fromEntries(sources.map(s => [s.source_url, s.results_limit]));
-
   console.log(`Triggering Apify runs for ${sources.length} source(s)...`);
   sources.forEach(s => console.log(`  - ${s.label}: ${s.source_url} (limit: ${s.results_limit})`));
 
-  const results = await startAllRuns(groupUrls, WEBHOOK_URL);
+  const results = await startAllRuns(sources, WEBHOOK_URL);
 
   for (let i = 0; i < results.length; i++) {
     const source = sources[i];

@@ -35,7 +35,7 @@ export function mapApifyItem(item) {
   };
 }
 
-export async function processOneItem(item, sourceUrl, supabase, modelOptions = {}) {
+export async function processOneItem(item, source, supabase, modelOptions = {}) {
   const postUrl = item.url || item.postUrl;
   if (!postUrl) return null;
 
@@ -66,8 +66,10 @@ export async function processOneItem(item, sourceUrl, supabase, modelOptions = {
   const lead = {
     id: leadId,
     post_url: postUrl,
-    source_url: sourceUrl,
+    source_url: source.source_url,
     source_platform: 'facebook',
+    source_config_id: source.id || null,
+    source_name: source.label || null,
     author_name: item.authorName,
     author_url: item.authorUrl,
     posted_at: item.date || item.createdAt || null,
@@ -114,7 +116,7 @@ export async function processOneItem(item, sourceUrl, supabase, modelOptions = {
   }
 }
 
-export async function processItems(items, sourceUrl, supabase, modelOptions = {}, steps = null) {
+export async function processItems(items, source, supabase, modelOptions = {}, steps = null) {
   const startTime = Date.now();
   const results = [];
   let skipped = 0;
@@ -131,7 +133,7 @@ export async function processItems(items, sourceUrl, supabase, modelOptions = {}
     if (steps) steps.push({ type: 'batch_progress', status: 'processing', batch: Math.floor(i / BATCH_SIZE) + 1, total: Math.ceil(items.length / BATCH_SIZE) });
 
     const batchResults = await Promise.all(
-      batch.map(item => processOneItem(item, sourceUrl, supabase, modelOptions).catch(err => ({
+      batch.map(item => processOneItem(item, source, supabase, modelOptions).catch(err => ({
         postUrl: item.url || item.postUrl,
         status: 'error',
         error: err.message,
@@ -211,7 +213,7 @@ export async function collect({ supabase, sources, steps, opts = {} }) {
       const items = await fetchSourceItems(source, steps);
       steps.push({ type: 'fetch', status: 'ok', count: items.length, label: source.label });
       const modelOptions = { provider: source.model_provider, model: source.model_name };
-      const { results: r, skipped } = await processItems(items, source.source_url, supabase, modelOptions, steps);
+      const { results: r, skipped } = await processItems(items, source, supabase, modelOptions, steps);
       results.push(...r);
       totalSkipped += skipped;
     } catch (err) {

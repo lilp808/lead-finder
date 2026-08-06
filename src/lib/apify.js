@@ -9,7 +9,7 @@ async function safeJson(res) {
   }
 }
 
-export async function startActorRun(groupUrl, webhookUrl, resultsLimit) {
+export async function startActorRun(groupUrl, webhookUrl, resultsLimit, webhookData = {}) {
   const actorId = process.env.APIFY_ACTOR_ID.replace('/', '~');
   const url = groupUrl.trim();
 
@@ -23,7 +23,7 @@ export async function startActorRun(groupUrl, webhookUrl, resultsLimit) {
     body.webhookUrls = [{
       requestUrl: webhookUrl,
       eventTypes: ['ACTOR.RUN.SUCCEEDED'],
-      data: { groupUrl: url },
+      data: { groupUrl: url, ...webhookData },
     }];
   }
 
@@ -55,6 +55,9 @@ export async function getDatasetItems(datasetId) {
   return safeJson(res);
 }
 
-export async function startAllRuns(groupUrls, webhookUrl, resultsLimit) {
-  return Promise.all(groupUrls.map(url => startActorRun(url, webhookUrl, resultsLimit)));
+export async function startAllRuns(sources, webhookUrl, resultsLimit) {
+  return Promise.all(sources.map(s => startActorRun(s.source_url, webhookUrl, s.results_limit, {
+    sourceId: s.id,
+    sourceName: s.label,
+  })));
 }

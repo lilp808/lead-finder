@@ -1,7 +1,7 @@
 import { getClient } from '../../src/lib/supabase.js';
 
 const CSV_COLS = [
-  'id', 'post_url', 'source_url', 'source_platform', 'author_name', 'posted_at', 'collected_at',
+  'id', 'post_url', 'source_url', 'source_platform', 'source_config_id', 'source_name', 'author_name', 'posted_at', 'collected_at',
   'property_type', 'listing_status', 'rent_price', 'sale_price', 'land_area', 'building_area',
   'province', 'district', 'sub_district', 'address',
   'contact_name', 'phone_number', 'line_id', 'whatsapp', 'owner_or_agent',

@@ -80,7 +80,7 @@ body { font-family: var(--font-family); background: var(--color-bg); color: var(
   border-radius: var(--radius-lg); padding: var(--space-4) var(--space-5);
   margin-bottom: var(--space-5); box-shadow: var(--shadow-sm);
 }
-.filter-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr; gap: var(--space-3); align-items: end; }
+.filter-grid { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr 1fr 1fr 1fr; gap: var(--space-3); align-items: end; }
 .filter-grid .field { display: flex; flex-direction: column; gap: var(--space-1); }
 .filter-grid .field label { font-size: 0.72rem; font-weight: 500; color: var(--color-text-secondary); }
 .filter-actions { display: flex; gap: var(--space-2); align-items: flex-end; }
@@ -388,6 +388,12 @@ select.input { cursor: pointer; }
       </select>
     </div>
     <div class="field">
+      <label>Source Config</label>
+      <select class="input" id="fSourceName">
+        <option value="">All</option>
+      </select>
+    </div>
+    <div class="field">
       <label>Province</label>
       <input class="input" type="text" id="fProvince" placeholder="e.g. Bangkok" />
     </div>
@@ -464,7 +470,26 @@ window.onload = function () {
   lucide.createIcons();
   loadLeads();
   loadStats();
+  loadSourceOptions();
 };
+
+async function loadSourceOptions() {
+  try {
+    const res = await fetch(API_BASE + '/api/sources');
+    if (!res.ok) return;
+    const data = await res.json();
+    const sel = document.getElementById('fSourceName');
+    const seen = new Set();
+    for (const s of data || []) {
+      if (!s.label || seen.has(s.label)) continue;
+      seen.add(s.label);
+      const opt = document.createElement('option');
+      opt.value = s.label;
+      opt.textContent = s.label;
+      sel.appendChild(opt);
+    }
+  } catch (e) { /* ignore */ }
+}
 
 function showToast(msg) {
   const t = document.getElementById('toast');
@@ -491,6 +516,7 @@ function getFilters() {
     property_type: document.getElementById('fType').value,
     province: document.getElementById('fProvince').value.trim(),
     source_platform: document.getElementById('fPlatform').value,
+    source_name: document.getElementById('fSourceName').value,
   };
 }
 
@@ -502,6 +528,7 @@ function getFilterParams() {
   if (f.property_type) p.set('property_type', f.property_type);
   if (f.province) p.set('province', f.province);
   if (f.source_platform) p.set('source_platform', f.source_platform);
+  if (f.source_name) p.set('source_name', f.source_name);
   p.set('page', String(currentState.page));
   p.set('limit', '20');
   return p;
@@ -514,6 +541,7 @@ function resetFilters() {
   document.getElementById('fType').value = '';
   document.getElementById('fProvince').value = '';
   document.getElementById('fPlatform').value = '';
+  document.getElementById('fSourceName').value = '';
   currentState.page = 1;
   loadLeads();
 }
@@ -600,6 +628,11 @@ function platformBadge(p) {
   return `<span class="${cls}"><i data-lucide="${p === 'ddproperty' ? 'building-2' : 'facebook'}" style="width:11px;height:11px"></i>${esc(label)}</span>`;
 }
 
+function sourceNameBadge(name) {
+  if (!name) return '';
+  return `<span class="badge badge-gold" title="Source config">${esc(name)}</span>`;
+}
+
 function typeLabel(t) {
   if (!t) return '';
   return TYPE_LABEL_MAP[t] || TYPE_LABEL_MAP[String(t).toLowerCase()] || t;
@@ -666,7 +699,7 @@ function renderLeadCard(l) {
     <div class="lead-card-inner">
       <div class="lead-thumb">${thumb}</div>
       <div class="lead-body">
-        <div class="lead-head">${typeHtml}${platformBadge(l.source_platform)}${status}</div>
+        <div class="lead-head">${typeHtml}${platformBadge(l.source_platform)}${sourceNameBadge(l.source_name)}${status}</div>
         ${priceSection}
         ${locHtml}
         ${contactHtml}
@@ -775,6 +808,7 @@ function detailLead(id) {
       let html = '';
       html += '<div class="detail-section"><h3>Listing Info</h3>';
       html += row('Platform', PLATFORM_MAP[l.source_platform] || l.source_platform);
+      html += row('Source Config', l.source_name);
       html += row('Type', l.property_type);
       html += row('Status', listingStatusLabel(l.listing_status));
       html += row('Sale Price', l.sale_price ? `฿${fmtPriceFull(l.sale_price)}${priceBreakdown(l.sale_price_raw, l.sale_price_unit, l.pricing_area_sqm)}` : '');
