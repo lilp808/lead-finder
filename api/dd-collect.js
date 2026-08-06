@@ -213,6 +213,14 @@ export default async function handler(req, res) {
       return res.status(405).json({ error: 'Method not allowed' });
     }
 
+    if (process.env.DD_ENABLED !== '1') {
+      return res.status(200).json({
+        ok: false,
+        steps: [{ type: 'dd_skipped', status: 'ok', count: 0, label: 'DDProperty', hint: 'DD_ENABLED is not set on this server. Run locally: node --env-file=.env.local scripts/dd-collect.mjs' }],
+        summary: { inserted: 0, duplicates: 0, errors: 0 },
+      });
+    }
+
     const supabase = getClient();
     const { steps, summary } = await collectSources(supabase);
 

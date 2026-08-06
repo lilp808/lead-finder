@@ -610,6 +610,7 @@ function textFor(step) {
       if (tp > 0) return `Got ${step.count} posts (page ${step.page} of ${tp})`;
       return `Got ${step.count} posts (page ${step.page})`;
     case 'fetched': return `DDProperty done — ${step.inserted} new, ${step.duplicates} dup, ${step.pagesRead} pages`;
+    case 'dd_skipped': return `${step.label} skipped (${step.count} source${step.count > 1 ? 's' : ''}) — ${step.hint}`;
     case 'source_error': return `${step.label || ''} — ${step.error}`;
     case 'batch_progress': return `Processing batch ${step.batch}/${step.total}...`;
     case 'time_limit': return `Time limit — processed ${step.processed} items, skipped ${step.skipped} (next round)`;

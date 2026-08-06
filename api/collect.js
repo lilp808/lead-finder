@@ -240,8 +240,18 @@ export default async function handler(req, res) {
     }
 
     if (ddSources.length > 0) {
-      const dd = await runDDSources(supabase, ddSources, steps, { pushSummary: false, sourceGapMs: 3000 });
-      allResults.push(...dd.results);
+      if (process.env.DD_ENABLED === '1') {
+        const dd = await runDDSources(supabase, ddSources, steps, { pushSummary: false, sourceGapMs: 3000 });
+        allResults.push(...dd.results);
+      } else {
+        steps.push({
+          type: 'dd_skipped',
+          status: 'ok',
+          count: ddSources.length,
+          label: 'DDProperty',
+          hint: 'blocked by Cloudflare on server — run locally: node --env-file=.env.local scripts/dd-collect.mjs',
+        });
+      }
     }
 
     const summary = {

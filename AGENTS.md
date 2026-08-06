@@ -45,6 +45,11 @@ Read active sources from DB → start Apify runs with webhook URLs per source
 - **Groq prompt** (`src/lib/prompts/extract-property.md`): Thai property extraction. Loaded in `src/lib/groq.js`. Returns JSON. Posts with `confidence_score < 0.3` are dropped.
 - **Image timeout**: 15s per image, max 10 images per post.
 - **Env required**: `APIFY_API_KEY`, `APIFY_ACTOR_ID` (default `apify/facebook-groups-scraper`), `SUPABASE_URL` (or `NEXT_PUBLIC_SUPABASE_URL`), `SUPABASE_SERVICE_ROLE_KEY`, `VERCEL_WEBHOOK_URL`. **AI**: `TYPHOON_API_KEY` (default) or `GROQ_API_KEY` (optional alternate).
+- **DDProperty is local-only**: DDProperty sits behind Cloudflare that serves a JS challenge to **datacenter IPs** (Vercel/AWS), so all direct fetch/JSON/api paths fail on the server (even curl). It works only from a residential IP. Gate via `DD_ENABLED=1`:
+  - `.env.local` sets `DD_ENABLED=1` → local Collect + `npm run scrape` collect DD via `curl`.
+  - Vercel does NOT set it → `/api/collect` and `/api/dd-collect` skip DD and emit `dd_skipped` step.
+  - Run DD manually on local: `node --env-file=.env.local scripts/dd-collect.mjs [quota]`.
+  - Keep only the `curl`-based path in `src/lib/ddproperty.js` (`ddproperty` fetch). Do NOT call it with node `fetch`/`axios` from the server.
 - **Facebook auth**: Cookie/session must be configured inside Apify Console actor input — not in env.
 - **No test/lint/typecheck framework** exists.
 - **Vercel**: Function maxDuration 60s. Cron `/api/cron-check` daily at 6 AM UTC (`vercel.json`).
