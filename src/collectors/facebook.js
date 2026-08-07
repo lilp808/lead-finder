@@ -47,10 +47,27 @@ export async function processOneItem(item, source, supabase, modelOptions = {}) 
     .maybeSingle();
 
   if (existing) {
-    return { postUrl, status: 'duplicate' };
+    return { postUrl, status: 'duplicate', reason: 'existing_url' };
   }
 
-  const extraction = await extractProperty(item.text || '', modelOptions);
+  const text = (item.text || '').trim();
+  if (text) {
+    const { data: contentMatches } = await supabase
+      .from('leads')
+      .select('id, post_url, image_urls')
+      .eq('raw_post_text', text)
+      .limit(50);
+
+    if (contentMatches && contentMatches.length) {
+      const imageCount = (item.imageUrls || []).length;
+      const matched = contentMatches.find(r => (r.image_urls || []).length === imageCount);
+      if (matched) {
+        return { postUrl, status: 'duplicate', reason: 'repost', matched_url: matched.post_url };
+      }
+    }
+  }
+
+  const extraction = await extractProperty(text, modelOptions);
 
   if ((extraction.confidence_score ?? 0) < 0.3) {
     return { postUrl, status: 'low_confidence', score: extraction.confidence_score };
@@ -99,7 +116,7 @@ export async function processOneItem(item, source, supabase, modelOptions = {}) 
     owner_or_agent: extraction.owner_or_agent,
     image_urls: imageUrls,
     screenshot_urls: [],
-    raw_post_text: item.text,
+    raw_post_text: text,
     ai_summary: extraction.ai_summary,
     ai_tags: extraction.ai_tags,
     confidence_score: extraction.confidence_score,
@@ -109,7 +126,16 @@ export async function processOneItem(item, source, supabase, modelOptions = {}) 
 
   try {
     const inserted = await insertLead(lead);
-    return { postUrl, status: 'inserted', leadId: inserted.id, property_type: extraction.property_type, confidence: extraction.confidence_score };
+    return {
+      postUrl,
+      status: 'inserted',
+      leadId: inserted.id,
+      property_type: extraction.property_type,
+      confidence: extraction.confidence_score,
+      area: extraction.land_area || extraction.building_area || null,
+      district: extraction.district || null,
+      province: extraction.province || null,
+    };
   } catch (err) {
     if (err.message?.includes('duplicate key') || err.code === '23505') {
       return { postUrl, status: 'duplicate' };
@@ -147,13 +173,21 @@ export async function processItems(items, source, supabase, modelOptions = {}, s
       results.push(r);
       if (steps) {
         if (r.status === 'inserted') {
-          steps.push({ type: 'item', status: 'inserted', property_type: r.property_type, confidence: r.confidence, postUrl: (r.postUrl || '').slice(0, 80) });
+          steps.push({
+            type: 'item', status: 'inserted',
+            property_type: r.property_type, confidence: r.confidence,
+            area: r.area, district: r.district, province: r.province,
+            postUrl: r.postUrl || '',
+          });
         } else if (r.status === 'duplicate') {
-          steps.push({ type: 'item', status: 'duplicate', postUrl: (r.postUrl || '').slice(0, 80) });
+          steps.push({
+            type: 'item', status: 'duplicate', reason: r.reason || 'existing_url',
+            matchedUrl: r.matched_url || '', postUrl: r.postUrl || '',
+          });
         } else if (r.status === 'low_confidence') {
-          steps.push({ type: 'item', status: 'low_confidence', score: r.score, postUrl: (r.postUrl || '').slice(0, 80) });
+          steps.push({ type: 'item', status: 'low_confidence', score: r.score, postUrl: r.postUrl || '' });
         } else if (r.status === 'error') {
-          steps.push({ type: 'item', status: 'error', error: r.error });
+          steps.push({ type: 'item', status: 'error', error: r.error, postUrl: r.postUrl || '' });
         }
       }
     }

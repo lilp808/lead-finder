@@ -29,7 +29,7 @@ Target:
 Admin currently:
 
 - Browses websites manually
-- Takes screenshots
+- Captures listing images
 - Copies property information
 - Records into LINE Notes
 - Records into Google Sheets
@@ -102,33 +102,22 @@ LINE is only used for communication.
 
 ---
 
-# Screenshot Requirement
+# Image Requirement
 
-The company still requires screenshots because salespeople need visual references from:
-
-- Facebook
-- DDProperty
-- Developer websites
-- Agent websites
-
-Therefore:
-
-Each property record must store:
+Each property record must store listing images captured from the source (Facebook, DDProperty, developer/agent websites):
 
 - Original URL
-- Multiple screenshots
 - Listing images
 - AI summary
 - Source platform
 
-Screenshots should be uploaded into cloud storage.
+Images should be uploaded into cloud storage as `image_urls`.
 
 Example:
 
 ```
 Property
  ├── Details
- ├── Screenshots
  ├── Images
  ├── Google Maps
  ├── Contact
@@ -143,7 +132,7 @@ Property
 Website
      │
      ▼
-Take Screenshot
+Capture Listing Images
      │
      ▼
 Upload to Storage
@@ -152,7 +141,7 @@ Upload to Storage
 AI Extract Information
      │
      ▼
-Save Property + Screenshot Links
+Save Property + Image Links
      │
      ▼
 Notify LINE Group
@@ -161,7 +150,7 @@ Notify LINE Group
 Salespeople can immediately view:
 
 - Summary
-- Screenshots
+- Listing images
 - Original listing
 - Contact
 - Google Maps
@@ -188,7 +177,6 @@ Each Lead Card contains:
 - LINE
 - WhatsApp
 - WeChat
-- Screenshots
 - Property Photos
 - AI Summary
 - Assignment
@@ -216,7 +204,7 @@ LINE Group
 📍 Bang Phli
 💰 Rent 250,000
 
-📸 Screenshots Attached
+📸 Listing Images Attached
 
 🔗 Open Lead Card
 ```
@@ -232,7 +220,7 @@ The CRM stores the permanent history.
 ## Fully Automatable
 
 - Website scraping
-- Screenshot capture
+- Listing image capture
 - AI information extraction
 - Duplicate detection
 - Database recording
@@ -284,9 +272,9 @@ Keep LINE as the team's communication platform, but **do not use LINE Notes as t
 Instead:
 
 - Store every property in Supabase/CRM.
-- Upload all screenshots and images to cloud storage.
-- Associate screenshots with each property record.
-- Send a LINE notification containing the screenshots and a link to the Lead Card.
+- Upload all listing images to cloud storage.
+- Associate images with each property record.
+- Send a LINE notification containing the images and a link to the Lead Card.
 - Let salespeople discuss the lead in LINE while the CRM maintains the permanent, searchable record.
 
 This architecture scales efficiently to tens of thousands of property leads while preserving the team's existing workflow and minimizing manual administration.

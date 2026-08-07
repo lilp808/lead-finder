@@ -52,7 +52,7 @@ async function main() {
     if (['fetch', 'item', 'time_limit'].includes(s.type)) {
       const line = `${s.type}[${s.status}]`;
       const extra = s.type === 'item'
-        ? `${s.status}${s.images != null ? ` imgs=${s.images}` : ''}${s.price ? ` ${s.price}` : ''}${s.error ? ` ${s.error}` : ''}${s.id ? ` id=${s.id}` : ''}`
+        ? `${s.status}${s.images != null ? ` imgs=${s.images}` : ''}${s.price ? ` ${s.price}` : ''}${s.error ? ` ERR: ${s.error}` : ''}${s.reason ? ` reason=${s.reason}` : ''}${s.postUrl ? ` ${s.postUrl}` : ''}${s.id ? ` id=${s.id}` : ''}`
         : s.type === 'fetch'
           ? ` page ${s.page} (${s.count} listings${s.totalPages ? `/${s.totalPages}` : ''})${s.error ? ` ERR: ${s.error}` : ''}`
           : s.error ? ` ${s.error}` : ` ${s.skipped ?? 0} skipped`;

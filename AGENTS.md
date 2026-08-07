@@ -42,6 +42,9 @@ Read active sources from DB → start Apify runs with webhook URLs per source
 - **Webhook payload**: Apify sends `webhook.data.groupUrl` in callback body. Webhook reads `req.body.webhook?.data?.groupUrl` for group_url — no extra API call.
 - **Apify webhook format** (`src/lib/apify.js`): `{ requestUrl, eventTypes: ['ACTOR.RUN.SUCCEEDED'], data: { groupUrl } }`. Do NOT send plain URL strings.
 - **Apify output mapping** (`api/collect.js`): `user.name→authorName`, `user.profilePic→authorUrl`, `attachments[].image.uri→imageUrls`, `time→createdAt`, `inputUrl→groupUrl`.
+- **Dedup (Facebook)**: two-stage in `src/collectors/facebook.js processOneItem` — (1) same `post_url` → duplicate; (2) global content match: same `raw_post_text` (exact) AND same image count → `duplicate reason='repost'` (skipped, no AI call). Index `idx_leads_post_content` on `raw_post_text`.
+- **Collect log**: `/api/collect` persists one `lead_logs` row per run via `src/lib/log.js` `saveRunLog` (name = datetime `label`). Only `/api/collect` persists — webhook/dd-collect/CLI do NOT. View history at `/logs` (`api/logs/index.js`, `api/logs/[id].js`, `scripts/logs.html`).
+- **Log message**: `item` steps carry `property_type/area/province/district/postUrl/reason`. Inserted → "Saved — type · area · province"; skipped shows reason (`existing_url`/`repost`/`low_confidence`/`error`) + post URL.
 - **Groq prompt** (`src/lib/prompts/extract-property.md`): Thai property extraction. Loaded in `src/lib/groq.js`. Returns JSON. Posts with `confidence_score < 0.3` are dropped.
 - **Image timeout**: 15s per image, max 10 images per post.
 - **Env required**: `APIFY_API_KEY`, `APIFY_ACTOR_ID` (default `apify/facebook-groups-scraper`), `SUPABASE_URL` (or `NEXT_PUBLIC_SUPABASE_URL`), `SUPABASE_SERVICE_ROLE_KEY`, `VERCEL_WEBHOOK_URL`. **AI**: `TYPHOON_API_KEY` (default) or `GROQ_API_KEY` (optional alternate).

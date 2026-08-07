@@ -176,6 +176,7 @@ select.input { cursor: pointer; }
 <div class="nav">
   <a href="/" class="active"><i data-lucide="settings-2" style="width:16px;height:16px"></i> Config</a>
   <a href="/lead"><i data-lucide="users" style="width:16px;height:16px"></i> Leads</a>
+  <a href="/logs"><i data-lucide="scroll-text" style="width:16px;height:16px"></i> Logs</a>
 </div>
 
 <h1 class="page-title">
@@ -617,13 +618,26 @@ function textFor(step) {
     case 'time_limit': return `Time limit — processed ${step.processed} items, skipped ${step.skipped} (next round)`;
     case 'item_progress': return `Processing post ${step.index}/${step.total}...`;
     case 'item':
+      const itemUrl = step.postUrl ? `\n   ↳ ${step.postUrl}` : '';
       if (step.status === 'inserted') {
-        if (step.property_type) return `Saved — ${step.property_type} (${(step.confidence * 100).toFixed(0)}%)`;
-        return `Saved — ${step.title || ''}${step.price ? ' · ' + step.price : ''}${step.images ? ` · ${step.images} imgs` : ''}`;
+        if (step.property_type) {
+          let parts = [];
+          if (step.area) parts.push(step.area);
+          if (step.province) parts.push(step.province);
+          if (step.district) parts.push(step.district);
+          const detail = parts.length ? ' · ' + parts.join(' · ') : '';
+          return `Saved — ${step.property_type}${detail} (${(step.confidence * 100).toFixed(0)}%)` + itemUrl;
+        }
+        return `Saved — ${step.title || ''}${step.price ? ' · ' + step.price : ''}${step.images ? ` · ${step.images} imgs` : ''}` + itemUrl;
       }
-      if (step.status === 'duplicate') return 'Duplicate (already in DB)';
-      if (step.status === 'low_confidence') return `Not a listing (score: ${step.score})`;
-      if (step.status === 'error') return `Error: ${step.error}`;
+      if (step.status === 'duplicate') {
+        if (step.reason === 'repost') return `Duplicated post (same text & image count) — NOT saved` + (step.matchedUrl ? ` · ${step.matchedUrl}` : '') + itemUrl;
+        return (step.reason === 'existing_url'
+          ? 'Duplicate (already in DB) — NOT saved'
+          : 'Duplicate — NOT saved') + itemUrl;
+      }
+      if (step.status === 'low_confidence') return `Not a listing (score: ${step.score}) — NOT saved` + itemUrl;
+      if (step.status === 'error') return `Error: ${step.error} — NOT saved` + itemUrl;
       return '';
     case 'summary': return '';
     case 'error': return step.message;

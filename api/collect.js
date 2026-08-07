@@ -1,5 +1,6 @@
 import { getCollector } from '../src/collectors/index.js';
 import { getClient } from '../src/lib/supabase.js';
+import { saveRunLog } from '../src/lib/log.js';
 
 export default async function handler(req, res) {
   try {
@@ -53,8 +54,13 @@ export default async function handler(req, res) {
       low_confidence: allResults.filter(r => r.status === 'low_confidence').length,
       errors: allResults.filter(r => r.status === 'error').length,
       skipped: totalSkipped,
+      total: allResults.length,
     };
     steps.push({ type: 'summary', ...summary });
+
+    await saveRunLog(steps, summary).catch(err => {
+      console.error('Failed to save lead_logs:', err.message);
+    });
 
     return res.status(200).json({ ok: true, steps, summary });
   } catch (err) {

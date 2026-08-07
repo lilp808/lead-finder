@@ -71,7 +71,7 @@ async function processOneListing(listing, source, supabase) {
     .maybeSingle();
 
   if (existing) {
-    return { id: listing.id, status: 'duplicate' };
+    return { id: listing.id, status: 'duplicate', reason: 'existing_url', postUrl: listing.url };
   }
 
   const lead = buildLead(listing, source);
@@ -90,10 +90,15 @@ async function processOneListing(listing, source, supabase) {
       title: listing.title?.slice(0, 60),
       images: lead.image_urls.length,
       price: listing.pricePretty,
+      property_type: listing.propertyType,
+      area: listing.floorAreaSqm != null ? `${listing.floorAreaSqm} sqm` : null,
+      district: listing.district || null,
+      province: listing.province || null,
+      postUrl: listing.url,
     };
   } catch (err) {
-    if (isDuplicateError(err)) return { id: listing.id, status: 'duplicate' };
-    return { id: listing.id, status: 'error', error: err.message };
+    if (isDuplicateError(err)) return { id: listing.id, status: 'duplicate', reason: 'existing_url', postUrl: listing.url };
+    return { id: listing.id, status: 'error', error: err.message, postUrl: listing.url };
   }
 }
 
@@ -149,12 +154,16 @@ async function processSource(source, supabase, steps) {
         results.push(r);
         if (r.status === 'inserted') {
           inserted += 1;
-          steps.push({ type: 'item', status: 'inserted', title: r.title, images: r.images, price: r.price });
+          steps.push({
+            type: 'item', status: 'inserted', title: r.title, images: r.images,
+            price: r.price, property_type: r.property_type, area: r.area,
+            district: r.district, province: r.province, postUrl: r.postUrl || '',
+          });
         } else if (r.status === 'duplicate') {
           duplicates += 1;
-          steps.push({ type: 'item', status: 'duplicate', id: r.id });
+          steps.push({ type: 'item', status: 'duplicate', reason: r.reason || 'existing_url', postUrl: r.postUrl || '' });
         } else if (r.status === 'error') {
-          steps.push({ type: 'item', status: 'error', error: r.error });
+          steps.push({ type: 'item', status: 'error', error: r.error, postUrl: r.postUrl || '' });
         }
       }
     }

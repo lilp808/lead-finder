@@ -5,12 +5,14 @@ const PORT = process.env.PORT || 3000;
 const routes = {
   '/': () => import('../api/index.js').then(m => m.default),
   '/lead': () => import('../api/index.js').then(m => m.default),
+  '/logs': () => import('../api/index.js').then(m => m.default),
   '/api/collect': () => import('../api/collect.js').then(m => m.default),
   '/api/dd-collect': () => import('../api/dd-collect.js').then(m => m.default),
   '/api/webhook': () => import('../api/webhook.js').then(m => m.default),
   '/api/sources': () => import('../api/sources/index.js').then(m => m.default),
   '/api/leads/export': () => import('../api/leads/export.js').then(m => m.default),
   '/api/leads': () => import('../api/leads/index.js').then(m => m.default),
+  '/api/logs': () => import('../api/logs/index.js').then(m => m.default),
   '/api/cron-check': () => import('../api/cron-check.js').then(m => m.default),
   '/api/schedules': () => import('../api/schedules/index.js').then(m => m.default),
 };
@@ -77,6 +79,14 @@ function matchRoute(pathname) {
     };
   }
 
+  m = pathname.match(/^\/api\/logs\/([^/]+)$/);
+  if (m) {
+    return {
+      handler: () => import('../api/logs/[id].js').then(m => m.default),
+      params: { id: m[1] },
+    };
+  }
+
   return null;
 }
 
@@ -120,6 +130,7 @@ server.listen(PORT, () => {
   console.log(`Dev server: http://localhost:${PORT}`);
   console.log(`  /                    — Config dashboard`);
   console.log(`  /lead                — Lead page`);
+  console.log(`  /logs                — Collect logs page`);
   console.log(`  GET /api/collect     — Trigger Apify`);
   console.log(`  POST /api/webhook    — Receive Apify results`);
   console.log(`  GET/POST /api/sources     — Manage sources`);

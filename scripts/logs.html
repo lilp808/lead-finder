@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FindProperty — Collect Logs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root {
+  --font-family: 'Poppins', sans-serif;
+  --color-primary: #D4A843;
+  --color-primary-hover: #C8992F;
+  --color-bg: #FAFAFA;
+  --color-surface: #FFFFFF;
+  --color-text: #2F2F2F;
+  --color-text-secondary: #707070;
+  --color-text-muted: #A5A5A5;
+  --color-border: #ECECEC;
+  --color-success: #30C46C;
+  --color-info: #4E9EF7;
+  --color-warning: #E7B64A;
+  --color-danger: #E15D5D;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --shadow-sm: 0 2px 10px rgba(0,0,0,.04);
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px;
+  --transition: 200ms ease;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; }
+body { font-family: var(--font-family); background: var(--color-bg); color: var(--color-text); padding: var(--space-5) var(--space-6); max-width: 1100px; margin: 0 auto; }
+
+.nav { display: flex; gap: var(--space-1); margin-bottom: var(--space-5); border-bottom: 2px solid var(--color-border); padding-bottom: 0; }
+.nav a {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  text-decoration: none; font-weight: 500; font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all var(--transition);
+}
+.nav a.active { color: var(--color-primary); border-bottom-color: var(--color-primary); }
+.nav a:hover:not(.active) { color: var(--color-text); }
+
+.page-title { font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-6); }
+.page-title span { color: var(--color-primary); }
+
+.toolbar { display: flex; gap: var(--space-3); margin-bottom: var(--space-5); align-items: center; flex-wrap: wrap; }
+.toolbar input {
+  flex: 1; min-width: 200px; padding: 10px 14px;
+  border: 1px solid var(--color-border); border-radius: var(--radius-md);
+  font-family: inherit; font-size: 0.9rem;
+}
+.toolbar button {
+  padding: 10px 18px; border: none; border-radius: var(--radius-md);
+  background: var(--color-primary); color: #fff; font-family: inherit; font-weight: 600;
+  cursor: pointer; transition: background var(--transition);
+}
+.toolbar button:hover { background: var(--color-primary-hover); }
+
+.log-list { display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-6); }
+.log-card {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg); padding: var(--space-4) var(--space-5);
+  cursor: pointer; box-shadow: var(--shadow-sm); transition: border var(--transition), box-shadow var(--transition);
+}
+.log-card:hover { border-color: var(--color-primary); }
+.log-card.open { border-color: var(--color-primary); box-shadow: 0 4px 16px rgba(212,168,67,.18); }
+.log-card .head { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.log-card .label { font-size: 1.05rem; font-weight: 600; }
+.log-card .trigger-badge {
+  font-size: 0.7rem; padding: 2px 10px; border-radius: 999px;
+  background: var(--color-primary-bg, #F8F3E8); color: var(--color-primary);
+}
+.log-card .chev { margin-left: auto; color: var(--color-text-muted); }
+.chips { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-3); }
+.chip { font-size: 0.72rem; padding: 3px 10px; border-radius: 999px; font-weight: 500; }
+.chip.ok { background: #ECFAF2; color: var(--color-success); }
+.chip.dup { background: #FFF7E8; color: var(--color-warning); }
+.chip.skip { background: #EDF5FF; color: var(--color-info); }
+.chip.err { background: #FDEFEF; color: var(--color-danger); }
+.chip.plain { background: #F3F3F3; color: var(--color-text-muted); }
+
+.steps { margin-top: var(--space-4); border-top: 1px solid var(--color-border-light, #F3F3F3); padding-top: var(--space-3); }
+.step-row { display: flex; gap: var(--space-3); padding: var(--space-2) 0; align-items: flex-start; }
+.step-icon { color: var(--color-text-muted); flex-shrink: 0; margin-top: 2px; }
+.step-text { font-size: 0.9rem; line-height: 1.5; word-break: break-word; }
+.step-text .url { color: var(--color-info); text-decoration: none; font-size: 0.8rem; word-break: break-all; }
+.step-ok { color: var(--color-text); }
+.step-running { color: var(--color-text-secondary); }
+.step-duplicate { color: var(--color-warning); }
+.step-error { color: var(--color-danger); }
+.step-skip { color: var(--color-info); }
+
+.pager { display: flex; gap: var(--space-3); align-items: center; justify-content: center; }
+.pager button {
+  padding: 8px 16px; border: 1px solid var(--color-border); border-radius: var(--radius-md);
+  background: var(--color-surface); font-family: inherit; cursor: pointer;
+}
+.pager button:disabled { opacity: .4; cursor: not-allowed; }
+.empty { color: var(--color-text-muted); text-align: center; padding: var(--space-8) 0; }
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <a href="/"><i data-lucide="settings-2" style="width:16px;height:16px"></i> Config</a>
+  <a href="/lead"><i data-lucide="users" style="width:16px;height:16px"></i> Leads</a>
+  <a href="/logs" class="active"><i data-lucide="scroll-text" style="width:16px;height:16px"></i> Logs</a>
+</div>
+
+<div class="page-title">Collect Logs <span>· ประวัติการรัน</span></div>
+
+<div class="toolbar">
+  <input type="text" id="searchInput" placeholder="ค้นหาด้วย label/ช่วงเวลา (เช่น 2026-08-07)..." />
+  <button id="btnSearch"><i data-lucide="search" style="width:14px;height:14px"></i> ค้นหา</button>
+  <button id="btnRefresh"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i> รีเฟรช</button>
+</div>
+
+<div class="log-list" id="logList"></div>
+<div class="pager" id="pager"></div>
+
+<script>
+const API_BASE = '';
+let currentState = { page: 1, search: '' };
+
+window.onload = function () {
+  lucide.createIcons();
+  loadLogs();
+};
+
+async function loadLogs() {
+  const list = document.getElementById('logList');
+  list.innerHTML = '<div class="empty">โหลดข้อมูล...</div>';
+
+  const params = new URLSearchParams({ page: currentState.page, limit: 20 });
+  if (currentState.search) params.set('search', currentState.search);
+
+  try {
+    const res = await fetch(API_BASE + '/api/logs?' + params.toString());
+    if (!res.ok) { const e = await res.json(); throw new Error(e.error || res.statusText); }
+    const data = await res.json();
+    renderLogs(data.logs || []);
+    renderPager(data);
+    lucide.createIcons();
+  } catch (err) {
+    list.innerHTML = '<div class="empty">Error: ' + err.message + '</div>';
+  }
+}
+
+function renderLogs(logs) {
+  const list = document.getElementById('logList');
+  if (!logs.length) {
+    list.innerHTML = '<div class="empty">ไม่พบ log</div>';
+    return;
+  }
+  list.innerHTML = logs.map(log => {
+    const summary = log.summary || {};
+    return `
+      <div class="log-card" id="card-${log.id}">
+        <div class="head" onclick="toggleLog('${log.id}')">
+          <span class="label">${esc(log.label || log.ran_at || '')}</span>
+          <span class="meta-badge">${esc(log.trigger || 'manual')}</span>
+          <span class="chevron"></span>
+        </div>
+        <div class="chips">
+          <span class="chip ok">${summary.inserted || 0} inserted</span>
+          <span class="chip dup">${summary.duplicates || 0} dup</span>
+          <span class="chip skip">${summary.low_confidence || 0} skipped</span>
+          <span class="chip err">${summary.errors || 0} errors</span>
+          <span class="chip plain">total ${summary.total || 0}</span>
+        </div>
+        <div class="steps" id="steps-${log.id}" style="display:none"></div>
+      </div>`;
+  }).join('');
+}
+
+async function toggleLog(id) {
+  const card = document.getElementById('card-' + id);
+  const stepsDiv = document.getElementById('steps-' + id);
+  const chevron = card.querySelector('.chevron');
+  if (card.classList.contains('open')) {
+    card.classList.remove('open');
+    stepsDiv.style.display = 'none';
+    return;
+  }
+  card.classList.add('open');
+  stepsDiv.style.display = 'block';
+  stepsDiv.innerHTML = '<div class="empty">โหลด...</div>';
+  try {
+    const res = await fetch(API_BASE + '/api/logs/' + id);
+    if (!res.ok) { const e = await res.json(); throw new Error(e.error || res.statusText); }
+    const data = await res.json();
+    renderSteps(stepsDiv, data.log.steps || []);
+  } catch (err) {
+    stepsDiv.innerHTML = '<div class="empty">Error: ' + err.message + '</div>';
+  }
+}
+
+function renderSteps(container, steps) {
+  if (!steps.length) {
+    container.innerHTML = '<div class="empty">No steps</div>';
+    return;
+  }
+  container.innerHTML = steps.map(s => stepRow(s)).join('');
+  lucide.createIcons();
+}
+
+function stepRow(step) {
+  const { icon, cls } = iconAndClass(step);
+  const text = textFor(step);
+  return `
+    <div class="step-row">
+      <span class="step-icon">${stepIcon(icon)}</span>
+      <span class="step-text"><span class="${cls}">${text}</span></span>
+    </div>`;
+}
+
+function stepIcon(name) {
+  return `<i data-lucide="${name}" style="width:15px;height:15px"></i>`;
+}
+
+function iconAndClass(step) {
+  const s = step.status;
+  if (s === 'ok' || s === 'inserted') return { icon: 'check-circle', cls: 'step-ok' };
+  if (s === 'running' || s === 'processing' || s === 'polling' || s === 'batch_progress') return { icon: 'loader', cls: 'step-running' };
+  if (s === 'error' || s === 'source_error') return { icon: 'x-circle', cls: 'step-error' };
+  if (s === 'duplicate') return { icon: 'arrow-right', cls: 'step-duplicate' };
+  if (s === 'low_confidence') return { icon: 'triangle', cls: 'step-skip' };
+  if (s === 'warning') return { icon: 'alert-triangle', cls: 'step-ok' };
+  return { icon: 'minus', cls: 'step-ok' };
+}
+
+function textFor(step) {
+  const url = step.postUrl ? `<div><a class="url" href="${esc(step.postUrl)}" target="_blank" rel="noopener">${esc(step.postUrl)}</a></div>` : '';
+  switch (step.type) {
+    case 'source_start': return `Scraping ${esc(step.label || '')} (limit: ${step.limit ?? step.quota})` + url;
+    case 'poll':
+      if (step.status === 'ok') return `${esc(step.label || '')} scrape done (${step.elapsed}s)` + url;
+      return `Waiting for ${esc(step.label || '')} scrape... (${step.elapsed}s)` + url;
+    case 'fetch':
+      if (step.status === 'error') return `DDProperty fetch error (page ${step.page}): ${esc(step.error)}` + url;
+      if (step.label) return `Got ${step.count} posts from ${esc(step.label)}` + url;
+      const tp = Number(step.totalPages);
+      if (tp > 0) return `Got ${step.count} posts (page ${step.page} of ${tp})` + url;
+      return `Got ${step.count} posts (page ${step.page})` + url;
+    case 'fetched': return `DDProperty done — ${step.inserted} new, ${step.duplicates} dup, ${step.pagesRead} pages` + url;
+    case 'dd_skipped': return `${esc(step.label || '')} skipped (${step.count} source) — ${esc(step.hint || '')}` + url;
+    case 'platform_skipped': return `${esc(step.label || '')} skipped (${step.count} source) — ${esc(step.hint || '')}` + url;
+    case 'source_error': return `${esc(step.label || '')} — ${esc(step.error || '')}` + url;
+    case 'batch_progress': return `Processing batch ${step.batch}/${step.total}...` + url;
+    case 'time_limit': return `Time limit — processed ${step.processed} items, skipped ${step.skipped} (next round)` + url;
+    case 'item':
+      if (step.status === 'inserted') {
+        if (step.property_type) {
+          let parts = [];
+          if (step.area) parts.push(step.area);
+          if (step.province) parts.push(step.province);
+          if (step.district) parts.push(step.district);
+          const detail = parts.length ? ` · ${parts.join(' · ')}` : '';
+          return `Saved — ${TYPE_LABEL(step.property_type)}${detail} (${Math.round((step.confidence || 0) * 100)}%)` + url;
+        }
+        return `Saved — ${esc(step.title || '')}${step.price ? ' · ' + esc(step.price) : ''}${step.images ? ` · ${step.images} imgs` : ''}` + url;
+      }
+      if (step.status === 'duplicate') {
+        if (step.reason === 'repost') {
+          let ref = step.matchedUrl ? ` · see <a class="url" href="${esc(step.matchedUrl)}" target="_blank" rel="noopener">${esc(step.matchedUrl)}</a>` : '';
+          return 'Duplicated post (same text & image count) — NOT saved' + ref + url;
+        }
+        return step.reason === 'existing_url'
+          ? 'Duplicate (already in DB) — NOT saved' + url
+          : 'Duplicate — NOT saved' + url;
+      }
+      if (step.status === 'low_confidence') return `Not a listing (score ${step.score}) — NOT saved` + url;
+      if (step.status === 'error') return `Error: ${esc(step.error)} — NOT saved` + url;
+      return '' + url;
+    case 'summary': return '';
+    case 'error': return esc(step.message || '') + url;
+    default: return esc(JSON.stringify(step)) + url;
+  }
+}
+
+function TYPE_LABEL(t) {
+  return ({ warehouse: 'Warehouse', factory: 'Factory', warehouse_factory: 'Warehouse/Factory' })[t] || esc(t || '');
+}
+
+function renderPager(data) {
+  const pager = document.getElementById('pager');
+  pager.innerHTML = `
+    <button ${data.page <= 1 ? 'disabled' : ''} onclick="goPage(${data.page - 1})">← Prev</button>
+    <span style="font-size:.85rem;color:var(--color-text-secondary)">${data.page} / ${data.totalPages || 1} (${data.total || 0} runs)</span>
+    <button ${data.page >= (data.totalPages || 1) ? 'disabled' : ''} onclick="goPage(${data.page + 1})">Next →</button>`;
+}
+
+function goPage(p) {
+  currentState.page = p;
+  loadLogs();
+}
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+}
+
+document.getElementById('btnSearch').onclick = function () {
+  currentState.search = document.getElementById('searchInput').value.trim();
+  currentState.page = 1;
+  loadLogs();
+};
+document.getElementById('searchInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('btnSearch').click();
+});
+document.getElementById('btnRefresh').onclick = function () { loadLogs(); };
+document.getElementById('searchInput').addEventListener('input', function () {
+  if (!this.value.trim()) { currentState.search = ''; currentState.page = 1; loadLogs(); }
+});
+</script>
+</body>
+</html>

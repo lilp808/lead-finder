@@ -73,6 +73,7 @@ create table if not exists leads (
 
 create index if not exists idx_leads_post_url on leads(post_url);
 create index if not exists idx_leads_status on leads(lead_status);
+create index if not exists idx_leads_post_content on leads(raw_post_text);
 
 -- Migration for existing DBs (pricing audit fields)
 alter table leads add column if not exists rent_price_raw numeric;
@@ -141,3 +142,23 @@ values (
   10,
   true
 );
+
+-- Collect run logs (1 row per run, named by run datetime)
+create table if not exists lead_logs (
+  id         uuid primary key default gen_random_uuid(),
+  label      text,
+  ran_at     timestamptz not null default now(),
+  trigger    text not null default 'manual',
+  platform   text not null default 'all',
+  summary    jsonb,
+  steps      jsonb,
+  total      integer not null default 0,
+  inserted   integer not null default 0,
+  duplicates integer not null default 0,
+  low_confidence integer not null default 0,
+  errors     integer not null default 0,
+  skipped    integer not null default 0,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_lead_logs_ran_at on lead_logs(ran_at desc);

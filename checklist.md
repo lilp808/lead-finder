@@ -28,37 +28,22 @@
 - [ ] สร้าง `src/sources/ddproperty.js` — class/fn สำหรับ scrape
 - [ ] search listings ตาม filter (province, type: warehouse/factory/land)
 - [ ] extract ฟิลด์: `url`, `title`, `price`, `area`, `location`, `description`, `contact`, `images`
-- [ ] screenshot หน้ารายการประกาศด้วย Playwright
-- [ ] upload screenshot + รูปประกาศไป Supabase Storage
+- [ ] upload รูปประกาศไป Supabase Storage
 
 ### Integration
 - [ ] สร้าง `api/fetch-ddproperty.js` — endpoint สำหรับ manual trigger
 - [ ] เพิ่ม cron ใน `vercel.json` สำหรับ ddproperty (ถ้าต่างเวลา)
 - [ ] เพิ่ม `DD_사용자` env vars (ถ้าต้อง login)
 
-### Playwright Setup
-- [ ] Add `playwright` to `package.json`
-- [ ] สร้าง `src/lib/screenshot.js` — utility function สำหรับ capture
-- [ ] fallback: ถ้า screenshot ล้มเหลว ให้ใช้ listing images แทน
-
-## 階段 2: Screenshot Pipeline
-
-- [ ] สร้าง `src/lib/screenshot.js` (ถ้ายังไม่ทำในขั้น 1)
-- [ ] สำหรับ Facebook: ถ้าไม่ใช่ image attachment → ใช้ Playwright เปิด URL แล้ว screenshot
-- [ ] สำหรับ source อื่นๆ: screenshot ทุก listing
-- [ ] upload screenshot → Supabase Storage
-- [ ] เพิ่ม column `screenshot_urls text[]` ใน DB
-- [ ] เก็บ screenshot_urls ใน lead object
-
-## 階段 3: LINE Notification
+## 階段 2: LINE Notification
 
 - [ ] สร้าง `src/lib/line.js` — LINE Messaging API client
 - [ ] env: `LINE_CHANNEL_ACCESS_TOKEN`, `LINE_GROUP_ID`
-- [ ] สร้าง lead card message template (property type, price, location, screenshot)
+- [ ] สร้าง lead card message template (property type, price, location)
 - [ ] ส่ง notification เมื่อ insert lead สำเร็จ (ทั้ง sync + async)
 - [ ] fallback: ถ้า LINE ล้มเหลว ไม่กระทบ pipeline หลัก
 
-## 階段 4: Lead Card UI
+## 階段 3: Lead Card UI
 
 ### Backend
 - [ ] สร้าง `pages/api/leads.js` — API list + filter + search
@@ -71,12 +56,12 @@
   - search: text search
   - sort: newest first
 - [ ] สร้าง `pages/leads/[id].js` — single lead card
-  - รูป screenshot + listing images
+  - รูปประกาศ (listing images)
   - property details, AI summary, contact
   - status management (assign, follow-up, close)
   - Google Maps link (จาก location_est/GPS)
 
-## 階段 5: Google Sheets Sync
+## 階段 4: Google Sheets Sync
 
 - [ ] `googleapis` package
 - [ ] สร้าง `src/lib/google-sheets.js`
@@ -84,7 +69,7 @@
 - [ ] sync เมื่อ insert lead (หรือ batch sync ตาม cron)
 - [ ] env: `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_PRIVATE_KEY`, `GOOGLE_SHEET_ID`
 
-## 階段 6: Lead Assignment + Workflow
+## 階段 5: Lead Assignment + Workflow
 
 - [ ] เพิ่ม column `assigned_to text` (salesperson name/ID)
 - [ ] เพิ่ม column `assigned_at timestamptz`
@@ -93,7 +78,7 @@
 - [ ] เพิ่ม `call_history jsonb` หรือ `appointment_history jsonb` column
 - [ ] UI สำหรับเปลี่ยน status + assign
 
-## 階段 7: GPS / Roof Hunting Support
+## 階段 6: GPS / Roof Hunting Support
 
 - [ ] Populate `location_est` — geocode จาก address ด้วย Google Maps API หรือ open source
 - [ ] env: `GOOGLE_MAPS_API_KEY`
@@ -102,7 +87,7 @@
   - บันทึก GPS, screenshot rooftop
   - column: `roof_gps point`, `roof_screenshot_url text`
 
-## 階段 8: Agent Websites / Developer Websites / LivingInsider
+## 階段 7: Agent Websites / Developer Websites / LivingInsider
 
 - [ ] สร้าง source module pattern (เหมือน ddproperty)
 - [ ] `src/sources/livinginsider.js`
@@ -110,7 +95,7 @@
 - [ ] `src/sources/developer-website.js`
 - [ ] สำหรับ site ที่ต้อง login: ใช้ Apify หรือ Playwright ที่ config cookies ได้
 
-## 階段 9: Advanced
+## 階段 8: Advanced
 
 - [ ] LINE Notify แจ้ง "สรุปประจำวัน": จำนวน lead ที่เข้าใหม่, จำแนกตามประเภท
 - [ ] Monthly reminder — ส่ง LINE message เตือน salesperson เรื่อง lead ที่ยังไม่ progress
@@ -125,7 +110,6 @@
 | P0 | Source Abstraction | medium | ต้องทำก่อนเพิ่ม source |
 | P0 | ddproperty Scraper | large | source แรกนอก Facebook |
 | P1 | Lead Card UI | large | admin ใช้งานจริง |
-| P1 | Screenshot Pipeline | medium | visual reference |
 | P1 | LINE Notify | small | notification |
 | P2 | Google Sheets Sync | small | reporting |
 | P2 | Lead Assignment | medium | workflow |
