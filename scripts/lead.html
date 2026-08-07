@@ -249,6 +249,14 @@ select.input { cursor: pointer; }
 .modal textarea:focus { border-color: var(--color-primary); }
 .modal-wide { max-width: 720px; }
 
+.edit-form { display: flex; flex-direction: column; gap: var(--space-3); }
+.edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+.edit-grid .field { display: flex; flex-direction: column; gap: var(--space-1); }
+.edit-grid .field-full { grid-column: 1 / -1; }
+.edit-grid label { font-size: 0.75rem; font-weight: 600; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: .03em; }
+.edit-form-actions { display: flex; gap: var(--space-2); margin-top: var(--space-1); }
+.edit-form-actions .btn { flex: 1; }
+
 .modal-tabs { display: flex; gap: var(--space-2); margin-bottom: var(--space-4); border-bottom: 1px solid var(--color-border); }
 .modal-tab {
   display: inline-flex; align-items: center; gap: var(--space-2);
@@ -452,9 +460,11 @@ select.input { cursor: pointer; }
     <div class="modal-tabs">
       <button class="modal-tab active" id="tabPost" onclick="switchModalView('post')"><i data-lucide="file-text" style="width:14px;height:14px"></i> Original Post</button>
       <button class="modal-tab" id="tabDetail" onclick="switchModalView('detail')"><i data-lucide="info" style="width:14px;height:14px"></i> Details</button>
+      <button class="modal-tab" id="tabEdit" onclick="switchModalView('edit')"><i data-lucide="edit-3" style="width:14px;height:14px"></i> Workflow</button>
     </div>
     <div class="modal-pane" id="postPane"></div>
     <div class="modal-pane hidden" id="detailPane"><div id="detailBody"></div></div>
+    <div class="modal-pane hidden" id="editPane"></div>
   </div>
 </div>
 
@@ -480,6 +490,7 @@ const TYPE_LABEL_MAP = {
 
 let currentState = { page: 1 };
 let detailSliderIndex = 0;
+let currentLead = null;
 
 window.onload = function () {
   lucide.createIcons();
@@ -877,6 +888,7 @@ function detailLead(id) {
       }
       document.getElementById('detailBody').innerHTML = html;
       document.getElementById('postPane').innerHTML = buildPostPane(l);
+      currentLead = l;
       detailSliderIndex = 0;
       switchModalView('post');
       document.getElementById('detailModal').classList.add('show');
@@ -913,10 +925,14 @@ function buildPostPane(l) {
 
 function switchModalView(view) {
   const isPost = view === 'post';
+  const isEdit = view === 'edit';
+  if (isEdit && currentLead) document.getElementById('editPane').innerHTML = renderEditForm(currentLead);
   document.getElementById('tabPost').classList.toggle('active', isPost);
-  document.getElementById('tabDetail').classList.toggle('active', !isPost);
+  document.getElementById('tabDetail').classList.toggle('active', view === 'detail');
+  document.getElementById('tabEdit').classList.toggle('active', isEdit);
   document.getElementById('postPane').classList.toggle('hidden', !isPost);
-  document.getElementById('detailPane').classList.toggle('hidden', isPost);
+  document.getElementById('detailPane').classList.toggle('hidden', view !== 'detail');
+  document.getElementById('editPane').classList.toggle('hidden', !isEdit);
 }
 
 function sliderMove(dir) {
@@ -938,6 +954,66 @@ function closeDetailModal() { document.getElementById('detailModal').classList.r
 function row(label, value) {
   if (!value) return '';
   return `<div class="detail-row"><span class="lbl">${esc(label)}</span><span class="val">${value}</span></div>`;
+}
+
+function renderEditForm(l) {
+  const opts = Object.entries(STATUS_MAP)
+    .map(([k, v]) => `<option value="${k}" ${l.lead_status === k ? 'selected' : ''}>${esc(v)}</option>`)
+    .join('');
+  const teamOpts = ['', 'A', 'B', 'C']
+    .map(t => `<option value="${t}" ${(l.agent_team || '').toUpperCase() === t && t ? 'selected' : t === '' && !l.agent_team ? 'selected' : ''}>${t ? 'Team ' + t : 'None (auto)'}</option>`)
+    .join('');
+  const field = (label, inner, full = false) =>
+    `<div class="field ${full ? 'field-full' : ''}"><label>${label}</label>${inner}</div>`;
+  return `<form class="edit-form" onsubmit="saveLeadEdits(event, '${esc(l.id)}')">
+    <div class="edit-grid">
+      ${field('Lead Status', `<select class="input" id="editStatus">${opts}</select>`)}
+      ${field('Agent Team', `<select class="input" id="editAgentTeam">${teamOpts}</select>`)}
+      ${field('Assigned To', `<input class="input" id="editAssignedTo" type="text" value="${esc(l.assigned_to || '')}" placeholder="Salesperson name">`)}
+      ${field('Province', `<input class="input" id="editProvince" type="text" value="${esc(l.province || '')}">`)}
+      ${field('District', `<input class="input" id="editDistrict" type="text" value="${esc(l.district || '')}">`)}
+      ${field('Sub District', `<input class="input" id="editSubDistrict" type="text" value="${esc(l.sub_district || '')}">`)}
+      ${field('Notes', `<textarea class="input" id="editNotes" style="min-height:90px">${esc(l.notes || '')}</textarea>`, true)}
+    </div>
+    <div class="edit-form-actions">
+      <button type="button" class="btn" onclick="switchModalView('detail')">Cancel</button>
+      <button type="submit" class="btn btn-primary">Save Changes</button>
+    </div>
+  </form>`;
+}
+
+async function saveLeadEdits(e, id) {
+  e.preventDefault();
+  const body = {};
+  const status = document.getElementById('editStatus').value;
+  const agentTeam = document.getElementById('editAgentTeam').value;
+  const assignedTo = document.getElementById('editAssignedTo').value.trim();
+  const province = document.getElementById('editProvince').value.trim();
+  const district = document.getElementById('editDistrict').value.trim();
+  const subDistrict = document.getElementById('editSubDistrict').value.trim();
+  const notes = document.getElementById('editNotes').value.trim();
+  if (status) body.lead_status = status;
+  body.agent_team = agentTeam || null;
+  body.assigned_to = assignedTo || null;
+  body.province = province || null;
+  body.district = district || null;
+  body.sub_district = subDistrict || null;
+  body.notes = notes || null;
+
+  try {
+    const res = await fetch(API_BASE + '/api/leads/' + encodeURIComponent(id), {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to save');
+    showToast('Saved');
+    closeDetailModal();
+    loadLeads();
+  } catch (err) {
+    showToast('Error: ' + err.message);
+  }
 }
 
 function exportCSV() {
