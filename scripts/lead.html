@@ -840,7 +840,10 @@ function detailLead(id) {
       html += row('Land Area', l.land_area);
       html += row('Building Area', l.building_area);
       html += row('Address', [l.address, l.sub_district, l.district, l.province].filter(Boolean).join(' '));
-      html += row('Google Maps', l.google_maps_url ? `<a href="${esc(l.google_maps_url)}" target="_blank" rel="noopener">Open map</a>` : '');
+      const gm = l.google_maps_url
+        ? (/^https?:\/\//i.test(l.google_maps_url) ? l.google_maps_url : `https://${l.google_maps_url}`)
+        : '';
+      html += row('Google Maps', gm ? `<a href="${esc(gm)}" target="_blank" rel="noopener">Open map</a>` : '');
       html += row('Post Link', l.post_url ? `<a href="${esc(l.post_url)}" target="_blank">Open post</a>` : '');
       html += row('Source', l.source_url);
       html += '</div>';

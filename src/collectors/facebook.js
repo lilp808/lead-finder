@@ -20,14 +20,22 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const BATCH_SIZE = 5;
 const TIME_LIMIT_SEC = 55;
 
-const GOOGLE_MAPS_RE = /https?:\/\/((maps\.google\.[a-z.]+|goo\.gl\/maps|maps\.app\.goo\.gl|www\.google\.[a-z.]+\/maps)[^\s"'<>]+)/i;
+const GOOGLE_MAPS_RE = /https?:\/\/(maps\.google\.[a-z.]+|goo\.gl\/maps|maps\.app\.goo\.gl|www\.google\.[a-z.]+\/maps)[^\s"'<>]+/i;
 
 export function extractGoogleMapsUrl(text) {
   if (!text) return null;
+  const candidates = [];
   const m = String(text).match(GOOGLE_MAPS_RE);
-  if (!m) return null;
-  let url = m[1].replace(/[)\]}]+$/, '').trim();
-  return url || null;
+  if (m) candidates.push(m[0]);
+  const bare = String(text).match(/goo\.gl\/maps\/[a-zA-Z0-9]+/i);
+  if (bare) candidates.push(bare[0]);
+  for (const raw of candidates) {
+    let url = raw.replace(/[)\]}]+$/, '').trim();
+    if (!url) continue;
+    if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
+    return url;
+  }
+  return null;
 }
 
 export function mapApifyItem(item) {
