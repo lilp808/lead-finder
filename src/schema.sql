@@ -35,6 +35,7 @@ create table if not exists leads (
   sub_district    text,
   address         text,
   location_est    text,
+  google_maps_url text,
 
   -- Contact info
   contact_name    text,
@@ -132,6 +133,9 @@ alter table leads add column if not exists source_name text;
 
 -- Migration for existing DBs (agent team A/B/C)
 alter table leads add column if not exists agent_team text;
+
+-- Migration for existing DBs (google maps url extracted from caption)
+alter table leads add column if not exists google_maps_url text;
 
 -- DDProperty source (warehouse/factory for rent) — test quota 10/day
 insert into source_configs (platform, label, source_url, results_limit, active)
