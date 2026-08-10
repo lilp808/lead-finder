@@ -5,6 +5,28 @@ export default async function handler(req, res) {
     const supabase = getClient();
 
     if (req.method === 'GET') {
+      const { id } = req.query;
+
+      if (id) {
+        const { data, error } = await supabase
+          .from('lead_logs')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle();
+
+        if (error) return res.status(500).json({ error: error.message });
+        if (!data) return res.status(404).json({ error: 'Log not found' });
+
+        let steps = [];
+        try {
+          steps = typeof data.steps === 'string' ? JSON.parse(data.steps) : (data.steps || []);
+        } catch {
+          steps = [];
+        }
+
+        return res.status(200).json({ log: { ...data, steps } });
+      }
+
       const { search, page = '1', limit = '20' } = req.query;
 
       const pageNum = Math.max(1, parseInt(page) || 1);

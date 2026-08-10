@@ -1,7 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { isAuthenticated, clearCookie } from '../src/lib/auth.js';
+import {
+  isAuthenticated,
+  clearCookie,
+  verifyCredentials,
+  sessionCookie,
+} from '../src/lib/auth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_PATH = path.join(__dirname, '..', 'scripts', 'test.html');
@@ -18,6 +23,18 @@ export default function handler(req, res) {
   const url = new URL(req.url || '/', 'http://localhost');
   const pathname = url.pathname;
   const view = url.searchParams.get('view');
+
+  if (
+    req.method === 'POST'
+    && (pathname === '/api/login' || pathname.endsWith('/api/login') || url.searchParams.get('__login') === '1')
+  ) {
+    const { username = '', password = '' } = req.body || {};
+    if (!verifyCredentials(username, password)) {
+      return res.status(401).json({ error: 'invalid_credentials' });
+    }
+    res.setHeader('Set-Cookie', sessionCookie());
+    return res.status(200).json({ ok: true });
+  }
 
   if (pathname === '/login' || pathname.endsWith('/login') || view === 'login') {
     return sendPage(res, LOGIN_PATH);

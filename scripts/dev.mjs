@@ -8,7 +8,7 @@ const routes = {
   '/logout': () => import('../api/index.js').then(m => m.default),
   '/lead': () => import('../api/index.js').then(m => m.default),
   '/logs': () => import('../api/index.js').then(m => m.default),
-  '/api/login': () => import('../api/login.js').then(m => m.default),
+  '/api/login': () => import('../api/index.js').then(m => m.default),
   '/api/collect': () => import('../api/collect.js').then(m => m.default),
   '/api/dd-collect': () => import('../api/dd-collect.js').then(m => m.default),
   '/api/webhook': () => import('../api/webhook.js').then(m => m.default),
@@ -85,7 +85,7 @@ function matchRoute(pathname) {
   m = pathname.match(/^\/api\/logs\/([^/]+)$/);
   if (m) {
     return {
-      handler: () => import('../api/logs/[id].js').then(m => m.default),
+      handler: () => import('../api/logs/index.js').then(m => m.default),
       params: { id: m[1] },
     };
   }
