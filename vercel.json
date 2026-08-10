@@ -9,6 +9,8 @@
     { "source": "/", "destination": "/api/index" },
     { "source": "/lead", "destination": "/api/index?view=lead" },
     { "source": "/logs", "destination": "/api/index?view=logs" },
+    { "source": "/login", "destination": "/api/index?view=login" },
+    { "source": "/logout", "destination": "/api/index?view=logout" },
     { "source": "/api/sources/:id", "destination": "/api/sources?id=:id" },
     { "source": "/api/schedules/:id", "destination": "/api/schedules?id=:id" }
   ],

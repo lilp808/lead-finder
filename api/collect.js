@@ -10,10 +10,17 @@ export default async function handler(req, res) {
 
     const supabase = getClient();
 
-    const { data: sources, error: sourcesError } = await supabase
+    const sourceId = req.query?.sourceId || req.body?.sourceId || null;
+
+    let sourcesQuery = supabase
       .from('source_configs')
       .select('*')
       .eq('active', true);
+    if (sourceId) {
+      sourcesQuery = sourcesQuery.eq('id', sourceId);
+    }
+
+    const { data: sources, error: sourcesError } = await sourcesQuery;
 
     if (sourcesError) {
       throw new Error(`Failed to load sources: ${sourcesError.message}`);
@@ -21,7 +28,10 @@ export default async function handler(req, res) {
 
     const active = sources || [];
     if (active.length === 0) {
-      return res.status(400).json({ error: 'No active sources configured. Add one in Sources settings.' });
+      const msg = sourceId
+        ? `Source not found or inactive (${sourceId}).`
+        : 'No active sources configured. Add one in Sources settings.';
+      return res.status(400).json({ error: msg });
     }
 
     const byPlatform = active.reduce((acc, s) => {

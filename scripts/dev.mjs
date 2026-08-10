@@ -4,8 +4,11 @@ const PORT = process.env.PORT || 3000;
 
 const routes = {
   '/': () => import('../api/index.js').then(m => m.default),
+  '/login': () => import('../api/index.js').then(m => m.default),
+  '/logout': () => import('../api/index.js').then(m => m.default),
   '/lead': () => import('../api/index.js').then(m => m.default),
   '/logs': () => import('../api/index.js').then(m => m.default),
+  '/api/login': () => import('../api/login.js').then(m => m.default),
   '/api/collect': () => import('../api/collect.js').then(m => m.default),
   '/api/dd-collect': () => import('../api/dd-collect.js').then(m => m.default),
   '/api/webhook': () => import('../api/webhook.js').then(m => m.default),
@@ -128,9 +131,11 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`Dev server: http://localhost:${PORT}`);
+  console.log(`  /login               — Login page`);
   console.log(`  /                    — Config dashboard`);
   console.log(`  /lead                — Lead page`);
   console.log(`  /logs                — Collect logs page`);
+  console.log(`  POST /api/login      — Login (username/password from .env.local)`);
   console.log(`  GET /api/collect     — Trigger Apify`);
   console.log(`  POST /api/webhook    — Receive Apify results`);
   console.log(`  GET/POST /api/sources     — Manage sources`);

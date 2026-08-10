@@ -148,6 +148,7 @@ select.input { cursor: pointer; }
 .log-error .log-icon { color: var(--color-danger); }
 .log-duplicate .log-icon { color: var(--color-warning); }
 .log-skip .log-icon { color: #9333ea; }
+.log-step.source-head { font-weight: 600; color: var(--color-text); margin-top: var(--space-2); }
 .summary-card { background: var(--color-success-bg); border: 1px solid var(--color-success); border-radius: var(--radius-md); padding: var(--space-4); margin-top: var(--space-3); display: flex; gap: var(--space-5); flex-wrap: wrap; }
 .summary-item { text-align: center; }
 .summary-item .num { font-size: 1.25rem; font-weight: 700; display: block; }
@@ -177,6 +178,7 @@ select.input { cursor: pointer; }
   <a href="/" class="active"><i data-lucide="settings-2" style="width:16px;height:16px"></i> Config</a>
   <a href="/lead"><i data-lucide="users" style="width:16px;height:16px"></i> Leads</a>
   <a href="/logs"><i data-lucide="scroll-text" style="width:16px;height:16px"></i> Logs</a>
+  <a href="/logout" style="margin-left:auto;color:var(--color-danger)"><i data-lucide="log-out" style="width:16px;height:16px"></i> Logout</a>
 </div>
 
 <h1 class="page-title">
@@ -645,6 +647,52 @@ function textFor(step) {
   }
 }
 
+function appendStep(step) {
+  const logDiv = document.getElementById('collectLog');
+  if (step.type === 'summary') {
+    logDiv.innerHTML += `<div class="summary-card">
+      <div class="summary-item ok"><span class="num">${step.inserted || 0}</span><span class="label">Inserted</span></div>
+      <div class="summary-item dup"><span class="num">${step.duplicates || 0}</span><span class="label">Duplicates</span></div>
+      <div class="summary-item skip"><span class="num">${step.low_confidence || 0}</span><span class="label">Skipped</span></div>
+      <div class="summary-item err"><span class="num">${step.errors || 0}</span><span class="label">Errors</span></div>
+      <div class="summary-item skp"><span class="num">${step.skipped || 0}</span><span class="label">Time limit</span></div>
+    </div>`;
+    return;
+  }
+  const icon = iconFor(step.status);
+  const cls = classFor(step.status);
+  const txt = textFor(step);
+  logDiv.innerHTML += `<div class="log-step ${cls}"><span class="log-icon">${iconSvg(icon)}</span><span class="log-text">${txt}</span></div>`;
+}
+
+function renderSteps(steps) {
+  const logDiv = document.getElementById('collectLog');
+  if (!steps || steps.length === 0) {
+    appendStep({ type: 'error', status: 'error', message: 'No data returned' });
+    return;
+  }
+  for (const step of steps) appendStep(step);
+  logDiv.scrollTop = logDiv.scrollHeight;
+}
+
+async function runOneSource(src) {
+  const logDiv = document.getElementById('collectLog');
+  logDiv.innerHTML += `<div class="log-step log-running source-head"><span class="log-icon">${iconSvg('loader')}</span><span class="log-text">Collecting [${esc(src.label || src.id || 'source')}]...</span></div>`;
+  logDiv.scrollTop = logDiv.scrollHeight;
+  try {
+    const res = await fetch(API_BASE + '/api/collect?sourceId=' + encodeURIComponent(src.id));
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      throw new Error(`Non-JSON response (HTTP ${res.status}) — possibly Vercel 60s timeout`);
+    }
+    renderSteps(data.steps || []);
+  } catch (err) {
+    appendStep({ type: 'error', status: 'error', message: `${src.label || src.id || 'source'} — ${err.message}` });
+  }
+}
+
 async function testCollect() {
   const btn = document.getElementById('btnCollect');
   const logDiv = document.getElementById('collectLog');
@@ -654,28 +702,18 @@ async function testCollect() {
     <span class="log-text">Running Collect...</span>
   </div>`;
   try {
-    const res = await fetch(API_BASE + '/api/collect');
-    const data = await res.json();
+    const res = await fetch(API_BASE + '/api/sources');
+    const sources = await res.json();
+    const active = (Array.isArray(sources) ? sources : []).filter(s => s.active);
+
     logDiv.innerHTML = '';
-    if (!data.steps || data.steps.length === 0) {
-      logDiv.innerHTML = `<div class="log-step log-error"><span class="log-icon">${iconSvg('x-circle')}</span><span class="log-text">No data returned</span></div>`;
+    if (active.length === 0) {
+      appendStep({ type: 'error', status: 'error', message: 'No active sources configured. Add one in Sources settings.' });
       return;
     }
-    for (const step of data.steps) {
-      if (step.type === 'summary') {
-        logDiv.innerHTML += `<div class="summary-card">
-          <div class="summary-item ok"><span class="num">${step.inserted || 0}</span><span class="label">Inserted</span></div>
-          <div class="summary-item dup"><span class="num">${step.duplicates || 0}</span><span class="label">Duplicates</span></div>
-          <div class="summary-item skip"><span class="num">${step.low_confidence || 0}</span><span class="label">Skipped</span></div>
-          <div class="summary-item err"><span class="num">${step.errors || 0}</span><span class="label">Errors</span></div>
-          <div class="summary-item skp"><span class="num">${step.skipped || 0}</span><span class="label">Time limit</span></div>
-        </div>`;
-        continue;
-      }
-      const icon = iconFor(step.status);
-      const cls = classFor(step.status);
-      const txt = textFor(step);
-      logDiv.innerHTML += `<div class="log-step ${cls}"><span class="log-icon">${iconSvg(icon)}</span><span class="log-text">${txt}</span></div>`;
+
+    for (const src of active) {
+      await runOneSource(src);
     }
     logDiv.scrollTop = logDiv.scrollHeight;
   } catch (err) {
