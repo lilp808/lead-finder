@@ -46,6 +46,7 @@ export function completenessScore(lead) {
 export function toSnapshot(lead) {
   const snap = {};
   for (const f of SNAPSHOT_FIELDS) snap[f] = lead[f] ?? null;
+  snap.lead_id = lead.lead_id ?? lead.id ?? null;
   snap.province_norm = normalize(snap.province);
   snap.district_norm = normalize(snap.district);
   snap.sub_district_norm = normalize(snap.sub_district);

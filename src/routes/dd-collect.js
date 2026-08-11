@@ -84,7 +84,7 @@ async function processOneListing(listing, source, supabase, steps = null, workfl
   }
 
   try {
-    await insertLead(lead);
+    const inserted = await insertLead(lead);
 
     let workflow = null;
     let resultLeadId = null;
@@ -93,7 +93,7 @@ async function processOneListing(listing, source, supabase, steps = null, workfl
       workflow = 'skipped';
     } else {
       try {
-        const wf = await processLeadForResult(supabase, lead, steps);
+        const wf = await processLeadForResult(supabase, { ...lead, id: inserted.id }, steps);
         workflow = wf.status;
         resultLeadId = wf.resultLeadId || null;
       } catch (wfErr) {

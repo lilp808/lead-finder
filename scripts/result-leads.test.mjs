@@ -30,6 +30,7 @@ assert('incomplete flags price+agent', !chk.complete && chk.missing.includes('pr
 
 const snap = toSnapshot(completeLead);
 assert('snapshot normalizes location', snap.province_norm === 'samut prakan' && snap.sub_district_norm === 'bang kaew');
+assert('snapshot maps lead.id to lead_id', snap.lead_id === 'lead-new');
 
 function mockSupabase() {
   const rows = [];
