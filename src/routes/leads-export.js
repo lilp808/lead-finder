@@ -1,4 +1,4 @@
-import { getClient } from '../../src/lib/supabase.js';
+import { getClient } from '../lib/supabase.js';
 
 const CSV_COLS = [
   'id', 'post_url', 'source_url', 'source_platform', 'source_config_id', 'source_name', 'author_name', 'posted_at', 'collected_at',

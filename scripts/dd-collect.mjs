@@ -1,5 +1,5 @@
 import { getClient } from '../src/lib/supabase.js';
-import { collectSources } from '../api/dd-collect.js';
+import { collectSources } from '../src/routes/dd-collect.js';
 
 const SEARCH_URL =
   'https://www.ddproperty.com/en/property-for-rent?locale=th&listingType=rent&propertyTypeGroup=C&propertyTypeCode=WAR&isCommercial=true';

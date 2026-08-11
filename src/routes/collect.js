@@ -1,6 +1,6 @@
-import { getCollector } from '../src/collectors/index.js';
-import { getClient } from '../src/lib/supabase.js';
-import { saveRunLog } from '../src/lib/log.js';
+import { getCollector } from '../collectors/index.js';
+import { getClient } from '../lib/supabase.js';
+import { saveRunLog } from '../lib/log.js';
 
 export default async function handler(req, res) {
   try {

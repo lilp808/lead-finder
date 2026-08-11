@@ -1,11 +1,11 @@
-import { fetchSearchPage, DD_DEFAULT_PAGE_SIZE } from '../src/lib/ddproperty.js';
-import { assignAgentTeam } from '../src/lib/agent-team.js';
-import { processLeadForResult } from '../src/workflow/result-leads.js';
+import { fetchSearchPage, DD_DEFAULT_PAGE_SIZE } from '../lib/ddproperty.js';
+import { assignAgentTeam } from '../lib/agent-team.js';
+import { processLeadForResult } from '../workflow/result-leads.js';
 import {
   getClient,
   downloadAndUploadImages,
   insertLead,
-} from '../src/lib/supabase.js';
+} from '../lib/supabase.js';
 
 const BATCH_SIZE = 2;
 const TIME_LIMIT_SEC = 55;

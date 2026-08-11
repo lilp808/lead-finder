@@ -1,5 +1,5 @@
-import { getClient } from '../../src/lib/supabase.js';
-import { assignAgentTeam } from '../../src/lib/agent-team.js';
+import { getClient } from '../lib/supabase.js';
+import { assignAgentTeam } from '../lib/agent-team.js';
 
 export default async function handler(req, res) {
   try {

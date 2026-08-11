@@ -1,4 +1,4 @@
-import { runDDSources } from '../../api/dd-collect.js';
+import { runDDSources } from '../routes/dd-collect.js';
 
 export const platform = 'ddproperty';
 export const label = 'DDProperty';

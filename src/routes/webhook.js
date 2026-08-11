@@ -1,6 +1,6 @@
-import { getDatasetItems } from '../src/lib/apify.js';
-import { processItems } from '../src/collectors/facebook.js';
-import { getClient } from '../src/lib/supabase.js';
+import { getDatasetItems } from '../lib/apify.js';
+import { processItems } from '../collectors/facebook.js';
+import { getClient } from '../lib/supabase.js';
 
 export default async function handler(req, res) {
   try {

@@ -9,15 +9,27 @@
     { "source": "/", "destination": "/api/index" },
     { "source": "/lead", "destination": "/api/index?view=lead" },
     { "source": "/logs", "destination": "/api/index?view=logs" },
+    { "source": "/result", "destination": "/api/index?view=result" },
     { "source": "/login", "destination": "/api/index?view=login" },
     { "source": "/logout", "destination": "/api/index?view=logout" },
     { "source": "/api/login", "destination": "/api/index?__login=1" },
-    { "source": "/api/sources/:id", "destination": "/api/sources?id=:id" },
-    { "source": "/api/schedules/:id", "destination": "/api/schedules?id=:id" },
-    { "source": "/api/logs/:id", "destination": "/api/logs?id=:id" }
+    { "source": "/api/collect", "destination": "/api/index?__route=collect" },
+    { "source": "/api/cron-check", "destination": "/api/index?__route=cron-check" },
+    { "source": "/api/dd-collect", "destination": "/api/index?__route=dd-collect" },
+    { "source": "/api/webhook", "destination": "/api/index?__route=webhook" },
+    { "source": "/api/leads/export", "destination": "/api/index?__route=leads-export" },
+    { "source": "/api/leads/:id", "destination": "/api/index?__route=lead&id=:id" },
+    { "source": "/api/leads", "destination": "/api/index?__route=leads" },
+    { "source": "/api/logs/:id", "destination": "/api/index?__route=logs&id=:id" },
+    { "source": "/api/logs", "destination": "/api/index?__route=logs" },
+    { "source": "/api/result-leads", "destination": "/api/index?__route=result-leads" },
+    { "source": "/api/schedules/:id", "destination": "/api/index?__route=schedules&id=:id" },
+    { "source": "/api/schedules", "destination": "/api/index?__route=schedules" },
+    { "source": "/api/sources/:id", "destination": "/api/index?__route=sources&id=:id" },
+    { "source": "/api/sources", "destination": "/api/index?__route=sources" }
   ],
   "functions": {
-    "api/*.js": {
+    "api/index.js": {
       "maxDuration": 60
     }
   }

@@ -2,24 +2,26 @@ import http from 'node:http';
 
 const PORT = process.env.PORT || 3000;
 
+const indexHandler = () => import('../api/index.js').then(m => m.default);
+
 const routes = {
-  '/': () => import('../api/index.js').then(m => m.default),
-  '/login': () => import('../api/index.js').then(m => m.default),
-  '/logout': () => import('../api/index.js').then(m => m.default),
-  '/lead': () => import('../api/index.js').then(m => m.default),
-  '/logs': () => import('../api/index.js').then(m => m.default),
-  '/result': () => import('../api/index.js').then(m => m.default),
-  '/api/login': () => import('../api/index.js').then(m => m.default),
-  '/api/collect': () => import('../api/collect.js').then(m => m.default),
-  '/api/dd-collect': () => import('../api/dd-collect.js').then(m => m.default),
-  '/api/webhook': () => import('../api/webhook.js').then(m => m.default),
-  '/api/sources': () => import('../api/sources/index.js').then(m => m.default),
-  '/api/leads/export': () => import('../api/leads/export.js').then(m => m.default),
-  '/api/leads': () => import('../api/leads/index.js').then(m => m.default),
-  '/api/result-leads': () => import('../api/result-leads/index.js').then(m => m.default),
-  '/api/logs': () => import('../api/logs/index.js').then(m => m.default),
-  '/api/cron-check': () => import('../api/cron-check.js').then(m => m.default),
-  '/api/schedules': () => import('../api/schedules/index.js').then(m => m.default),
+  '/': indexHandler,
+  '/login': indexHandler,
+  '/logout': indexHandler,
+  '/lead': indexHandler,
+  '/logs': indexHandler,
+  '/result': indexHandler,
+  '/api/login': indexHandler,
+  '/api/collect': indexHandler,
+  '/api/dd-collect': indexHandler,
+  '/api/webhook': indexHandler,
+  '/api/sources': indexHandler,
+  '/api/leads/export': indexHandler,
+  '/api/leads': indexHandler,
+  '/api/result-leads': indexHandler,
+  '/api/logs': indexHandler,
+  '/api/cron-check': indexHandler,
+  '/api/schedules': indexHandler,
 };
 
 function createMockRes(realRes) {
@@ -63,7 +65,7 @@ function matchRoute(pathname) {
   m = pathname.match(/^\/api\/sources\/([^/]+)$/);
   if (m) {
     return {
-      handler: () => import('../api/sources/index.js').then(m => m.default),
+      handler: indexHandler,
       params: { id: m[1] },
     };
   }
@@ -71,7 +73,7 @@ function matchRoute(pathname) {
   m = pathname.match(/^\/api\/schedules\/([^/]+)$/);
   if (m) {
     return {
-      handler: () => import('../api/schedules/index.js').then(m => m.default),
+      handler: indexHandler,
       params: { id: m[1] },
     };
   }
@@ -79,15 +81,7 @@ function matchRoute(pathname) {
   m = pathname.match(/^\/api\/leads\/([^/]+)$/);
   if (m) {
     return {
-      handler: () => import('../api/leads/[id].js').then(m => m.default),
-      params: { id: m[1] },
-    };
-  }
-
-  m = pathname.match(/^\/api\/result-leads\/([^/]+)$/);
-  if (m) {
-    return {
-      handler: () => import('../api/result-leads/[id].js').then(m => m.default),
+      handler: indexHandler,
       params: { id: m[1] },
     };
   }
@@ -95,7 +89,7 @@ function matchRoute(pathname) {
   m = pathname.match(/^\/api\/logs\/([^/]+)$/);
   if (m) {
     return {
-      handler: () => import('../api/logs/index.js').then(m => m.default),
+      handler: indexHandler,
       params: { id: m[1] },
     };
   }
