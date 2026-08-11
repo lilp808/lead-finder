@@ -32,6 +32,7 @@ export default async function handler(req, res) {
       if (req.body.province !== undefined) { updates.province = req.body.province; locationEdited = true; }
       if (req.body.district !== undefined) { updates.district = req.body.district; locationEdited = true; }
       if (req.body.sub_district !== undefined) { updates.sub_district = req.body.sub_district; locationEdited = true; }
+      if (req.body.google_maps_url !== undefined) updates.google_maps_url = req.body.google_maps_url || null;
       updates.updated_at = new Date().toISOString();
 
       // Recompute agent_team from the latest location unless overridden manually.
@@ -63,6 +64,16 @@ export default async function handler(req, res) {
 
       if (error) return res.status(500).json({ error: error.message });
       if (!data) return res.status(404).json({ error: 'Lead not found' });
+
+      // Keep the Result Lead snapshot in sync (google_maps_url may affect the Result Leads page).
+      if (updates.google_maps_url !== undefined) {
+        const { error: snapErr } = await supabase
+          .from('result_leads')
+          .update({ google_maps_url: data.google_maps_url, updated_at: new Date().toISOString() })
+          .eq('lead_id', id);
+        if (snapErr) console.error('Result-leads google_maps_url sync failed:', snapErr.message);
+      }
+
       return res.status(200).json(data);
     }
 

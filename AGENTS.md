@@ -75,6 +75,7 @@ After a lead is inserted, `processLeadForResult(supabase, lead, steps)` runs aut
 - **Vision verify** (`src/lib/vision.js`, prompt `compare-properties.md`): Groq `qwen/qwen3.6-27b` (JSON mode), ≤2 images/side. `same_place && confidence ≥ 0.7` → merge.
 - **Merge**: keep the more complete lead (field+image count; tie → the one recorded first). Delete loser from `result_leads`, set `leads.lead_status='merged'` + `merged_into_lead_id` (leads row is NOT deleted — keeps source URL to prevent re-scrape). Vision unavailable/error → no merge, logged as `workflow_dedup unverified` and the new lead is still snapshotted for review.
 - **Backfill existing rows**: `node --env-file=.env.local scripts/backfill-result-leads.mjs`.
+- **Google Maps URL sync**: `google_maps_url` is copied into `result_leads` at snapshot time and synced again when the lead is edited via `/api/leads/:id` PATCH (`src/routes/lead.js`). Backfill existing rows that were snapshotted before the URL existed: `npm run backfill:maps` (`scripts/backfill-result-google-maps.mjs`).
 - **UI**: `/result` page (`scripts/result.html`) reads `src/routes/result-leads.js`. Route registered in `scripts/dev.mjs`.
 - Requires `GROQ_API_KEY` for the vision step.
 

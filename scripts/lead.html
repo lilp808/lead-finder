@@ -915,6 +915,7 @@ function renderEditForm(l) {
       ${field('Province', `<input class="input" id="editProvince" type="text" value="${esc(l.province || '')}">`)}
       ${field('District', `<input class="input" id="editDistrict" type="text" value="${esc(l.district || '')}">`)}
       ${field('Sub District', `<input class="input" id="editSubDistrict" type="text" value="${esc(l.sub_district || '')}">`)}
+      ${field('Google Maps', `<input class="input" id="editGoogleMaps" type="text" value="${esc(l.google_maps_url || '')}" placeholder="https://maps.app.goo.gl/...">`, true)}
       ${field('Notes', `<textarea class="input" id="editNotes" style="min-height:90px">${esc(l.notes || '')}</textarea>`, true)}
     </div>
     <div class="edit-form-actions">
@@ -933,6 +934,7 @@ async function saveLeadEdits(e, id) {
   const province = document.getElementById('editProvince').value.trim();
   const district = document.getElementById('editDistrict').value.trim();
   const subDistrict = document.getElementById('editSubDistrict').value.trim();
+  const googleMaps = document.getElementById('editGoogleMaps').value.trim();
   const notes = document.getElementById('editNotes').value.trim();
   if (status) body.lead_status = status;
   body.agent_team = agentTeam || null;
@@ -940,6 +942,7 @@ async function saveLeadEdits(e, id) {
   body.province = province || null;
   body.district = district || null;
   body.sub_district = subDistrict || null;
+  body.google_maps_url = googleMaps || null;
   body.notes = notes || null;
 
   try {

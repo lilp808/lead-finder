@@ -8,6 +8,7 @@
     "scrape": "node --env-file .env.local scripts/scrape.mjs",
     "backfill:team": "node --env-file .env.local scripts/backfill-agent-team.mjs",
     "backfill:result": "node --env-file .env.local scripts/backfill-result-leads.mjs",
+    "backfill:maps": "node --env-file .env.local scripts/backfill-result-google-maps.mjs",
     "test:team": "node scripts/agent-team.test.mjs",
     "test:result": "node scripts/result-leads.test.mjs",
     "dev": "node --env-file .env.local --watch scripts/dev.mjs"
