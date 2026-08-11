@@ -229,11 +229,11 @@ function stepIcon(name) {
 
 function iconAndClass(step) {
   const s = step.status;
-  if (s === 'ok' || s === 'inserted') return { icon: 'check-circle', cls: 'step-ok' };
+  if (s === 'ok' || s === 'inserted' || s === 'ready' || s === 'same' || s === 'merged') return { icon: 'check-circle', cls: 'step-ok' };
   if (s === 'running' || s === 'processing' || s === 'polling' || s === 'batch_progress') return { icon: 'loader', cls: 'step-running' };
   if (s === 'error' || s === 'source_error') return { icon: 'x-circle', cls: 'step-error' };
-  if (s === 'duplicate') return { icon: 'arrow-right', cls: 'step-duplicate' };
-  if (s === 'low_confidence') return { icon: 'triangle', cls: 'step-skip' };
+  if (s === 'duplicate' || s === 'candidate') return { icon: 'arrow-right', cls: 'step-duplicate' };
+  if (s === 'low_confidence' || s === 'incomplete' || s === 'unverified' || s === 'different') return { icon: 'alert-triangle', cls: 'step-skip' };
   if (s === 'warning') return { icon: 'alert-triangle', cls: 'step-ok' };
   return { icon: 'minus', cls: 'step-ok' };
 }
@@ -281,6 +281,24 @@ function textFor(step) {
       if (step.status === 'low_confidence') return `Not a listing (score ${step.score}) — NOT saved` + url;
       if (step.status === 'error') return `Error: ${esc(step.error)} — NOT saved` + url;
       return '' + url;
+    case 'workflow_check':
+      if (step.status === 'ready') return `Workflow: ข้อมูลครบ พร้อมส่ง Agent (Team ${esc(step.agent_team || '?')})` + url;
+      if (step.status === 'time_limit') return `Workflow: ข้ามไป (ใกล้หมดเวลา) — รันครั้งหน้า` + url;
+      return `Workflow: ข้อมูลไม่ครบ — missing: ${(step.missing || []).join(', ') || '?'}` + url;
+    case 'workflow_dedup':
+      if (step.status === 'candidate') {
+        let ref = step.matchedUrl ? ` · เทียบกับ <a class="url" href="${esc(step.matchedUrl)}" target="_blank" rel="noopener">${esc(step.matchedUrl)}</a>` : '';
+        return `Workflow: พบรายการต้องสงสัยซ้ำ (Location+SQM ตรง)` + ref + url;
+      }
+      if (step.status === 'unverified') return `Workflow: dedup ตรวจภาพไม่ได้ (${esc(step.error || '')}) — บันทึกไว้รอ review` + url;
+      if (step.status === 'error') return `Workflow: dedup error — ${esc(step.error || '')}` + url;
+      return 'Workflow: dedup' + url;
+    case 'workflow_vision':
+      return `Workflow: AI เทียบภาพ → ${step.status === 'same' ? 'เป็นที่เดียวกัน' : 'คนละที่'} (${Math.round((step.confidence || 0) * 100)}%)` + url;
+    case 'workflow_merged':
+      return `Workflow: MERGED — เก็บรายการ ${esc(step.winner || '')} (${esc(step.mergedInto || '')}), ลบฝั่งซ้ำออกจาก result_leads` + url;
+    case 'workflow_ready':
+      return `Workflow: บันทึก result_leads แล้ว (id: ${esc(step.resultLeadId || '')})` + url;
     case 'summary': return '';
     case 'error': return esc(step.message || '') + url;
     default: return esc(JSON.stringify(step)) + url;

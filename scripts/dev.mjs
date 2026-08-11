@@ -8,6 +8,7 @@ const routes = {
   '/logout': () => import('../api/index.js').then(m => m.default),
   '/lead': () => import('../api/index.js').then(m => m.default),
   '/logs': () => import('../api/index.js').then(m => m.default),
+  '/result': () => import('../api/index.js').then(m => m.default),
   '/api/login': () => import('../api/index.js').then(m => m.default),
   '/api/collect': () => import('../api/collect.js').then(m => m.default),
   '/api/dd-collect': () => import('../api/dd-collect.js').then(m => m.default),
@@ -15,6 +16,7 @@ const routes = {
   '/api/sources': () => import('../api/sources/index.js').then(m => m.default),
   '/api/leads/export': () => import('../api/leads/export.js').then(m => m.default),
   '/api/leads': () => import('../api/leads/index.js').then(m => m.default),
+  '/api/result-leads': () => import('../api/result-leads/index.js').then(m => m.default),
   '/api/logs': () => import('../api/logs/index.js').then(m => m.default),
   '/api/cron-check': () => import('../api/cron-check.js').then(m => m.default),
   '/api/schedules': () => import('../api/schedules/index.js').then(m => m.default),
@@ -82,6 +84,14 @@ function matchRoute(pathname) {
     };
   }
 
+  m = pathname.match(/^\/api\/result-leads\/([^/]+)$/);
+  if (m) {
+    return {
+      handler: () => import('../api/result-leads/[id].js').then(m => m.default),
+      params: { id: m[1] },
+    };
+  }
+
   m = pathname.match(/^\/api\/logs\/([^/]+)$/);
   if (m) {
     return {
@@ -134,6 +144,7 @@ server.listen(PORT, () => {
   console.log(`  /login               — Login page`);
   console.log(`  /                    — Config dashboard`);
   console.log(`  /lead                — Lead page`);
+  console.log(`  /result              — Result leads page`);
   console.log(`  /logs                — Collect logs page`);
   console.log(`  POST /api/login      — Login (username/password from .env.local)`);
   console.log(`  GET /api/collect     — Trigger Apify`);
@@ -143,5 +154,6 @@ server.listen(PORT, () => {
   console.log(`  GET /api/cron-check       — Cron trigger`);
   console.log(`  GET/PATCH /api/leads      — List & batch update leads`);
   console.log(`  GET /api/leads/:id        — Lead detail`);
+  console.log(`  GET /api/result-leads     — List result leads`);
   console.log(`  GET /api/leads/export     — Export CSV`);
 });

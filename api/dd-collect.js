@@ -1,5 +1,6 @@
 import { fetchSearchPage, DD_DEFAULT_PAGE_SIZE } from '../src/lib/ddproperty.js';
 import { assignAgentTeam } from '../src/lib/agent-team.js';
+import { processLeadForResult } from '../src/workflow/result-leads.js';
 import {
   getClient,
   downloadAndUploadImages,
@@ -61,7 +62,7 @@ function isDuplicateError(err) {
   return err?.message?.includes('duplicate key') || err?.code === '23505';
 }
 
-async function processOneListing(listing, source, supabase) {
+async function processOneListing(listing, source, supabase, steps = null, workflowDeadline = 0) {
   if (!listing.url) return { id: listing.id, status: 'no_url' };
 
   const { data: existing } = await supabase
@@ -84,6 +85,22 @@ async function processOneListing(listing, source, supabase) {
 
   try {
     await insertLead(lead);
+
+    let workflow = null;
+    let resultLeadId = null;
+    if (workflowDeadline && Date.now() > workflowDeadline) {
+      if (steps) steps.push({ type: 'workflow_check', status: 'time_limit', postUrl: lead.post_url || '' });
+      workflow = 'skipped';
+    } else {
+      try {
+        const wf = await processLeadForResult(supabase, lead, steps);
+        workflow = wf.status;
+        resultLeadId = wf.resultLeadId || null;
+      } catch (wfErr) {
+        console.error('Result-leads workflow failed:', wfErr.message);
+      }
+    }
+
     return {
       id: listing.id,
       status: 'inserted',
@@ -95,6 +112,8 @@ async function processOneListing(listing, source, supabase) {
       district: listing.district || null,
       province: listing.province || null,
       postUrl: listing.url,
+      workflow,
+      resultLeadId,
     };
   } catch (err) {
     if (isDuplicateError(err)) return { id: listing.id, status: 'duplicate', reason: 'existing_url', postUrl: listing.url };
@@ -115,6 +134,7 @@ async function processSource(source, supabase, steps) {
   let duplicates = 0;
   let page = 1;
   const startTime = Date.now();
+  const workflowDeadline = startTime + (TIME_LIMIT_SEC - 12) * 1000;
 
   while (inserted < quota && page <= MAX_PAGES_PER_RUN) {
     if ((Date.now() - startTime) / 1000 > TIME_LIMIT_SEC) {
@@ -142,7 +162,7 @@ async function processSource(source, supabase, steps) {
 
       const batch = result.listings.slice(i, i + BATCH_SIZE);
       const batchResults = await Promise.all(
-        batch.map(listing => processOneListing(listing, source, supabase).catch(err => ({
+        batch.map(listing => processOneListing(listing, source, supabase, steps, workflowDeadline).catch(err => ({
           id: listing.id,
           status: 'error',
           error: err.message,

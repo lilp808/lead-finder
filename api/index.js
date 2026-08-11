@@ -12,6 +12,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DASHBOARD_PATH = path.join(__dirname, '..', 'scripts', 'test.html');
 const LEAD_PATH = path.join(__dirname, '..', 'scripts', 'lead.html');
 const LOGS_PATH = path.join(__dirname, '..', 'scripts', 'logs.html');
+const RESULT_PATH = path.join(__dirname, '..', 'scripts', 'result.html');
 const LOGIN_PATH = path.join(__dirname, '..', 'scripts', 'login.html');
 
 function redirect(res, location) {
@@ -53,6 +54,8 @@ export default function handler(req, res) {
   let htmlPath;
   if (pathname === '/logs' || pathname.endsWith('/logs') || view === 'logs') {
     htmlPath = LOGS_PATH;
+  } else if (pathname === '/result' || pathname.endsWith('/result') || view === 'result') {
+    htmlPath = RESULT_PATH;
   } else if (pathname === '/lead' || pathname.endsWith('/lead') || view === 'lead') {
     htmlPath = LEAD_PATH;
   } else {

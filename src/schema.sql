@@ -137,6 +137,48 @@ alter table leads add column if not exists agent_team text;
 -- Migration for existing DBs (google maps url extracted from caption)
 alter table leads add column if not exists google_maps_url text;
 
+-- Migration for existing DBs (workflow result-leads merge tracking)
+alter table leads add column if not exists merged_into_lead_id uuid;
+
+-- Result Leads (workflow: complete leads ready to send to Agent, deduped by location + sqm)
+create table if not exists result_leads (
+  id                uuid primary key default gen_random_uuid(),
+  lead_id           uuid not null unique references leads(id) on delete cascade,
+  post_url          text,
+  source_platform   text,
+  source_name       text,
+  property_type     text,
+  listing_status    text,
+  rent_price        numeric,
+  sale_price        numeric,
+  rent_price_unit   text,
+  sale_price_unit   text,
+  pricing_area_sqm  numeric,
+  land_area         text,
+  land_area_sqm     numeric,
+  building_area     text,
+  building_area_sqm numeric,
+  province          text,
+  province_norm     text,
+  district          text,
+  district_norm     text,
+  sub_district      text,
+  sub_district_norm text,
+  address           text,
+  google_maps_url   text,
+  image_urls        text[],
+  ai_summary        text,
+  ai_tags           text[],
+  confidence_score  numeric,
+  agent_team        text,
+  created_at        timestamptz default now(),
+  updated_at        timestamptz default now()
+);
+
+create index if not exists idx_result_leads_location
+  on result_leads(province_norm, district_norm, sub_district_norm);
+create index if not exists idx_result_leads_agent_team on result_leads(agent_team);
+
 -- DDProperty source (warehouse/factory for rent) — test quota 10/day
 insert into source_configs (platform, label, source_url, results_limit, active)
 values (

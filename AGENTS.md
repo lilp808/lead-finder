@@ -5,6 +5,7 @@
 | Command | What |
 |---|---|
 | `npm run scrape` | Trigger Apify facebook-groups-scraper runs for all active sources in DB |
+| `npm run backfill:result` | Run result-leads workflow on existing leads (populates `result_leads`) |
 | `npm run dev` | Dev server at localhost:3000 with `--watch` hot reload |
 | `npm run setup:db` | Create Supabase `lead-images` storage bucket |
 
@@ -62,6 +63,19 @@ Read active sources from DB → start Apify runs with webhook URLs per source
 ## Constraint
 
 Platform is property-lead-intelligence, not a Facebook scraper. Facebook is source #1; new sources must be pluggable without pipeline rewrites.
+
+## Result Leads workflow (`src/workflow/result-leads.js`)
+
+After a lead is inserted, `processLeadForResult(supabase, lead, steps)` runs automatically (hooked in `facebook.js processOneItem` + `api/dd-collect.js processOneListing`; webhook path reuses `processItems` → covered).
+
+- **Completeness** (`isComplete`): must have SQM (any of `pricing_area_sqm`/`land_area_sqm`/`building_area_sqm`), `province`+`district`+`sub_district`, ≥1 `image_urls`, price (`rent_price`/`sale_price`), and `agent_team`. Incomplete leads stay in `leads` only; missing fields pushed as `workflow_check` step.
+- **Snapshot** (`toSnapshot`): complete leads are copied into `result_leads` (`lead_id` unique, upsert on conflict) with normalized location columns `province_norm/district_norm/sub_district_norm` (from `src/lib/agent-team.js`).
+- **Dedup** (`findDuplicates`): candidate = same normalized location AND any sqm column exactly equal (column-to-column).
+- **Vision verify** (`src/lib/vision.js`, prompt `compare-properties.md`): Groq `qwen/qwen3.6-27b` (JSON mode), ≤2 images/side. `same_place && confidence ≥ 0.7` → merge.
+- **Merge**: keep the more complete lead (field+image count; tie → the one recorded first). Delete loser from `result_leads`, set `leads.lead_status='merged'` + `merged_into_lead_id` (leads row is NOT deleted — keeps source URL to prevent re-scrape). Vision unavailable/error → no merge, logged as `workflow_dedup unverified` and the new lead is still snapshotted for review.
+- **Backfill existing rows**: `node --env-file=.env.local scripts/backfill-result-leads.mjs`.
+- **UI**: `/result` page (`scripts/result.html`) reads `api/result-leads`. Route registered in `scripts/dev.mjs`.
+- Requires `GROQ_API_KEY` for the vision step.
 
 ## Collector interface (`src/collectors/`)
 

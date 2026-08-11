@@ -1,6 +1,7 @@
 import { startActorRun, getDatasetItems } from '../lib/apify.js';
 import { extractProperty } from '../lib/groq.js';
 import { assignAgentTeam } from '../lib/agent-team.js';
+import { processLeadForResult } from '../workflow/result-leads.js';
 import {
   downloadAndUploadImages,
   insertLead,
@@ -54,7 +55,7 @@ export function mapApifyItem(item) {
   };
 }
 
-export async function processOneItem(item, source, supabase, modelOptions = {}) {
+export async function processOneItem(item, source, supabase, modelOptions = {}, steps = null, workflowDeadline = 0) {
   const postUrl = item.url || item.postUrl;
   if (!postUrl) return null;
 
@@ -145,16 +146,34 @@ export async function processOneItem(item, source, supabase, modelOptions = {}) 
 
   try {
     const inserted = await insertLead(lead);
-    return {
-      postUrl,
-      status: 'inserted',
-      leadId: inserted.id,
-      property_type: extraction.property_type,
-      confidence: extraction.confidence_score,
-      area: extraction.land_area || extraction.building_area || null,
-      district: extraction.district || null,
-      province: extraction.province || null,
-    };
+
+    if (inserted?.id) {
+      const workflowLead = { ...lead, id: inserted.id };
+      let workflowResult = null;
+      if (workflowDeadline && Date.now() > workflowDeadline) {
+        if (steps) steps.push({ type: 'workflow_check', status: 'time_limit', postUrl: lead.post_url || '' });
+        workflowResult = { status: 'skipped' };
+      } else {
+        try {
+          workflowResult = await processLeadForResult(supabase, workflowLead, steps);
+        } catch (wfErr) {
+          console.error('Result-leads workflow failed:', wfErr.message);
+        }
+      }
+      return {
+        postUrl,
+        status: 'inserted',
+        leadId: inserted.id,
+        property_type: extraction.property_type,
+        confidence: extraction.confidence_score,
+        area: extraction.land_area || extraction.building_area || null,
+        district: extraction.district || null,
+        province: extraction.province || null,
+        workflow: workflowResult?.status || null,
+        resultLeadId: workflowResult?.resultLeadId || null,
+      };
+    }
+    return { postUrl, status: 'inserted', leadId: inserted.id };
   } catch (err) {
     if (err.message?.includes('duplicate key') || err.code === '23505') {
       return { postUrl, status: 'duplicate' };
@@ -165,6 +184,7 @@ export async function processOneItem(item, source, supabase, modelOptions = {}) 
 
 export async function processItems(items, source, supabase, modelOptions = {}, steps = null) {
   const startTime = Date.now();
+  const workflowDeadline = startTime + (TIME_LIMIT_SEC - 12) * 1000;
   const results = [];
   let skipped = 0;
 
@@ -180,7 +200,7 @@ export async function processItems(items, source, supabase, modelOptions = {}, s
     if (steps) steps.push({ type: 'batch_progress', status: 'processing', batch: Math.floor(i / BATCH_SIZE) + 1, total: Math.ceil(items.length / BATCH_SIZE) });
 
     const batchResults = await Promise.all(
-      batch.map(item => processOneItem(item, source, supabase, modelOptions).catch(err => ({
+      batch.map(item => processOneItem(item, source, supabase, modelOptions, steps, workflowDeadline).catch(err => ({
         postUrl: item.url || item.postUrl,
         status: 'error',
         error: err.message,
