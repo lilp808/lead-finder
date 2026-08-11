@@ -105,7 +105,84 @@ body { font-family: var(--font-family); background: var(--color-bg); color: var(
 .card-foot { border-top: 1px solid var(--color-border); padding: var(--space-3) var(--space-4); display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
 .card-foot a { font-size: 0.78rem; color: var(--color-info); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
 .card-foot a:hover { text-decoration: underline; }
-.card-foot .src { margin-left: auto; color: var(--color-text-muted); font-size: 0.72rem; }
+.card-foot .src { color: var(--color-text-muted); font-size: 0.72rem; }
+.card-actions { display: inline-flex; align-items: center; gap: var(--space-1); margin-left: auto; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  height: 38px; padding: 0 var(--space-4); border-radius: var(--radius-md);
+  font-family: var(--font-family); font-size: 0.85rem; font-weight: 600;
+  border: 1px solid transparent; cursor: pointer;
+  transition: all var(--transition); white-space: nowrap; text-decoration: none; line-height: 1;
+}
+.btn-xs { height: 28px; padding: 0 var(--space-2); font-size: 0.75rem; }
+.btn-ghost { background: transparent; color: var(--color-text-secondary); padding: 0 var(--space-2); height: 28px; }
+.btn-ghost:hover:not(:disabled) { background: #F5F5F5; color: var(--color-text); }
+
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.4); z-index: 1000;
+  align-items: center; justify-content: center; padding: var(--space-4);
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--color-surface); border-radius: var(--radius-lg);
+  max-width: 560px; width: 100%; max-height: 80vh; overflow-y: auto;
+  padding: var(--space-6); box-shadow: 0 20px 60px rgba(0,0,0,.15);
+  position: relative;
+}
+.modal-wide { max-width: 720px; }
+.modal-close { position: absolute; top: var(--space-3); right: var(--space-3); background: none; border: none; cursor: pointer; color: var(--color-text-muted); padding: var(--space-1); border-radius: var(--radius-sm); }
+.modal-close:hover { background: var(--color-bg); color: var(--color-text); }
+.modal h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: var(--space-4); }
+.modal textarea {
+  width: 100%; min-height: 160px;
+  border: 1px solid var(--color-border); border-radius: var(--radius-md);
+  padding: var(--space-3); font-family: var(--font-family); font-size: 0.85rem;
+  color: var(--color-text); resize: vertical; outline: none;
+}
+.modal textarea:focus { border-color: var(--color-primary); }
+.copy-btn {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  margin-top: var(--space-3); padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md); background: var(--color-primary); color: #fff;
+  border: none; font-family: var(--font-family); font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; transition: background var(--transition);
+}
+.copy-btn:hover { background: var(--color-primary-hover); }
+.copy-btn.copied { background: var(--color-success); }
+
+.slider { position: relative; border-radius: var(--radius-lg); overflow: hidden; background: #000; margin-bottom: var(--space-4); }
+.slider-viewport { overflow: hidden; }
+.slider-track { display: flex; transition: transform 250ms ease; }
+.slider-track img { width: 100%; flex-shrink: 0; max-height: 420px; object-fit: contain; background: #000; display: block; }
+.slider-btn {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 34px; height: 34px; border-radius: var(--radius-full);
+  border: none; background: rgba(255,255,255,.85); color: var(--color-text);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,.2); font-size: 1rem; line-height: 1;
+}
+.slider-btn:hover { background: #fff; }
+.slider-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.slider-prev { left: var(--space-3); }
+.slider-next { right: var(--space-3); }
+.slider-count {
+  position: absolute; bottom: var(--space-3); left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,.55); color: #fff; font-size: 0.78rem; font-weight: 600;
+  padding: 2px 10px; border-radius: var(--radius-full);
+}
+.slider-empty { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); padding: var(--space-8); color: var(--color-text-muted); }
+
+.detail-section { margin-bottom: var(--space-4); }
+.detail-section h3 { font-size: 0.85rem; font-weight: 600; color: var(--color-primary); margin-bottom: var(--space-2); text-transform: uppercase; letter-spacing: 0.5px; }
+.detail-row { display: flex; gap: var(--space-2); padding: 3px 0; font-size: 0.85rem; }
+.detail-row .lbl { color: var(--color-text-secondary); min-width: 90px; flex-shrink: 0; }
+.detail-row .val { color: var(--color-text); word-break: break-all; }
+.detail-row .val a { color: var(--color-info); }
+
+.toast { position: fixed; bottom: var(--space-6); left: 50%; transform: translateX(-50%); background: var(--color-text); color: #fff; padding: var(--space-3) var(--space-6); border-radius: var(--radius-full); font-size: 0.85rem; font-weight: 500; z-index: 2000; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+.toast.show { opacity: 1; }
 
 .pager { display: flex; gap: var(--space-3); align-items: center; justify-content: center; }
 .pager button {
@@ -149,9 +226,31 @@ body { font-family: var(--font-family); background: var(--color-bg); color: var(
 <div class="result-grid" id="resultGrid"></div>
 <div class="pager" id="pager"></div>
 
+<div class="modal-overlay" id="shareModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeShareModal()"><i data-lucide="x" style="width:20px;height:20px"></i></button>
+    <h2><i data-lucide="share-2" style="width:18px;height:18px;vertical-align:middle"></i> Share Listing</h2>
+    <textarea id="shareText" readonly></textarea>
+    <button class="copy-btn" id="copyBtn" onclick="copyShareText()">
+      <i data-lucide="copy" style="width:16px;height:16px"></i> Copy Text
+    </button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="detailModal">
+  <div class="modal modal-wide">
+    <button class="modal-close" onclick="closeDetailModal()"><i data-lucide="x" style="width:20px;height:20px"></i></button>
+    <h2 id="detailTitle">Details</h2>
+    <div id="detailBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
 <script>
 const API_BASE = '';
 let currentState = { page: 1, search: '', agent_team: '', source_platform: '' };
+let detailSliderIndex = 0;
 
 window.onload = function () {
   lucide.createIcons();
@@ -226,10 +325,13 @@ function renderResults(results) {
           <div class="summary">${esc(r.ai_summary || '')}</div>
         </div>
         <div class="card-foot">
-          <a href="/lead" title="ดู lead ต้นทาง"><i data-lucide="external-link" style="width:12px;height:12px"></i> Lead</a>
           ${r.google_maps_url ? `<a href="${esc(r.google_maps_url)}" target="_blank" rel="noopener"><i data-lucide="map" style="width:12px;height:12px"></i> แผนที่</a>` : ''}
           ${r.post_url ? `<a href="${esc(r.post_url)}" target="_blank" rel="noopener"><i data-lucide="link" style="width:12px;height:12px"></i> ต้นทาง</a>` : ''}
           <span class="src">${esc(r.source_platform || '')}${r.source_name ? ' · ' + esc(r.source_name) : ''}</span>
+          <span class="card-actions">
+            <button class="btn btn-xs btn-ghost" onclick="shareResultLead('${esc(r.lead_id || '')}')" title="Share"><i data-lucide="share-2" style="width:13px;height:13px"></i> Share</button>
+            <button class="btn btn-xs btn-ghost" onclick="viewResultLead('${esc(r.lead_id || '')}')" title="View details"><i data-lucide="eye" style="width:13px;height:13px"></i> View</button>
+          </span>
         </div>
       </div>`;
   }).join('');
@@ -250,6 +352,170 @@ function goPage(p) {
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function fmtPriceFull(v) {
+  if (v === null || v === undefined) return '';
+  return Number(v).toLocaleString('en-US');
+}
+
+function listingStatusLabel(s) {
+  const map = { rent: 'For Rent', sale: 'For Sale', both: 'For Rent & For Sale' };
+  return map[s] || s || '';
+}
+
+function typeLabel(t) {
+  if (!t) return '';
+  const map = { warehouse: 'Warehouse', factory: 'Factory', warehouse_factory: 'Warehouse/Factory', 'showroom & commercial': 'Showroom & Commercial' };
+  return map[t] || map[String(t).toLowerCase()] || t;
+}
+
+function ownerLabel(s) {
+  if (!s) return '';
+  const map = { owner: 'Owner', agent: 'Agent', unknown: 'Unknown' };
+  return map[s] || s;
+}
+
+function row(label, value) {
+  if (!value) return '';
+  return `<div class="detail-row"><span class="lbl">${esc(label)}</span><span class="val">${value}</span></div>`;
+}
+
+function viewResultLead(leadId) {
+  if (!leadId) { showToast('No source lead for this result'); return; }
+  fetch(API_BASE + '/api/leads/' + leadId)
+    .then(r => r.json())
+    .then(l => {
+      document.getElementById('detailTitle').textContent = '📋 ' + (typeLabel(l.property_type) || 'Listing');
+      let html = '';
+      html += '<div class="detail-section"><h3>Listing Info</h3>';
+      html += row('Platform', l.source_platform ? (l.source_platform === 'ddproperty' ? 'DDProperty' : 'Facebook') : '');
+      html += row('Source Config', l.source_name);
+      html += row('Type', typeLabel(l.property_type));
+      html += row('Status', listingStatusLabel(l.listing_status));
+      html += row('Sale Price', l.sale_price ? '฿' + fmtPriceFull(l.sale_price) : '');
+      html += row('Rent', l.rent_price ? '฿' + fmtPriceFull(l.rent_price) + '/mo' : '');
+      html += row('Land Area', l.land_area);
+      html += row('Building Area', l.building_area);
+      html += row('Address', [l.address, l.sub_district, l.district, l.province].filter(Boolean).join(' '));
+      const gm = l.google_maps_url
+        ? (/^https?:\/\//i.test(l.google_maps_url) ? l.google_maps_url : `https://${l.google_maps_url}`)
+        : '';
+      html += row('Google Maps', gm ? `<a href="${esc(gm)}" target="_blank" rel="noopener">Open map</a>` : '');
+      html += row('Post Link', l.post_url ? `<a href="${esc(l.post_url)}" target="_blank" rel="noopener">Open post</a>` : '');
+      html += row('Source', l.source_url);
+      html += '</div>';
+      html += '<div class="detail-section"><h3>Contact</h3>';
+      html += row('Name', l.contact_name);
+      html += row('Phone', l.phone_number ? `<a href="tel:${esc(l.phone_number)}">${esc(l.phone_number)}</a>` : '');
+      html += row('LINE', l.line_id);
+      html += row('WhatsApp', l.whatsapp);
+      html += row('WeChat', l.wechat);
+      html += row('Type', ownerLabel(l.owner_or_agent));
+      html += '</div>';
+      html += '<div class="detail-section"><h3>AI Analysis</h3>';
+      html += row('Summary', l.ai_summary);
+      html += row('Confidence', l.confidence_score != null ? `${(l.confidence_score * 100).toFixed(1)}%` : '');
+      html += row('Tags', l.ai_tags ? l.ai_tags.join(', ') : '');
+      html += '</div>';
+      html += '<div class="detail-section"><h3>Internal</h3>';
+      html += row('Lead Status', l.lead_status ? String(l.lead_status).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : '');
+      html += row('Agent Team', l.agent_team ? 'Team ' + String(l.agent_team).toUpperCase() : '');
+      html += row('Posted', l.posted_at ? new Date(l.posted_at).toLocaleString('en-US') : '');
+      html += row('Collected', l.collected_at ? new Date(l.collected_at).toLocaleString('en-US') : '');
+      html += '</div>';
+
+      const imgs = l.image_urls || [];
+      let sliderHtml;
+      if (imgs.length === 0) {
+        sliderHtml = '<div class="slider slider-empty"><i data-lucide="image-off" style="width:28px;height:28px"></i><span>No images</span></div>';
+      } else {
+        const imgsHtml = imgs.map(u => `<img src="${esc(u)}" alt="" loading="lazy" />`).join('');
+        const btns = imgs.length > 1
+          ? `<button class="slider-btn slider-prev" id="sliderPrev" onclick="sliderMove(-1)" disabled>&lsaquo;</button>
+             <button class="slider-btn slider-next" id="sliderNext" onclick="sliderMove(1)">&rsaquo;</button>
+             <div class="slider-count" id="sliderCount">1 / ${imgs.length}</div>`
+          : '';
+        sliderHtml = `<div class="slider"><div class="slider-viewport"><div class="slider-track" id="sliderTrack">${imgsHtml}</div></div>${btns}</div>`;
+      }
+
+      detailSliderIndex = 0;
+      document.getElementById('detailBody').innerHTML = sliderHtml + html;
+      document.getElementById('detailModal').classList.add('show');
+      lucide.createIcons();
+    })
+    .catch(e => showToast('Error: ' + e.message));
+}
+
+function sliderMove(dir) {
+  const track = document.getElementById('sliderTrack');
+  if (!track) return;
+  const total = track.children.length;
+  detailSliderIndex = Math.max(0, Math.min(total - 1, detailSliderIndex + dir));
+  track.style.transform = `translateX(-${detailSliderIndex * 100}%)`;
+  const count = document.getElementById('sliderCount');
+  if (count) count.textContent = `${detailSliderIndex + 1} / ${total}`;
+  const prev = document.getElementById('sliderPrev');
+  const next = document.getElementById('sliderNext');
+  if (prev) prev.disabled = detailSliderIndex === 0;
+  if (next) next.disabled = detailSliderIndex === total - 1;
+}
+
+function closeDetailModal() { document.getElementById('detailModal').classList.remove('show'); }
+
+function shareResultLead(leadId) {
+  if (!leadId) { showToast('No source lead for this result'); return; }
+  fetch(API_BASE + '/api/leads/' + leadId)
+    .then(r => r.json())
+    .then(l => {
+      const lines = [];
+      lines.push(`📌 ${typeLabel(l.property_type) || 'Listing'}${l.listing_status ? ' ' + listingStatusLabel(l.listing_status) : ''}`);
+      if (l.sale_price) lines.push(`💰 Sale: ฿${fmtPriceFull(l.sale_price)}`);
+      if (l.rent_price) lines.push(`💰 Rent: ฿${fmtPriceFull(l.rent_price)}/mo`);
+      if (l.land_area) lines.push(`📐 Land: ${l.land_area}`);
+      if (l.building_area) lines.push(`📐 Building: ${l.building_area}`);
+      const loc = [l.province, l.district, l.sub_district].filter(Boolean).join(' / ');
+      if (loc) lines.push(`📍 ${loc}`);
+      if (l.contact_name) lines.push(`👤 ${l.contact_name}`);
+      const contacts = [];
+      if (l.phone_number) contacts.push(`📞 ${l.phone_number}`);
+      if (l.line_id) contacts.push(`LINE: ${l.line_id}`);
+      if (l.whatsapp) contacts.push(`WA: ${l.whatsapp}`);
+      if (contacts.length) lines.push(contacts.join(' | '));
+      if (l.owner_or_agent) lines.push(`🏢 ${ownerLabel(l.owner_or_agent)}`);
+      if (l.ai_summary) lines.push(`💬 ${l.ai_summary}`);
+      lines.push('');
+      lines.push(`🔗 ${l.post_url || ''}`);
+      lines.push('———');
+      lines.push('Powered by FindProperty Lead Intelligence');
+
+      document.getElementById('shareText').value = lines.join('\n');
+      document.getElementById('copyBtn').className = 'copy-btn';
+      document.getElementById('copyBtn').innerHTML = '<i data-lucide="copy" style="width:16px;height:16px"></i> Copy Text';
+      document.getElementById('shareModal').classList.add('show');
+      lucide.createIcons();
+    })
+    .catch(e => showToast('Error: ' + e.message));
+}
+
+function closeShareModal() { document.getElementById('shareModal').classList.remove('show'); }
+
+function copyShareText() {
+  const text = document.getElementById('shareText');
+  text.select();
+  navigator.clipboard.writeText(text.value).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.className = 'copy-btn copied';
+    btn.innerHTML = '<i data-lucide="check" style="width:16px;height:16px"></i> Copied!';
+    lucide.createIcons();
+    showToast('Copied to clipboard');
+  }).catch(() => { showToast('Failed to copy'); });
 }
 
 document.getElementById('btnSearch').onclick = function () {
