@@ -99,9 +99,56 @@ body {
   color: var(--color-text-muted); line-height: 1.6;
 }
 .hint code { background: #F5F5F5; padding: 1px 5px; border-radius: 4px; }
+
+.backend-guide-toggle {
+  position: fixed; top: 12px; left: 12px; z-index: 950;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 14px; border: 1px dashed #D4A843; border-radius: 10px;
+  background: #F8F3E8; color: #D4A843;
+  font-family: var(--font-family); font-size: 0.8rem; font-weight: 600;
+  cursor: pointer; transition: all 200ms ease;
+}
+.backend-guide-toggle:hover { background: var(--color-primary); color: #fff; }
+.backend-guide {
+  position: fixed; top: 52px; left: 12px; z-index: 949;
+  width: min(720px, calc(100vw - 24px)); max-height: 72vh; overflow-y: auto;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-primary);
+  border-radius: var(--radius-md); padding: 16px 18px;
+  font-size: 0.84rem; line-height: 1.6; color: var(--color-text);
+  box-shadow: 0 6px 20px rgba(0,0,0,.08);
+}
+.backend-guide h2 { font-size: 1rem; font-weight: 700; color: var(--color-primary); margin-bottom: 6px; }
+.backend-guide h3 { font-size: 0.9rem; font-weight: 600; margin-top: 12px; margin-bottom: 4px; color: var(--color-text); }
+.backend-guide p { margin: 4px 0; }
+.backend-guide ul, .backend-guide ol { margin: 4px 0 4px 20px; }
+.backend-guide li { margin: 2px 0; }
+.backend-guide code { background: #F5F5F5; padding: 1px 6px; border-radius: 4px; font-size: 0.78rem; word-break: break-all; }
+.backend-guide table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 0.8rem; }
+.backend-guide th, .backend-guide td { border: 1px solid var(--color-border); padding: 6px 8px; text-align: left; vertical-align: top; }
+.backend-guide th { background: var(--color-primary-bg); color: var(--color-primary); font-weight: 600; }
 </style>
 </head>
 <body>
+
+<button class="backend-guide-toggle" onclick="toggleBackendGuide()">
+  <i data-lucide="book-open" style="width:15px;height:15px"></i> คู่มือสำหรับทีม Backend
+</button>
+<div class="backend-guide" id="backendGuide" style="display:none">
+  <h2>คู่มือสำหรับทีม Backend — หน้า Login</h2>
+  <p>หน้าแรกก่อนเข้า Dashboard — หน้าเว็บอื่น ๆ จะ redirect มาที่นี่ถ้ายังไม่ได้ล็อกอิน</p>
+  <h3>API ที่ใช้</h3>
+  <table>
+    <tr><th>Method</th><th>URL</th><th>Body</th><th>สำเร็จ</th><th>ผิดพลาด</th></tr>
+    <tr><td>POST</td><td><code>/api/login</code></td><td><code>{ "username", "password" }</code></td><td>200 <code>{ "ok": true }</code> + Set-Cookie <code>fp_session</code></td><td>401 <code>{ "error": "invalid_credentials" }</code></td></tr>
+  </table>
+  <h3>สิ่งที่ Backend ต้องทำ</h3>
+  <ul>
+    <li>ตรวจ username / password เทียบกับ env <code>LOGIN_USERNAME</code> / <code>LOGIN_PASSWORD</code></li>
+    <li>ออก cookie <code>fp_session</code> (HttpOnly, Path=/, SameSite=Lax, อายุ 7 วัน)</li>
+    <li>ทุกหน้าเว็บต้องตรวจ cookie นี้ก่อนให้ข้อมูล; ถ้าไม่มี → redirect ไป <code>/login</code></li>
+  </ul>
+</div>
 
 <div class="login-card">
   <div class="login-head">
@@ -138,6 +185,11 @@ body {
 
 <script>
 lucide.createIcons();
+
+function toggleBackendGuide() {
+  const g = document.getElementById('backendGuide');
+  g.style.display = g.style.display === 'none' ? 'block' : 'none';
+}
 
 const form = document.getElementById('loginForm');
 const errorBox = document.getElementById('errorMsg');

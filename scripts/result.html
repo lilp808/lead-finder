@@ -191,6 +191,32 @@ body { font-family: var(--font-family); background: var(--color-bg); color: var(
 }
 .pager button:disabled { opacity: .4; cursor: not-allowed; }
 .empty { color: var(--color-text-muted); text-align: center; padding: var(--space-8) 0; }
+
+.backend-guide-toggle {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  padding: 10px 16px; border: 1px dashed var(--color-primary); border-radius: var(--radius-md);
+  background: #F8F3E8; color: var(--color-primary);
+  font-family: var(--font-family); font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; transition: all var(--transition);
+}
+.backend-guide-toggle:hover { background: var(--color-primary); color: #fff; }
+.backend-guide {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-primary);
+  border-radius: var(--radius-md); padding: 18px 20px;
+  margin-bottom: var(--space-5); font-size: 0.84rem; line-height: 1.6; color: var(--color-text);
+  box-shadow: var(--shadow-sm);
+}
+.backend-guide h2 { font-size: 1rem; font-weight: 700; color: var(--color-primary); margin-bottom: 6px; }
+.backend-guide h3 { font-size: 0.9rem; font-weight: 600; margin-top: 12px; margin-bottom: 4px; color: var(--color-text); }
+.backend-guide p { margin: 4px 0; }
+.backend-guide ul, .backend-guide ol { margin: 4px 0 4px 20px; }
+.backend-guide li { margin: 2px 0; }
+.backend-guide code { background: #F5F5F5; padding: 1px 6px; border-radius: 4px; font-size: 0.78rem; word-break: break-all; }
+.backend-guide table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 0.8rem; }
+.backend-guide th, .backend-guide td { border: 1px solid var(--color-border); padding: 6px 8px; text-align: left; vertical-align: top; }
+.backend-guide th { background: #F8F3E8; color: var(--color-primary); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -201,6 +227,40 @@ body { font-family: var(--font-family); background: var(--color-bg); color: var(
   <a href="/result" class="active"><i data-lucide="badge-check" style="width:16px;height:16px"></i> Result Leads</a>
   <a href="/logs"><i data-lucide="scroll-text" style="width:16px;height:16px"></i> Logs</a>
   <a href="/logout" style="margin-left:auto;color:var(--color-danger)"><i data-lucide="log-out" style="width:16px;height:16px"></i> Logout</a>
+</div>
+
+<button class="backend-guide-toggle" onclick="toggleBackendGuide()">
+  <i data-lucide="book-open" style="width:15px;height:15px"></i> คู่มือสำหรับทีม Backend — หน้า Result Leads
+</button>
+<div class="backend-guide" id="backendGuide" style="display:none">
+  <h2>คู่มือสำหรับทีม Backend — หน้า Result Leads</h2>
+  <p>แสดงเฉพาะ lead ที่ "สมบูรณ์ พร้อมส่ง Agent" — คือ snapshot จากตาราง <code>result_leads</code></p>
+
+  <h3>API</h3>
+  <p><code>GET /api/result-leads?search=&amp;agent_team=&amp;source_platform=&amp;page=1&amp;limit=12</code></p>
+  <table>
+    <tr><th>Param</th><th>ความหมาย</th></tr>
+    <tr><td><code>search</code></td><td>ค้นหา contains ใน address, post_url, source_name, ai_summary, province</td></tr>
+    <tr><td><code>agent_team</code></td><td>A / B / C; <code>none</code> = ไม่มีทีม (NULL)</td></tr>
+    <tr><td><code>source_platform</code></td><td>facebook | ddproperty</td></tr>
+  </table>
+  <p>Response: <code>{ results: [], total, page, totalPages }</code></p>
+
+  <h3>ฟิลด์ในการ์ด</h3>
+  <p><code>image_urls, property_type, agent_team, rent_price, sale_price, pricing_area_sqm / building_area_sqm / land_area_sqm, listing_status, province, district, sub_district, address, ai_summary, google_maps_url, post_url, source_platform, source_name, lead_id</code></p>
+
+  <h3>ปุ่ม View / Share</h3>
+  <ul>
+    <li>ใช้ <code>lead_id</code> (ชี้กลับไปที่ตาราง <code>leads</code>) → <code>GET /api/leads/:lead_id</code> เพื่อดึงรายละเอียดเต็ม</li>
+    <li>ถ้าไม่มี <code>lead_id</code> → แสดง "No source lead for this result"</li>
+  </ul>
+
+  <h3>เบื้องหลังที่ Backend ต้องรู้</h3>
+  <ul>
+    <li>result_leads เกิดจาก workflow: lead ที่ข้อมูลครบ (มี SQM, province+district+sub_district, มีรูป, มีราคา, มี agent_team) → snapshot เข้า result_leads (key เฉพาะ lead_id)</li>
+    <li>มีระบบ dedup + merge: หา candidate (ตำแหน่งเดียวกัน + SQM ตรง) → AI เทียบรูป → ถ้าเป็นที่เดียวกัน confidence &ge; 0.7 → merge</li>
+    <li>เมื่อแก้ google_maps_url ที่หน้า Leads ต้อง sync มาที่ result_leads ด้วย</li>
+  </ul>
 </div>
 
 <div class="page-title">Result Leads <span>· พร้อมส่ง Agent</span></div>
@@ -251,6 +311,11 @@ body { font-family: var(--font-family); background: var(--color-bg); color: var(
 const API_BASE = '';
 let currentState = { page: 1, search: '', agent_team: '', source_platform: '' };
 let detailSliderIndex = 0;
+
+function toggleBackendGuide() {
+  const g = document.getElementById('backendGuide');
+  g.style.display = g.style.display === 'none' ? 'block' : 'none';
+}
 
 window.onload = function () {
   lucide.createIcons();

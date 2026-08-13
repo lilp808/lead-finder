@@ -170,6 +170,32 @@ select.input { cursor: pointer; }
   .form-inline { flex-direction: column; }
   .form-inline .field { width: 100%; }
 }
+
+.backend-guide-toggle {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  padding: 10px 16px; border: 1px dashed var(--color-primary); border-radius: var(--radius-md);
+  background: var(--color-primary-bg); color: var(--color-primary);
+  font-family: var(--font-family); font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; transition: all var(--transition);
+}
+.backend-guide-toggle:hover { background: var(--color-primary); color: #fff; }
+.backend-guide {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-primary);
+  border-radius: var(--radius-md); padding: 18px 20px;
+  margin-bottom: var(--space-5); font-size: 0.84rem; line-height: 1.6; color: var(--color-text);
+  box-shadow: var(--shadow-sm);
+}
+.backend-guide h2 { font-size: 1rem; font-weight: 700; color: var(--color-primary); margin-bottom: 6px; }
+.backend-guide h3 { font-size: 0.9rem; font-weight: 600; margin-top: 12px; margin-bottom: 4px; color: var(--color-text); }
+.backend-guide p { margin: 4px 0; }
+.backend-guide ul, .backend-guide ol { margin: 4px 0 4px 20px; }
+.backend-guide li { margin: 2px 0; }
+.backend-guide code { background: #F5F5F5; padding: 1px 6px; border-radius: 4px; font-size: 0.78rem; word-break: break-all; }
+.backend-guide table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 0.8rem; }
+.backend-guide th, .backend-guide td { border: 1px solid var(--color-border); padding: 6px 8px; text-align: left; vertical-align: top; }
+.backend-guide th { background: var(--color-primary-bg); color: var(--color-primary); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -180,6 +206,56 @@ select.input { cursor: pointer; }
   <a href="/result"><i data-lucide="badge-check" style="width:16px;height:16px"></i> Result Leads</a>
   <a href="/logs"><i data-lucide="scroll-text" style="width:16px;height:16px"></i> Logs</a>
   <a href="/logout" style="margin-left:auto;color:var(--color-danger)"><i data-lucide="log-out" style="width:16px;height:16px"></i> Logout</a>
+</div>
+
+<button class="backend-guide-toggle" onclick="toggleBackendGuide()">
+  <i data-lucide="book-open" style="width:15px;height:15px"></i> คู่มือสำหรับทีม Backend — หน้า Config
+</button>
+<div class="backend-guide" id="backendGuide" style="display:none">
+  <h2>คู่มือสำหรับทีม Backend — หน้า Config (หน้าหลัก)</h2>
+  <p>ศูนย์ควบคุมระบบ: จัดการแหล่งข้อมูล (Sources), กำหนดเวลารันอัตโนมัติ (Schedule) และกดรันเก็บข้อมูล (Collect)</p>
+
+  <h3>1) Sources — จัดการแหล่งข้อมูล</h3>
+  <table>
+    <tr><th>Method</th><th>URL</th><th>Body</th><th>ความหมาย</th></tr>
+    <tr><td>GET</td><td><code>/api/sources</code></td><td>—</td><td>ดึงรายการ source ทั้งหมด (เรียง created_at desc)</td></tr>
+    <tr><td>POST</td><td><code>/api/sources</code></td><td><code>{ platform, label, source_url, results_limit, model_provider, model_name }</code></td><td>เพิ่ม source (201)</td></tr>
+    <tr><td>PATCH</td><td><code>/api/sources/:id</code></td><td>เช่น <code>{ active }</code></td><td>แก้ไข / toggle เปิด-ปิด (badge On/Off คลิกได้)</td></tr>
+    <tr><td>DELETE</td><td><code>/api/sources/:id</code></td><td>—</td><td>ลบ (200 <code>{ ok: true }</code>)</td></tr>
+  </table>
+  <p>ฟิลด์ใน object: <code>id, platform (facebook|ddproperty), label, source_url, results_limit, active, model_provider (typhoon|groq), model_name, created_at, updated_at</code></p>
+  <p>หมายเหตุ: platform = <code>ddproperty</code> → หน้าเว็บซ่อนช่องเลือก AI; AI model ที่มี: typhoon (v2.5-30b / v2.5-7b), groq (llama-3.3-70b / llama-3.1-8b)</p>
+
+  <h3>2) Schedule — กำหนดเวลารัน</h3>
+  <table>
+    <tr><th>Method</th><th>URL</th><th>Body</th></tr>
+    <tr><td>GET</td><td><code>/api/schedules</code></td><td>—</td></tr>
+    <tr><td>POST</td><td><code>/api/schedules</code></td><td><code>{ hour, minute, label }</code> (hour 0–23, minute 0–59)</td></tr>
+    <tr><td>PATCH</td><td><code>/api/schedules/:id</code></td><td>เช่น <code>{ active }</code></td></tr>
+    <tr><td>DELETE</td><td><code>/api/schedules/:id</code></td><td>—</td></tr>
+  </table>
+  <p>ฟิลด์: <code>id, hour, minute, label, active</code> — เวลาเป็น UTC</p>
+
+  <h3>3) Collect — รันเก็บข้อมูล (หัวใจของระบบ)</h3>
+  <ul>
+    <li>หน้าเว็บโหลด <code>/api/sources</code> → กรอง <code>active === true</code> → เรียก <code>GET /api/collect?sourceId=&lt;id&gt;</code> ทีละ source</li>
+    <li>Response เป็น <code>{ steps: [...] }</code> หน้าเว็บฉายทีละบรรทัดแบบ real-time</li>
+    <li>Step สุดท้ายต้องเป็น <code>{ type: "summary", inserted, duplicates, low_confidence, errors, skipped }</code></li>
+  </ul>
+  <table>
+    <tr><th>type</th><th>status</th><th>แสดงผล</th></tr>
+    <tr><td><code>source_start</code></td><td>running</td><td>Scraping &lt;label&gt; (limit: N)</td></tr>
+    <tr><td><code>poll</code></td><td>ok / รอ</td><td>Scrape done (Xs) / Waiting...</td></tr>
+    <tr><td><code>fetch</code></td><td>ok / error</td><td>Got N posts (page X of Y) / fetch error</td></tr>
+    <tr><td><code>dd_skipped</code> / <code>platform_skipped</code></td><td>—</td><td>&lt;label&gt; skipped — &lt;hint&gt;</td></tr>
+    <tr><td><code>item</code></td><td>inserted</td><td>Saved — type · area · province · district (conf%)</td></tr>
+    <tr><td><code>item</code></td><td>duplicate</td><td>Duplicate (already in DB) / Duplicated post (repost) — NOT saved</td></tr>
+    <tr><td><code>item</code></td><td>low_confidence</td><td>Not a listing (score: N) — NOT saved</td></tr>
+    <tr><td><code>item</code></td><td>error</td><td>Error: ... — NOT saved</td></tr>
+    <tr><td><code>time_limit</code></td><td>—</td><td>Time limit — processed X, skipped Y (next round)</td></tr>
+    <tr><td><code>summary</code></td><td>—</td><td>การ์ดสรุปตัวเลข (step สุดท้าย)</td></tr>
+  </table>
+  <p>กฎ Backend: <code>post_url</code> ซ้ำ = duplicate; <code>raw_post_text</code> เหมือนกันเป๊ะ + จำนวนรูปเท่ากัน = repost (ไม่เรียก AI); confidence &lt; 0.3 = drop; ใกล้หมดเวลา (60s) ให้บันทึก time_limit แล้วรันต่อรอบหน้า</p>
 </div>
 
 <h1 class="page-title">
@@ -310,6 +386,12 @@ select.input { cursor: pointer; }
 
 <script>
 const API_BASE = '';
+
+function toggleBackendGuide() {
+  const g = document.getElementById('backendGuide');
+  g.style.display = g.style.display === 'none' ? 'block' : 'none';
+}
+
 const MODELS = {
   typhoon: [
     { value: 'typhoon-v2.5-30b-a3b-instruct', label: 'Typhoon v2.5 30B' },

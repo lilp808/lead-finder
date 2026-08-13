@@ -105,6 +105,32 @@ body { font-family: var(--font-family); background: var(--color-bg); color: var(
 }
 .pager button:disabled { opacity: .4; cursor: not-allowed; }
 .empty { color: var(--color-text-muted); text-align: center; padding: var(--space-8) 0; }
+
+.backend-guide-toggle {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  padding: 10px 16px; border: 1px dashed var(--color-primary); border-radius: var(--radius-md);
+  background: #F8F3E8; color: var(--color-primary);
+  font-family: var(--font-family); font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; transition: all var(--transition);
+}
+.backend-guide-toggle:hover { background: var(--color-primary); color: #fff; }
+.backend-guide {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-primary);
+  border-radius: var(--radius-md); padding: 18px 20px;
+  margin-bottom: var(--space-5); font-size: 0.84rem; line-height: 1.6; color: var(--color-text);
+  box-shadow: var(--shadow-sm);
+}
+.backend-guide h2 { font-size: 1rem; font-weight: 700; color: var(--color-primary); margin-bottom: 6px; }
+.backend-guide h3 { font-size: 0.9rem; font-weight: 600; margin-top: 12px; margin-bottom: 4px; color: var(--color-text); }
+.backend-guide p { margin: 4px 0; }
+.backend-guide ul, .backend-guide ol { margin: 4px 0 4px 20px; }
+.backend-guide li { margin: 2px 0; }
+.backend-guide code { background: #F5F5F5; padding: 1px 6px; border-radius: 4px; font-size: 0.78rem; word-break: break-all; }
+.backend-guide table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 0.8rem; }
+.backend-guide th, .backend-guide td { border: 1px solid var(--color-border); padding: 6px 8px; text-align: left; vertical-align: top; }
+.backend-guide th { background: #F8F3E8; color: var(--color-primary); font-weight: 600; }
 </style>
 </head>
 <body>
@@ -115,6 +141,30 @@ body { font-family: var(--font-family); background: var(--color-bg); color: var(
   <a href="/result"><i data-lucide="badge-check" style="width:16px;height:16px"></i> Result Leads</a>
   <a href="/logs" class="active"><i data-lucide="scroll-text" style="width:16px;height:16px"></i> Logs</a>
   <a href="/logout" style="margin-left:auto;color:var(--color-danger)"><i data-lucide="log-out" style="width:16px;height:16px"></i> Logout</a>
+</div>
+
+<button class="backend-guide-toggle" onclick="toggleBackendGuide()">
+  <i data-lucide="book-open" style="width:15px;height:15px"></i> คู่มือสำหรับทีม Backend — หน้า Logs
+</button>
+<div class="backend-guide" id="backendGuide" style="display:none">
+  <h2>คู่มือสำหรับทีม Backend — หน้า Collect Logs</h2>
+  <p>แสดงประวัติการรัน Collect (ตาราง <code>lead_logs</code>) — หนึ่งการ์ด = หนึ่งรอบการรัน</p>
+
+  <h3>API</h3>
+  <ul>
+    <li><code>GET /api/logs?page=1&amp;limit=20&amp;search=...</code> → <code>{ logs: [], total, page, totalPages }</code> (sort ran_at desc; <code>search</code> ค้นหา label)</li>
+    <li><code>GET /api/logs/:id</code> → <code>{ log: { ..., steps: [...] } }</code> (steps อาจมาเป็น string JSON — ต้อง parse)</li>
+  </ul>
+
+  <h3>ฟิลด์ summary ในแต่ละ log</h3>
+  <p><code>{ inserted, duplicates, low_confidence, errors, total }</code> — หน้าเว็บแสดงเป็น chips สีต่าง ๆ</p>
+
+  <h3>step types ที่รองรับ</h3>
+  <ul>
+    <li>เหมือนหน้า Config / Collect: <code>source_start, poll, fetch, fetched, dd_skipped, platform_skipped, source_error, batch_progress, time_limit, item_progress, item, summary, error</code></li>
+    <li>ขั้น workflow (Result Leads): <code>workflow_check</code> (ready = ข้อมูลครบ / ไม่ใช่ = missing: ...), <code>workflow_dedup</code> (candidate / unverified / error), <code>workflow_vision</code> (same / different + confidence), <code>workflow_merged</code> (winner, mergedInto), <code>workflow_ready</code> (resultLeadId)</li>
+  </ul>
+  <p>step ที่มีฟิลด์ <code>postUrl</code> → หน้าเว็บแสดงเป็นลิงก์ใต้ข้อความ</p>
 </div>
 
 <div class="page-title">Collect Logs <span>· ประวัติการรัน</span></div>
@@ -131,6 +181,11 @@ body { font-family: var(--font-family); background: var(--color-bg); color: var(
 <script>
 const API_BASE = '';
 let currentState = { page: 1, search: '' };
+
+function toggleBackendGuide() {
+  const g = document.getElementById('backendGuide');
+  g.style.display = g.style.display === 'none' ? 'block' : 'none';
+}
 
 window.onload = function () {
   lucide.createIcons();
