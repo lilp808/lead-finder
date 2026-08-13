@@ -15,7 +15,6 @@
     { "source": "/api/login", "destination": "/api/index?__login=1" },
     { "source": "/api/collect", "destination": "/api/index?__route=collect" },
     { "source": "/api/cron-check", "destination": "/api/index?__route=cron-check" },
-    { "source": "/api/dd-collect", "destination": "/api/index?__route=dd-collect" },
     { "source": "/api/webhook", "destination": "/api/index?__route=webhook" },
     { "source": "/api/leads/export", "destination": "/api/index?__route=leads-export" },
     { "source": "/api/leads/:id", "destination": "/api/index?__route=lead&id=:id" },

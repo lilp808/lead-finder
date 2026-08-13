@@ -10,7 +10,6 @@ import {
 
 import collectHandler from '../src/routes/collect.js';
 import cronCheckHandler from '../src/routes/cron-check.js';
-import ddCollectHandler from '../src/routes/dd-collect.js';
 import webhookHandler from '../src/routes/webhook.js';
 import leadsHandler from '../src/routes/leads.js';
 import leadHandler from '../src/routes/lead.js';
@@ -23,7 +22,6 @@ import sourcesHandler from '../src/routes/sources.js';
 const API_ROUTES = {
   collect: collectHandler,
   'cron-check': cronCheckHandler,
-  'dd-collect': ddCollectHandler,
   webhook: webhookHandler,
   leads: leadsHandler,
   lead: leadHandler,
@@ -70,7 +68,7 @@ function resolveRoute(url) {
   if (head === 'result-leads') return 'result-leads';
   if (head === 'schedules') return 'schedules';
   if (head === 'sources') return 'sources';
-  if (['collect', 'cron-check', 'dd-collect', 'webhook'].includes(head)) return head;
+  if (['collect', 'cron-check', 'webhook'].includes(head)) return head;
   return null;
 }
 

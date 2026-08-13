@@ -242,7 +242,7 @@ body { font-family: var(--font-family); background: var(--color-bg); color: var(
     <tr><th>Param</th><th>ความหมาย</th></tr>
     <tr><td><code>search</code></td><td>ค้นหา contains ใน address, post_url, source_name, ai_summary, province</td></tr>
     <tr><td><code>agent_team</code></td><td>A / B / C; <code>none</code> = ไม่มีทีม (NULL)</td></tr>
-    <tr><td><code>source_platform</code></td><td>facebook | ddproperty</td></tr>
+    <tr><td><code>source_platform</code></td><td>facebook</td></tr>
   </table>
   <p>Response: <code>{ results: [], total, page, totalPages }</code></p>
 
@@ -261,6 +261,17 @@ body { font-family: var(--font-family); background: var(--color-bg); color: var(
     <li>มีระบบ dedup + merge: หา candidate (ตำแหน่งเดียวกัน + SQM ตรง) → AI เทียบรูป → ถ้าเป็นที่เดียวกัน confidence &ge; 0.7 → merge</li>
     <li>เมื่อแก้ google_maps_url ที่หน้า Leads ต้อง sync มาที่ result_leads ด้วย</li>
   </ul>
+
+  <h3>Collect ทำงานอย่างไร (โดยละเอียด)</h3>
+  <ol>
+    <li><strong>กดปุ่ม Collect Now</strong> (หน้า Config) → <code>GET /api/collect?sourceId=&lt;id&gt;</code> ไล่ทีละ active source</li>
+    <li><strong>Backend</strong> (<code>src/routes/collect.js</code>): อ่าน <code>source_configs</code> (active=true) → จัดกลุ่มตาม <code>platform</code> → <code>getCollector()</code> + ตรวจ <code>isAvailable()</code> → <code>collector.collect()</code> → step <code>summary</code> → <code>saveRunLog()</code> ลง <code>lead_logs</code></li>
+    <li><strong>Facebook collector</strong> (<code>src/collectors/facebook.js</code>): สั่ง Apify รัน <code>apify/facebook-groups-scraper</code> (proxy residential) → poll ทุก 3 วิ (งบ 55 วิ) → <code>mapApifyItem()</code> แปลงฟิลด์ → <code>processItems()</code> ทีละ 5 posts</li>
+    <li><strong>ต่อ post</strong>: (1) Dedup — post_url ซ้ำ หรือ raw_post_text เท่ากัน + จำนวนรูปเท่ากัน; (2) AI extract (<code>extractProperty</code>) — confidence &lt; 0.3 → drop; (3) โหลดรูป max 10 → อัปโหลด bucket <code>lead-images</code>; (4) <code>extractGoogleMapsUrl()</code>; (5) <code>assignAgentTeam()</code>; (6) <code>insertLead()</code>; (7) <code>processLeadForResult()</code></li>
+    <li><strong>AI</strong> (<code>src/lib/groq.js</code>): system prompt (<code>prompts/extract-property.md</code>) + ข้อความ post (ตัด 4000 ตัวอักษร) → typhoon (default) หรือ groq (JSON mode), temp 0.1, retry 3 → AI คืน JSON → <code>computePrices()</code> คำนวณราคา per_sqm → <code>raw × pricing_area_sqm</code></li>
+    <li><strong>Prompt</strong> (<code>extract-property.md</code>): "You extract industrial property listing information from Facebook posts." → คืน JSON เท่านั้น, กฎ per-sqm ≠ ราคารวม, schema 25+ ฟิลด์, ไม่ใช่อสังหาฯ → confidence 0</li>
+    <li><strong>Result workflow</strong> (<code>src/workflow/result-leads.js</code>): <code>isComplete()</code> → snapshot <code>result_leads</code> → หา duplicate → vision (Groq qwen/qwen3.6-27b, prompt <code>compare-properties.md</code>, ≤2 รูป/ฝั่ง) → merge เก็บโพสต์ที่สมบูรณ์กว่า</li>
+  </ol>
 </div>
 
 <div class="page-title">Result Leads <span>· พร้อมส่ง Agent</span></div>
@@ -277,7 +288,6 @@ body { font-family: var(--font-family); background: var(--color-bg); color: var(
   <select id="platformFilter">
     <option value="">ทุกแพลตฟอร์ม</option>
     <option value="facebook">Facebook</option>
-    <option value="ddproperty">DDProperty</option>
   </select>
   <button id="btnSearch"><i data-lucide="search" style="width:14px;height:14px"></i> ค้นหา</button>
   <button id="btnRefresh"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i> รีเฟรช</button>
@@ -460,7 +470,7 @@ function viewResultLead(leadId) {
       document.getElementById('detailTitle').textContent = '📋 ' + (typeLabel(l.property_type) || 'Listing');
       let html = '';
       html += '<div class="detail-section"><h3>Listing Info</h3>';
-      html += row('Platform', l.source_platform ? (l.source_platform === 'ddproperty' ? 'DDProperty' : 'Facebook') : '');
+      html += row('Platform', l.source_platform ? 'Facebook' : '');
       html += row('Source Config', l.source_name);
       html += row('Type', typeLabel(l.property_type));
       html += row('Status', listingStatusLabel(l.listing_status));

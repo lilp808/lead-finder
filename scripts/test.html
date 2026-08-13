@@ -223,8 +223,8 @@ select.input { cursor: pointer; }
     <tr><td>PATCH</td><td><code>/api/sources/:id</code></td><td>เช่น <code>{ active }</code></td><td>แก้ไข / toggle เปิด-ปิด (badge On/Off คลิกได้)</td></tr>
     <tr><td>DELETE</td><td><code>/api/sources/:id</code></td><td>—</td><td>ลบ (200 <code>{ ok: true }</code>)</td></tr>
   </table>
-  <p>ฟิลด์ใน object: <code>id, platform (facebook|ddproperty), label, source_url, results_limit, active, model_provider (typhoon|groq), model_name, created_at, updated_at</code></p>
-  <p>หมายเหตุ: platform = <code>ddproperty</code> → หน้าเว็บซ่อนช่องเลือก AI; AI model ที่มี: typhoon (v2.5-30b / v2.5-7b), groq (llama-3.3-70b / llama-3.1-8b)</p>
+  <p>ฟิลด์ใน object: <code>id, platform (facebook), label, source_url, results_limit, active, model_provider (typhoon|groq), model_name, created_at, updated_at</code></p>
+  <p>หมายเหตุ: แพลตฟอร์มเดียวที่รองรับคือ <code>facebook</code> (ผ่าน Apify); AI model ที่มี: typhoon (v2.5-30b / v2.5-7b), groq (llama-3.3-70b / llama-3.1-8b)</p>
 
   <h3>2) Schedule — กำหนดเวลารัน</h3>
   <table>
@@ -247,7 +247,7 @@ select.input { cursor: pointer; }
     <tr><td><code>source_start</code></td><td>running</td><td>Scraping &lt;label&gt; (limit: N)</td></tr>
     <tr><td><code>poll</code></td><td>ok / รอ</td><td>Scrape done (Xs) / Waiting...</td></tr>
     <tr><td><code>fetch</code></td><td>ok / error</td><td>Got N posts (page X of Y) / fetch error</td></tr>
-    <tr><td><code>dd_skipped</code> / <code>platform_skipped</code></td><td>—</td><td>&lt;label&gt; skipped — &lt;hint&gt;</td></tr>
+    <tr><td><code>platform_skipped</code></td><td>—</td><td>&lt;label&gt; skipped — &lt;hint&gt;</td></tr>
     <tr><td><code>item</code></td><td>inserted</td><td>Saved — type · area · province · district (conf%)</td></tr>
     <tr><td><code>item</code></td><td>duplicate</td><td>Duplicate (already in DB) / Duplicated post (repost) — NOT saved</td></tr>
     <tr><td><code>item</code></td><td>low_confidence</td><td>Not a listing (score: N) — NOT saved</td></tr>
@@ -256,6 +256,55 @@ select.input { cursor: pointer; }
     <tr><td><code>summary</code></td><td>—</td><td>การ์ดสรุปตัวเลข (step สุดท้าย)</td></tr>
   </table>
   <p>กฎ Backend: <code>post_url</code> ซ้ำ = duplicate; <code>raw_post_text</code> เหมือนกันเป๊ะ + จำนวนรูปเท่ากัน = repost (ไม่เรียก AI); confidence &lt; 0.3 = drop; ใกล้หมดเวลา (60s) ให้บันทึก time_limit แล้วรันต่อรอบหน้า</p>
+
+  <h3>4) Collect ทำงานอย่างไร (โดยละเอียด)</h3>
+  <p><strong>กดปุ่ม Collect Now → <code>GET /api/collect?sourceId=&lt;id&gt;</code></strong> ไล่ทีละ active source (เรียงจาก <code>/api/sources</code>)</p>
+  <ol>
+    <li><strong>Frontend</strong> (<code>scripts/test.html</code>): <code>testCollect()</code> → โหลด <code>/api/sources</code> → กรอง <code>active</code> → เรียก Collect ทีละ source → ฉาย <code>steps[]</code> แบบ real-time</li>
+    <li><strong>Backend</strong> (<code>src/routes/collect.js</code>): อ่าน sources จากตาราง <code>source_configs</code> (active=true) → จัดกลุ่มตาม <code>platform</code> → <code>getCollector(platform)</code> + ตรวจ <code>isAvailable()</code> (ถ้าไม่พร้อม = step <code>platform_skipped</code>) → เรียก <code>collector.collect()</code> → รวมผลเป็น step <code>summary</code> → <code>saveRunLog()</code> บันทึก <code>lead_logs</code> 1 แถว/รอบ</li>
+    <li><strong>Facebook collector</strong> (<code>src/collectors/facebook.js</code>):
+      <ol>
+        <li><code>fetchSourceItems()</code>: สั่ง Apify รัน actor <code>apify/facebook-groups-scraper</code> (proxy residential, extractPostDates) → poll ทุก 3 วิ จน <code>SUCCEEDED</code> (งบ 55 วิ) → <code>getDatasetItems()</code> ดึง posts</li>
+        <li><code>mapApifyItem()</code>: แปลงฟิลด์ — <code>user.name</code>→<code>authorName</code>, <code>user.profilePic</code>→<code>authorUrl</code>, <code>attachments[].image.uri</code>→<code>imageUrls</code>, <code>time</code>→<code>createdAt</code>, <code>inputUrl</code>→<code>groupUrl</code></li>
+        <li><code>processItems()</code>: ประมวลผลทีละ 5 posts (<code>BATCH_SIZE</code>), push step <code>batch_progress</code></li>
+      </ol>
+    </li>
+    <li><strong>ต่อ post</strong> (<code>processOneItem</code>):
+      <ol>
+        <li>Dedup: (a) <code>post_url</code> ซ้ำใน <code>leads</code> → <code>duplicate/existing_url</code>; (b) <code>raw_post_text</code> เท่ากันเป๊ะ + จำนวนรูปเท่ากัน → <code>duplicate/repost</code> (ข้ามโดยไม่เรียก AI)</li>
+        <li>AI extract → <code>extractProperty(text, {provider, model})</code> (อ่าน <code>src/lib/groq.js</code> + prompt ใน <code>src/lib/prompts/extract-property.md</code>)</li>
+        <li><code>confidence_score &lt; 0.3</code> → drop (<code>low_confidence</code>)</li>
+        <li>โหลดรูป (max 10, timeout 15s/รูป) → อัปโหลด bucket <code>lead-images</code> (Supabase Storage)</li>
+        <li><code>extractGoogleMapsUrl()</code> — regex ฉกลิงก์ Google Maps จาก caption (ไม่ใช้ AI)</li>
+        <li><code>assignAgentTeam()</code> — ทีม A/B/C แบบ deterministic จาก province/district</li>
+        <li><code>insertLead()</code> → ลงตาราง <code>leads</code></li>
+        <li><code>processLeadForResult()</code> → workflow result-leads (ดูด้านล่าง)</li>
+      </ol>
+    </li>
+    <li><strong>AI ทำอะไร</strong> (<code>src/lib/groq.js</code>):
+      <ul>
+        <li>ส่ง system prompt + เนื้อหา post (ตัด 4000 ตัวอักษร) → <code>{provider}.baseURL/chat/completions</code>, <code>temperature: 0.1</code>, retry 3 ครั้ง (429/5xx/JSON ผิด)</li>
+        <li>Provider: <code>typhoon</code> (default, <code>typhoon-v2.5-30b-a3b-instruct</code>, ไม่มี JSON mode) หรือ <code>groq</code> (<code>llama-3.3-70b</code>/<code>llama-3.1-8b</code>, ใช้ <code>response_format: json_object</code>)</li>
+        <li>AI อ่านโฆษณาแล้วคืน JSON: property_type (Warehouse/Factory/Showroom &amp; Commercial/Other), listing_status, ราคาเช่า/ขาย + unit (total/per_sqm) + พื้นที่อ้างอิง, ที่ตั้ง (province/district/sub_district/address), ข้อมูลติดต่อ (ชื่อ/เบอร์/Line/WhatsApp/WeChat), owner_or_agent, ai_summary (สรุปไทย 1-2 ประโยค), ai_tags, confidence_score (0-1)</li>
+        <li><code>computePrices()</code> (<code>src/lib/pricing.js</code>): ถ้าราคาเป็น <code>per_sqm</code> → <code>total = raw × pricing_area_sqm</code> (เช่น "108 บาท/ตรม/เดือน" ไม่ใช่ราคารวม)</li>
+        <li>post ที่ไม่ใช่อสังหาฯ → confidence 0 → drop</li>
+      </ul>
+    </li>
+    <li><strong>Prompt</strong> (<code>src/lib/prompts/extract-property.md</code>):
+      <ul>
+        <li>บทบาท: "You extract industrial property listing information from Facebook posts."</li>
+        <li>บังคับคืน JSON เท่านั้น (ไม่มี markdown); กฎราคา: per-sqm ≠ ราคารวม (ถ้า per-sqm → <code>unit:"per_sqm"</code> + <code>raw</code> + <code>pricing_area_sqm</code>, ปล่อย <code>rent_price:null</code> ให้ระบบคำนวณ; เช่าเป็นรายเดือนเว้นแต่ระบุรายปี)</li>
+        <li>Schema JSON 25+ ฟิลด์; ปิดท้าย "If the post is not a property listing, set confidence_score to 0."</li>
+      </ul>
+    </li>
+    <li><strong>Workflow result-leads</strong> (<code>src/workflow/result-leads.js</code>):
+      <ul>
+        <li><code>isComplete()</code>: ต้องมี sqm (อย่างน้อย 1 ใน pricing/land/building), province+district+sub_district, ≥1 รูป, ราคา, agent_team</li>
+        <li>สมบูรณ์ → snapshot ลง <code>result_leads</code> (normalize จังหวัด/อำเภอ/ตำบล)</li>
+        <li>หา duplicate: ตำแหน่งเดียวกัน + sqm เท่ากัน → <code>compareAndMerge()</code> ส่งรูปให้ vision (Groq <code>qwen/qwen3.6-27b</code>, prompt <code>compare-properties.md</code>, ≤2 รูป/ฝั่ง) → <code>same_place && confidence ≥ 0.7</code> → merge เก็บโพสต์ที่สมบูรณ์กว่า</li>
+      </ul>
+    </li>
+  </ol>
 </div>
 
 <h1 class="page-title">
@@ -290,7 +339,6 @@ select.input { cursor: pointer; }
       <label>Platform</label>
       <select class="input" id="newPlatform" onchange="updateSourceForm()" style="width:220px">
         <option value="facebook">Facebook Group</option>
-        <option value="ddproperty">DDProperty</option>
       </select>
     </div>
     <div class="form-row">
@@ -444,22 +492,10 @@ function closeSourceForm() {
 }
 
 function updateSourceForm() {
-  const plat = document.getElementById('newPlatform').value;
   const urlLabel = document.getElementById('urlLabel');
   const url = document.getElementById('newUrl');
-  const aiFields = document.getElementById('aiFields');
-  const aiModel = document.getElementById('aiModelField');
-  if (plat === 'ddproperty') {
-    urlLabel.textContent = 'DDProperty Search URL';
-    url.placeholder = 'https://ddproperty.com/en/properties-for-rent...';
-    aiFields.style.display = 'none';
-    aiModel.style.display = 'none';
-  } else {
-    urlLabel.textContent = 'Facebook Group URL';
-    url.placeholder = 'https://facebook.com/groups/...';
-    aiFields.style.display = '';
-    aiModel.style.display = '';
-  }
+  urlLabel.textContent = 'Facebook Group URL';
+  url.placeholder = 'https://facebook.com/groups/...';
 }
 
 let editingId = null;
@@ -498,10 +534,9 @@ async function loadSources() {
     data.forEach((s, i) => {
       const active = s.active ? 'on' : 'off';
       const activeLabel = s.active ? 'On' : 'Off';
-      const platform = s.platform === 'ddproperty' ? 'ddproperty' : 'facebook';
-      const platformBadge = `<span class="badge ${platform === 'ddproperty' ? 'badge-dd' : 'badge-fb'}">${platform === 'ddproperty' ? 'DDProperty' : 'Facebook'}</span>`;
+      const platformBadge = `<span class="badge badge-fb">Facebook</span>`;
       const modelLabel = (s.model_provider || 'typhoon') === 'typhoon' ? 'Typhoon' : 'Groq';
-      const modelBadge = platform === 'ddproperty' ? '' : `<span class="badge badge-gold">${modelLabel}</span>`;
+      const modelBadge = `<span class="badge badge-gold">${modelLabel}</span>`;
       html += `<div class="card-row">
         <span class="badge badge-gold" style="min-width:28px;justify-content:center">${i + 1}</span>
         <div style="flex:1;min-width:120px">
@@ -690,13 +725,12 @@ function textFor(step) {
       if (step.status === 'ok') return `${step.label || ''} scrape done (${step.elapsed}s)`;
       return `Waiting for ${step.label || ''} scrape... (${step.elapsed}s)`;
     case 'fetch':
-      if (step.status === 'error') return `DDProperty fetch error (page ${step.page}): ${step.error}`;
+      if (step.status === 'error') return `Fetch error (page ${step.page}): ${step.error}`;
       if (step.label) return `Got ${step.count} posts from ${step.label}`;
       const tp = Number(step.totalPages);
       if (tp > 0) return `Got ${step.count} posts (page ${step.page} of ${tp})`;
       return `Got ${step.count} posts (page ${step.page})`;
-    case 'fetched': return `DDProperty done — ${step.inserted} new, ${step.duplicates} dup, ${step.pagesRead} pages`;
-    case 'dd_skipped': return `${step.label} skipped (${step.count} source${step.count > 1 ? 's' : ''}) — ${step.hint}`;
+    case 'fetched': return `Fetch done — ${step.inserted} new, ${step.duplicates} dup, ${step.pagesRead} pages`;
     case 'platform_skipped': return `${step.label} skipped (${step.count} source${step.count > 1 ? 's' : ''}) — ${step.hint}`;
     case 'source_error': return `${step.label || ''} — ${step.error}`;
     case 'batch_progress': return `Processing batch ${step.batch}/${step.total}...`;

@@ -358,7 +358,7 @@ select.input { cursor: pointer; }
 </button>
 <div class="backend-guide" id="backendGuide" style="display:none">
   <h2>คู่มือสำหรับทีม Backend — หน้า Leads</h2>
-  <p>แสดงข้อมูลดิบ (leads) ทั้งหมดที่ระบบเก็บได้จาก Facebook / DDProperty พร้อมค้นหา, กรอง, ดูรายละเอียด, แก้ไขสถานะ และ Export CSV</p>
+  <p>แสดงข้อมูลดิบ (leads) ทั้งหมดที่ระบบเก็บได้จาก Facebook พร้อมค้นหา, กรอง, ดูรายละเอียด, แก้ไขสถานะ และ Export CSV</p>
 
   <h3>API — รายการ leads</h3>
   <p><code>GET /api/leads?search=&amp;status=&amp;property_type=&amp;province=&amp;source_platform=&amp;source_name=&amp;agent_team=&amp;page=1&amp;limit=20</code></p>
@@ -368,7 +368,7 @@ select.input { cursor: pointer; }
     <tr><td><code>status</code></td><td>new / contacted / interested / not_interested / appointment / sold / rented / invalid (รองรับ comma-separated)</td></tr>
     <tr><td><code>property_type</code></td><td>warehouse | factory | warehouse_factory | showroom &amp; commercial</td></tr>
     <tr><td><code>province</code></td><td>ค้นหาจังหวัด (contains)</td></tr>
-    <tr><td><code>source_platform</code></td><td>facebook | ddproperty</td></tr>
+    <tr><td><code>source_platform</code></td><td>facebook</td></tr>
     <tr><td><code>source_name</code></td><td>ชื่อ source (dropdown โหลดจาก /api/sources)</td></tr>
     <tr><td><code>agent_team</code></td><td>A / B / C; <code>none</code> หรือ <code>unassigned</code> = ไม่มีทีม (NULL)</td></tr>
   </table>
@@ -396,6 +396,17 @@ select.input { cursor: pointer; }
     <li>ปุ่ม View: modal 3 แท็บ (Original Post / Details / Workflow)</li>
     <li>Pagination 20 รายการ/หน้า</li>
   </ul>
+
+  <h3>Collect ทำงานอย่างไร (โดยละเอียด)</h3>
+  <ol>
+    <li><strong>กดปุ่ม Collect Now</strong> (หน้า Config) → <code>GET /api/collect?sourceId=&lt;id&gt;</code> ไล่ทีละ active source</li>
+    <li><strong>Backend</strong> (<code>src/routes/collect.js</code>): อ่าน <code>source_configs</code> (active=true) → จัดกลุ่มตาม <code>platform</code> → <code>getCollector()</code> + ตรวจ <code>isAvailable()</code> → <code>collector.collect()</code> → step <code>summary</code> → <code>saveRunLog()</code> ลง <code>lead_logs</code></li>
+    <li><strong>Facebook collector</strong> (<code>src/collectors/facebook.js</code>): สั่ง Apify รัน <code>apify/facebook-groups-scraper</code> (proxy residential) → poll ทุก 3 วิ (งบ 55 วิ) → <code>mapApifyItem()</code> แปลงฟิลด์ (user.name→authorName, attachments[].image.uri→imageUrls, time→createdAt) → <code>processItems()</code> ทีละ 5 posts</li>
+    <li><strong>ต่อ post</strong>: (1) Dedup — post_url ซ้ำ หรือ raw_post_text เท่ากัน + จำนวนรูปเท่ากัน; (2) AI extract (<code>extractProperty</code>) — confidence &lt; 0.3 → drop; (3) โหลดรูป max 10 (timeout 15s/รูป) → อัปโหลด bucket <code>lead-images</code>; (4) <code>extractGoogleMapsUrl()</code> regex; (5) <code>assignAgentTeam()</code> A/B/C; (6) <code>insertLead()</code> → <code>leads</code>; (7) <code>processLeadForResult()</code></li>
+    <li><strong>AI</strong> (<code>src/lib/groq.js</code>): ส่ง system prompt (<code>prompts/extract-property.md</code>) + ข้อความ post (ตัด 4000 ตัวอักษร) → typhoon (default, <code>typhoon-v2.5-30b-a3b-instruct</code>) หรือ groq (llama-3.3-70b / llama-3.1-8b, JSON mode), temp 0.1, retry 3 → AI คืน JSON (property_type, listing_status, ราคา+unit, ที่ตั้ง, ข้อมูลติดต่อ, ai_summary, ai_tags, confidence_score) → <code>computePrices()</code> คำนวณราคา per_sqm → <code>raw × pricing_area_sqm</code></li>
+    <li><strong>Prompt</strong> (<code>extract-property.md</code>): "You extract industrial property listing information from Facebook posts." → คืน JSON เท่านั้น, กฎ per-sqm ≠ ราคารวม, schema 25+ ฟิลด์, ไม่ใช่อสังหาฯ → confidence 0</li>
+    <li><strong>Result workflow</strong> (<code>src/workflow/result-leads.js</code>): <code>isComplete()</code> → snapshot <code>result_leads</code> → หา duplicate (ตำแหน่งเดียวกัน + sqm เท่ากัน) → vision (Groq qwen/qwen3.6-27b, prompt <code>compare-properties.md</code>, ≤2 รูป/ฝั่ง) → <code>same_place && ≥0.7</code> → merge เก็บโพสต์ที่สมบูรณ์กว่า</li>
+  </ol>
 </div>
 
 <div class="page-title">
@@ -435,7 +446,6 @@ select.input { cursor: pointer; }
   <select id="fPlatform">
     <option value="">ทุกแพลตฟอร์ม</option>
     <option value="facebook">Facebook</option>
-    <option value="ddproperty">DDProperty</option>
   </select>
   <select id="fSourceName">
     <option value="">ทุก Source</option>
@@ -493,7 +503,7 @@ const STATUS_MAP = {
   sold: 'Sold', rented: 'Rented', invalid: 'Invalid',
 };
 
-const PLATFORM_MAP = { facebook: 'Facebook', ddproperty: 'DDProperty' };
+const PLATFORM_MAP = { facebook: 'Facebook' };
 
 const TYPE_LABEL_MAP = {
   warehouse: 'Warehouse',
@@ -667,8 +677,7 @@ function statusBadge(s) {
 function platformBadge(p) {
   const label = PLATFORM_MAP[p] || p || '';
   if (!label) return '';
-  const cls = p === 'ddproperty' ? 'badge badge-dd' : 'badge badge-fb';
-  return `<span class="${cls}"><i data-lucide="${p === 'ddproperty' ? 'building-2' : 'facebook'}" style="width:11px;height:11px"></i>${esc(label)}</span>`;
+  return `<span class="badge badge-fb"><i data-lucide="facebook" style="width:11px;height:11px"></i>${esc(label)}</span>`;
 }
 
 function typeLabel(t) {

@@ -13,7 +13,6 @@ const routes = {
   '/result': indexHandler,
   '/api/login': indexHandler,
   '/api/collect': indexHandler,
-  '/api/dd-collect': indexHandler,
   '/api/webhook': indexHandler,
   '/api/sources': indexHandler,
   '/api/leads/export': indexHandler,

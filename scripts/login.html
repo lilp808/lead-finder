@@ -148,6 +148,17 @@ body {
     <li>ออก cookie <code>fp_session</code> (HttpOnly, Path=/, SameSite=Lax, อายุ 7 วัน)</li>
     <li>ทุกหน้าเว็บต้องตรวจ cookie นี้ก่อนให้ข้อมูล; ถ้าไม่มี → redirect ไป <code>/login</code></li>
   </ul>
+
+  <h3>Collect ทำงานอย่างไร (โดยละเอียด)</h3>
+  <ol>
+    <li><strong>กดปุ่ม Collect Now</strong> (หน้า Config) → <code>GET /api/collect?sourceId=&lt;id&gt;</code> ไล่ทีละ active source</li>
+    <li><strong>Backend</strong> (<code>src/routes/collect.js</code>): อ่าน <code>source_configs</code> (active=true) → จัดกลุ่มตาม <code>platform</code> → <code>getCollector()</code> + ตรวจ <code>isAvailable()</code> → <code>collector.collect()</code> → step <code>summary</code> → <code>saveRunLog()</code> ลง <code>lead_logs</code></li>
+    <li><strong>Facebook collector</strong> (<code>src/collectors/facebook.js</code>): สั่ง Apify รัน <code>apify/facebook-groups-scraper</code> (proxy residential) → poll ทุก 3 วิ (งบ 55 วิ) → <code>mapApifyItem()</code> แปลงฟิลด์ → <code>processItems()</code> ทีละ 5 posts</li>
+    <li><strong>ต่อ post</strong>: (1) Dedup — post_url ซ้ำ หรือ raw_post_text เท่ากัน + จำนวนรูปเท่ากัน; (2) AI extract (<code>extractProperty</code>) — confidence &lt; 0.3 → drop; (3) โหลดรูป max 10 → อัปโหลด bucket <code>lead-images</code>; (4) <code>extractGoogleMapsUrl()</code>; (5) <code>assignAgentTeam()</code>; (6) <code>insertLead()</code>; (7) <code>processLeadForResult()</code></li>
+    <li><strong>AI</strong> (<code>src/lib/groq.js</code>): system prompt (<code>prompts/extract-property.md</code>) + ข้อความ post (ตัด 4000 ตัวอักษร) → typhoon (default) หรือ groq (JSON mode), temp 0.1, retry 3 → AI คืน JSON → <code>computePrices()</code> คำนวณราคา per_sqm → <code>raw × pricing_area_sqm</code></li>
+    <li><strong>Prompt</strong> (<code>extract-property.md</code>): "You extract industrial property listing information from Facebook posts." → คืน JSON เท่านั้น, กฎ per-sqm ≠ ราคารวม, schema 25+ ฟิลด์, ไม่ใช่อสังหาฯ → confidence 0</li>
+    <li><strong>Result workflow</strong> (<code>src/workflow/result-leads.js</code>): <code>isComplete()</code> → snapshot <code>result_leads</code> → หา duplicate → vision (Groq qwen/qwen3.6-27b, prompt <code>compare-properties.md</code>, ≤2 รูป/ฝั่ง) → merge เก็บโพสต์ที่สมบูรณ์กว่า</li>
+  </ol>
 </div>
 
 <div class="login-card">

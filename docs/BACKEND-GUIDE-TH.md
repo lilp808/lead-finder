@@ -95,7 +95,6 @@ Failed:        401 { "error": "invalid_credentials" }
 - ปุ่ม **Add Source** — เปิดฟอร์มเพิ่ม (เลือก platform, ชื่อ, URL, จำนวนโพสต์, AI Provider/Model)
 - แต่ละแถว: หมายเลข, ชื่อ + URL, badge platform, badge จำนวนโพสต์, badge AI model, badge **On/Off (คลิกได้)** , ปุ่มแก้ไข, ปุ่มลบ (confirm ก่อน)
 - **Edit** → เปิดฟอร์มเดิมพร้อมค่าปัจจุบัน → Save = PATCH
-- เมื่อเลือก platform = `ddproperty` → **ซ่อนช่อง AI** (DD ไม่ใช้ AI)
 
 #### API
 | Method | URL | Body / Params | Success |
@@ -109,12 +108,12 @@ Failed:        401 { "error": "invalid_credentials" }
 ```jsonc
 {
   "id": "uuid",
-  "platform": "facebook",          // หรือ "ddproperty"
+  "platform": "facebook",          // แพลตฟอร์มเดียวที่รองรับ
   "label": "House Group 1",
   "source_url": "https://facebook.com/groups/...",
   "results_limit": 10,
   "active": true,
-  "model_provider": "typhoon",     // typhoon | groq (เฉพาะ facebook)
+  "model_provider": "typhoon",     // typhoon | groq
   "model_name": "typhoon-v2.5-30b-a3b-instruct",
   "created_at": "...",
   "updated_at": "..."
@@ -167,10 +166,9 @@ Failed:        401 { "error": "invalid_credentials" }
 |---|---|---|---|
 | `source_start` | running | `Scraping <label> (limit: N)` | `label, limit/quota` |
 | `poll` | ok / (waiting) | `Scrape done (Xs)` / `Waiting... (Xs)` | `label, elapsed` |
-| `fetch` | error | `DDProperty fetch error (page N): <msg>` | `page, error` |
+| `fetch` | error | `Fetch error (page N): <msg>` | `page, error` |
 | `fetch` | — | `Got N posts (page X of Y)` | `count, page, totalPages, label` |
-| `fetched` | — | `DDProperty done — N new, M dup, P pages` | `inserted, duplicates, pagesRead` |
-| `dd_skipped` | — | `<label> skipped — <hint>` | `label, count, hint` |
+| `fetched` | — | `Fetch done — N new, M dup, P pages` | `inserted, duplicates, pagesRead` |
 | `platform_skipped` | — | `<label> skipped — <hint>` | `label, count, hint` |
 | `source_error` | error | `<label> — <error>` | `label, error` |
 | `batch_progress` | running | `Processing batch X/Y` | `batch, total` |
@@ -195,6 +193,76 @@ Failed:        401 { "error": "invalid_credentials" }
    - `repost` → `raw_post_text` เหมือนกันเป๊ะ **และ** จำนวนรูปเท่ากัน → ข้าม, ไม่เรียก AI
 2. **low_confidence**: `confidence_score < 0.3` → ทิ้ง (ไม่บันทึก)
 3. **Time limit**: Vercel maxDuration 60s → ถ้าใกล้หมด ให้ส่ง step `time_limit` แล้วรันต่อรอบหน้า
+
+### 3.4 Collect ทำงานอย่างไร (โดยละเอียด)
+
+#### ลำดับทั้งหมดตั้งแต่กดปุ่มจนถึงบันทึก
+
+```
+กด "Collect Now" (หน้า Config)
+  └─ testCollect() → GET /api/sources → กรอง active → วนทีละ source
+       └─ GET /api/collect?sourceId=<id>   (src/routes/collect.js)
+            ├─ อ่าน source_configs (active=true, กรอง id ถ้ามี)
+            ├─ จัดกลุ่มตาม platform → byPlatform
+            ├─ วนทีละ platform:
+            │    ├─ getCollector(platform) — ไม่มี → step platform_skipped
+            │    └─ isAvailable() == false → step platform_skipped (hint)
+            └─ collector.collect({ supabase, sources, steps })   (src/collectors/facebook.js)
+                 ├─ วนทีละ source: fetchSourceItems()
+                 │    ├─ startActorRun(groupUrl, null, limit) → สั่ง Apify รัน actor
+                 │    │     (proxy RESIDENTIAL, extractPostDates:true)
+                 │    ├─ poll สถานะทุก 3 วิ (READY/RUNNING) จน SUCCEEDED (งบ 55 วิ)
+                 │    ├─ getDatasetItems(defaultDatasetId) → ดึง posts ทั้งหมด
+                 │    └─ mapApifyItem() แปลงฟิลด์:
+                 │         user.name→authorName, user.profilePic→authorUrl,
+                 │         attachments[].image.uri→imageUrls, time→createdAt, inputUrl→groupUrl
+                 └─ processItems(items, source, ...) — ประมวลผลทีละ 5 (BATCH_SIZE)
+                      └─ processOneItem(item) ต่อโพสต์:
+                           1. Dedup: post_url ซ้ำ → existing_url (ข้าม)
+                                    raw_post_text เท่ากัน + จำนวนรูปเท่ากัน → repost (ข้าม, ไม่เรียก AI)
+                           2. extractProperty(text, {provider, model}) — AI (src/lib/groq.js)
+                           3. confidence < 0.3 → drop (low_confidence)
+                           4. downloadAndUploadImages — โหลดรูป max 10 (15s/รูป) → bucket lead-images
+                           5. extractGoogleMapsUrl(text) — regex ฉกลิงก์ Google Maps
+                           6. assignAgentTeam(extraction) — ทีม A/B/C แบบ deterministic
+                           7. insertLead(lead) → ตาราง leads
+                           8. processLeadForResult() → workflow result-leads (ดูหัวข้อ 5.5)
+```
+
+**หลังครบทุก platform** → `collect.js` รวมผล → step `summary` → `saveRunLog()` บันทึก `lead_logs` 1 แถว/รอบ (label = วันที่-เวลา)
+
+#### AI ทำอะไร (`src/lib/groq.js`)
+
+| เรื่อง | รายละเอียด |
+|---|---|
+| Request | `system` = prompt `src/lib/prompts/extract-property.md` + `user` = เนื้อหา post (ตัดเหลือ **4000 ตัวอักษร**) → `POST {baseURL}/chat/completions` |
+| Provider | `typhoon` (default) → `https://api.opentyphoon.ai/v1` (ไม่มี JSON mode); `groq` → `https://api.groq.com/openai/v1` + `response_format: json_object` |
+| Model | default `typhoon-v2.5-30b-a3b-instruct`; groq: `llama-3.3-70b-versatile` / `llama-3.1-8b-instant` (ตั้งต่อ source ผ่าน `model_provider`/`model_name`) |
+| พารามิเตอร์ | `temperature: 0.1`, retry 3 ครั้ง (เมื่อ 429 / 5xx / JSON ผิดเพี้ยน) |
+| งานของ AI | อ่านโฆษณา (ไทย/อังกฤษปน) แล้วตอบ JSON: `property_type` (Warehouse/Factory/Showroom & Commercial/Other), `listing_status`, `rent_price`/`sale_price` + `unit` (total/per_sqm) + `pricing_area_sqm`, ที่ตั้ง (`province`/`district`/`sub_district`/`address`), ข้อมูลติดต่อ (`contact_name`/`phone_number`/`line_id`/`whatsapp`/`wechat`), `owner_or_agent`, `ai_summary` (สรุปไทย 1-2 ประโยค), `ai_tags`, `confidence_score` (0-1) |
+| หลังได้ JSON | `computePrices()` (`src/lib/pricing.js`): ถ้า `unit = "per_sqm"` → `total = raw × pricing_area_sqm` (เช่น "108 บาท/ตรม/เดือน" ≠ ราคารวม) |
+| ไม่ใช่อสังหาฯ | AI ตอบ `confidence_score: 0` → ระบบ drop |
+
+#### Prompt หน้าตาเป็นอย่างไร (`src/lib/prompts/extract-property.md`)
+
+1. บทบาท: "You extract industrial property listing information from Facebook posts."
+2. **Return ONLY valid JSON. No markdown, no extra text.**
+3. **กฎราคา** (สำคัญที่สุด):
+   - ราคาอาจเป็นแบบรวม หรือแบบ per ตารางเมตร (เช่น "ค่าเช่า 108 บาท/ตรม/เดือน" = 108 บาท/ตรม/เดือน **ไม่ใช่** ค่าเช่ารวม)
+   - ห้าม treat per-sqm เป็นราคารวมเด็ดขาด
+   - per-sqm → `rent_price_unit:"per_sqm"` + `rent_price_raw` = ตัวเลข + `pricing_area_sqm` = พื้นที่อ้างอิง (อาคารสำหรับโกดัง/โรงงาน/โชว์รูม, ที่ดินสำหรับที่ดิน) แล้ว **ปล่อย `rent_price:null`** ให้ระบบคำนวณ
+   - total → `unit:"total"` + ใส่ใน `rent_price`/`sale_price` **และ** `rent_price_raw`/`sale_price_raw`
+   - ค่าเช่า per-sqm ถือเป็น **รายเดือน** เว้นแต่โพสต์ระบุรายปี
+   - `land_area`/`building_area` ไว้แสดงผล; เติม `land_area_sqm`/`building_area_sqm` เป็นตัวเลขเมื่อเป็นตารางเมตร
+4. **Schema JSON** (25+ ฟิลด์ตามตารางด้านบน พร้อมชนิดข้อมูล — `number or null`, `"string or null"`, enum ฯลฯ)
+5. ปิดท้าย: "If the post is not a property listing, set confidence_score to 0."
+
+#### Vision verify (ตอน dedup workflow)
+
+- `src/lib/vision.js` + prompt `src/lib/prompts/compare-properties.md`
+- ส่งรูป listing A (≤2) + listing B (≤2) → Groq `qwen/qwen3.6-27b` (JSON mode, temp 0.1)
+- Prompt: "You compare two sets of property listing photos to decide whether they show the SAME physical property." → ตอบ JSON `{ same_place, confidence, reason }`
+- ถ้า `same_place === true && confidence ≥ 0.7` → merge (เก็บโพสต์ที่สมบูรณ์กว่า); vision ล้มเหลว/ambiguous → ไม่ merge บันทึกเป็น `workflow_dedup unverified`
 
 ---
 
@@ -228,7 +296,7 @@ GET /api/leads?search=...&status=...&property_type=...&province=...
 | `status` | กรองสถานะ | รองรับ comma-separated เช่น `new,contacted` |
 | `property_type` | กรองประเภท | `warehouse`, `factory`, `warehouse_factory`, `showroom & commercial` |
 | `province` | จังหวัด | contains (ilike) |
-| `source_platform` | แพลตฟอร์ม | `facebook` / `ddproperty` |
+| `source_platform` | แพลตฟอร์ม | `facebook` |
 | `source_name` | ชื่อ source | เท่ากับ field `source_name` |
 | `agent_team` | ทีม | `A`/`B`/`C`; `none` หรือ `unassigned` = `agent_team IS NULL` |
 | `page` / `limit` | pagination | หน้าใช้ `limit=20` |
@@ -310,7 +378,7 @@ lead_score, ai_summary, assigned_to, agent_team
 
 ### 5.1 Toolbar
 - ค้นหา: "ค้นหา address / จังหวัด / แหล่งที่มา"
-- Dropdown: `teamFilter` (ทุกทีม/A/B/C/ยังไม่มีทีม), `platformFilter` (facebook/ddproperty)
+- Dropdown: `teamFilter` (ทุกทีม/A/B/C/ยังไม่มีทีม), `platformFilter` (facebook)
 - ปุ่ม: **ค้นหา**, **รีเฟรช** (Enter ในช่องค้นหา = กดค้นหา; พิมพ์แล้วลบจนว่าง = รีโหลดอัตโนมัติ)
 
 ### 5.2 API
@@ -372,7 +440,7 @@ GET /api/logs/:id
 - คลิกการ์ด → expand → ฉาย `steps` ทีละบรรทัด
 
 ### 6.3 Step types ทั้งหมดที่รองรับ (รวมของ workflow)
-- เหมือนหน้า Collect: `source_start, poll, fetch, fetched, dd_skipped, platform_skipped, source_error, batch_progress, time_limit, item_progress, item, summary, error`
+- เหมือนหน้า Collect: `source_start, poll, fetch, fetched, platform_skipped, source_error, batch_progress, time_limit, item_progress, item, summary, error`
 - **ขั้นของ workflow (Result Leads)**:
   | type | status | ข้อความ | ฟิลด์ |
   |---|---|---|---|
@@ -435,7 +503,7 @@ GET /api/logs/:id
 2. รัน dev: `npm run dev` → เปิด `http://localhost:3000`
 3. เข้า `/login` → login → ตรวจว่า redirect ไป `/` ถูกต้อง
 4. ทดสอบหน้า Config:
-   - เพิ่ม source (facebook และ ddproperty) → ตรวจว่าโผล่ในรายการ → toggle On/Off → แก้ไข → ลบ
+   - เพิ่ม source (facebook) → ตรวจว่าโผล่ในรายการ → toggle On/Off → แก้ไข → ลบ
    - เพิ่ม schedule → toggle → ลบ
    - กด **Collect Now** → ดูว่า log ฉาย step ต่าง ๆ ถูกต้อง (รวม summary)
 5. ทดสอบหน้า Leads: ค้นหา/กรอง/ไปหน้า 2/ดู View (3 แท็บ)/Share/copy/แก้ไข Workflow/Export CSV

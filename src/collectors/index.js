@@ -1,6 +1,5 @@
 export const collectors = {
   facebook: () => import('./facebook.js'),
-  ddproperty: () => import('./ddproperty.js'),
 };
 
 export async function getCollector(platform) {

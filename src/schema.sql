@@ -179,16 +179,6 @@ create index if not exists idx_result_leads_location
   on result_leads(province_norm, district_norm, sub_district_norm);
 create index if not exists idx_result_leads_agent_team on result_leads(agent_team);
 
--- DDProperty source (warehouse/factory for rent) — test quota 10/day
-insert into source_configs (platform, label, source_url, results_limit, active)
-values (
-  'ddproperty',
-  'DDProperty Warehouse/Rent (test 10)',
-  'https://www.ddproperty.com/en/property-for-rent?locale=th&listingType=rent&propertyTypeGroup=C&propertyTypeCode=WAR&isCommercial=true',
-  10,
-  true
-);
-
 -- Collect run logs (1 row per run, named by run datetime)
 create table if not exists lead_logs (
   id         uuid primary key default gen_random_uuid(),

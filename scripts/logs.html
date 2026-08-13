@@ -161,10 +161,21 @@ body { font-family: var(--font-family); background: var(--color-bg); color: var(
 
   <h3>step types ที่รองรับ</h3>
   <ul>
-    <li>เหมือนหน้า Config / Collect: <code>source_start, poll, fetch, fetched, dd_skipped, platform_skipped, source_error, batch_progress, time_limit, item_progress, item, summary, error</code></li>
+    <li>เหมือนหน้า Config / Collect: <code>source_start, poll, fetch, fetched, platform_skipped, source_error, batch_progress, time_limit, item_progress, item, summary, error</code></li>
     <li>ขั้น workflow (Result Leads): <code>workflow_check</code> (ready = ข้อมูลครบ / ไม่ใช่ = missing: ...), <code>workflow_dedup</code> (candidate / unverified / error), <code>workflow_vision</code> (same / different + confidence), <code>workflow_merged</code> (winner, mergedInto), <code>workflow_ready</code> (resultLeadId)</li>
   </ul>
   <p>step ที่มีฟิลด์ <code>postUrl</code> → หน้าเว็บแสดงเป็นลิงก์ใต้ข้อความ</p>
+
+  <h3>Collect ทำงานอย่างไร (โดยละเอียด)</h3>
+  <ol>
+    <li><strong>กดปุ่ม Collect Now</strong> (หน้า Config) → <code>GET /api/collect?sourceId=&lt;id&gt;</code> ไล่ทีละ active source</li>
+    <li><strong>Backend</strong> (<code>src/routes/collect.js</code>): อ่าน <code>source_configs</code> (active=true) → จัดกลุ่มตาม <code>platform</code> → <code>getCollector()</code> + ตรวจ <code>isAvailable()</code> → <code>collector.collect()</code> → step <code>summary</code> → <code>saveRunLog()</code> ลง <code>lead_logs</code> (1 แถว/รอบ) — log นี้เองที่หน้า Logs นำมาแสดง</li>
+    <li><strong>Facebook collector</strong> (<code>src/collectors/facebook.js</code>): สั่ง Apify รัน <code>apify/facebook-groups-scraper</code> (proxy residential) → poll ทุก 3 วิ (งบ 55 วิ) → <code>mapApifyItem()</code> แปลงฟิลด์ → <code>processItems()</code> ทีละ 5 posts</li>
+    <li><strong>ต่อ post</strong>: (1) Dedup — post_url ซ้ำ หรือ raw_post_text เท่ากัน + จำนวนรูปเท่ากัน; (2) AI extract (<code>extractProperty</code>) — confidence &lt; 0.3 → drop; (3) โหลดรูป max 10 → อัปโหลด bucket <code>lead-images</code>; (4) <code>extractGoogleMapsUrl()</code>; (5) <code>assignAgentTeam()</code>; (6) <code>insertLead()</code>; (7) <code>processLeadForResult()</code></li>
+    <li><strong>AI</strong> (<code>src/lib/groq.js</code>): system prompt (<code>prompts/extract-property.md</code>) + ข้อความ post (ตัด 4000 ตัวอักษร) → typhoon (default) หรือ groq (JSON mode), temp 0.1, retry 3 → AI คืน JSON → <code>computePrices()</code> คำนวณราคา per_sqm → <code>raw × pricing_area_sqm</code></li>
+    <li><strong>Prompt</strong> (<code>extract-property.md</code>): "You extract industrial property listing information from Facebook posts." → คืน JSON เท่านั้น, กฎ per-sqm ≠ ราคารวม, schema 25+ ฟิลด์, ไม่ใช่อสังหาฯ → confidence 0</li>
+    <li><strong>Result workflow</strong> (<code>src/workflow/result-leads.js</code>): <code>isComplete()</code> → snapshot <code>result_leads</code> → หา duplicate → vision (Groq qwen/qwen3.6-27b, prompt <code>compare-properties.md</code>, ≤2 รูป/ฝั่ง) → merge เก็บโพสต์ที่สมบูรณ์กว่า</li>
+  </ol>
 </div>
 
 <div class="page-title">Collect Logs <span>· ประวัติการรัน</span></div>
@@ -302,13 +313,12 @@ function textFor(step) {
       if (step.status === 'ok') return `${esc(step.label || '')} scrape done (${step.elapsed}s)` + url;
       return `Waiting for ${esc(step.label || '')} scrape... (${step.elapsed}s)` + url;
     case 'fetch':
-      if (step.status === 'error') return `DDProperty fetch error (page ${step.page}): ${esc(step.error)}` + url;
+      if (step.status === 'error') return `Fetch error (page ${step.page}): ${esc(step.error)}` + url;
       if (step.label) return `Got ${step.count} posts from ${esc(step.label)}` + url;
       const tp = Number(step.totalPages);
       if (tp > 0) return `Got ${step.count} posts (page ${step.page} of ${tp})` + url;
       return `Got ${step.count} posts (page ${step.page})` + url;
-    case 'fetched': return `DDProperty done — ${step.inserted} new, ${step.duplicates} dup, ${step.pagesRead} pages` + url;
-    case 'dd_skipped': return `${esc(step.label || '')} skipped (${step.count} source) — ${esc(step.hint || '')}` + url;
+    case 'fetched': return `Fetch done — ${step.inserted} new, ${step.duplicates} dup, ${step.pagesRead} pages` + url;
     case 'platform_skipped': return `${esc(step.label || '')} skipped (${step.count} source) — ${esc(step.hint || '')}` + url;
     case 'source_error': return `${esc(step.label || '')} — ${esc(step.error || '')}` + url;
     case 'batch_progress': return `Processing batch ${step.batch}/${step.total}...` + url;

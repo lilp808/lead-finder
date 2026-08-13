@@ -1,5 +1,5 @@
 // Agent team assignment — deterministic rule-based, never guesses.
-// English-first lookup (DDProperty returns English), with Thai aliases for Facebook.
+// Lookup with Thai aliases (Facebook posts).
 // Unknown/missing location returns null (needs human review).
 
 export const TEAM_LABELS = {
