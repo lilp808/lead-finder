@@ -18,6 +18,9 @@ import logsHandler from '../src/routes/logs.js';
 import resultLeadsHandler from '../src/routes/result-leads.js';
 import schedulesHandler from '../src/routes/schedules.js';
 import sourcesHandler from '../src/routes/sources.js';
+import savedWebsitesHandler from '../src/routes/saved-websites.js';
+import searchConfigHandler from '../src/routes/search-config.js';
+import findWebsitesHandler from '../src/routes/find-websites.js';
 
 const API_ROUTES = {
   collect: collectHandler,
@@ -30,6 +33,9 @@ const API_ROUTES = {
   'result-leads': resultLeadsHandler,
   schedules: schedulesHandler,
   sources: sourcesHandler,
+  'saved-websites': savedWebsitesHandler,
+  'search-config': searchConfigHandler,
+  'find-websites': findWebsitesHandler,
 };
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -37,6 +43,7 @@ const DASHBOARD_PATH = path.join(__dirname, '..', 'scripts', 'test.html');
 const LEAD_PATH = path.join(__dirname, '..', 'scripts', 'lead.html');
 const LOGS_PATH = path.join(__dirname, '..', 'scripts', 'logs.html');
 const RESULT_PATH = path.join(__dirname, '..', 'scripts', 'result.html');
+const WEBSITES_PATH = path.join(__dirname, '..', 'scripts', 'websites.html');
 const LOGIN_PATH = path.join(__dirname, '..', 'scripts', 'login.html');
 
 function redirect(res, location) {
@@ -68,6 +75,9 @@ function resolveRoute(url) {
   if (head === 'result-leads') return 'result-leads';
   if (head === 'schedules') return 'schedules';
   if (head === 'sources') return 'sources';
+  if (head === 'saved-websites') return 'saved-websites';
+  if (head === 'search-config') return 'search-config';
+  if (head === 'find-websites') return 'find-websites';
   if (['collect', 'cron-check', 'webhook'].includes(head)) return head;
   return null;
 }
@@ -122,6 +132,8 @@ export default function handler(req, res) {
     htmlPath = RESULT_PATH;
   } else if (pathname === '/lead' || pathname.endsWith('/lead') || view === 'lead') {
     htmlPath = LEAD_PATH;
+  } else if (pathname === '/websites' || pathname.endsWith('/websites') || view === 'websites') {
+    htmlPath = WEBSITES_PATH;
   } else {
     htmlPath = DASHBOARD_PATH;
   }

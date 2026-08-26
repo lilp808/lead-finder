@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FindProperty — Websites</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root {
+  --font-family: 'Poppins', sans-serif;
+  --color-primary: #D4A843;
+  --color-primary-hover: #C8992F;
+  --color-primary-bg: #F8F3E8;
+  --color-bg: #FAFAFA;
+  --color-surface: #FFFFFF;
+  --color-text: #2F2F2F;
+  --color-text-secondary: #707070;
+  --color-text-muted: #A5A5A5;
+  --color-border: #ECECEC;
+  --color-border-light: #F3F3F3;
+  --color-success: #30C46C;
+  --color-info: #4E9EF7;
+  --color-warning: #E7B64A;
+  --color-danger: #E15D5D;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 999px;
+  --shadow-sm: 0 2px 10px rgba(0,0,0,.04);
+  --shadow-md: 0 6px 20px rgba(0,0,0,.05);
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+  --transition: 200ms ease;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; }
+body { font-family: var(--font-family); background: var(--color-bg); color: var(--color-text); padding: var(--space-5) var(--space-6); max-width: 1100px; margin: 0 auto; }
+
+.nav { display: flex; gap: var(--space-1); margin-bottom: var(--space-5); border-bottom: 2px solid var(--color-border); padding-bottom: 0; }
+.nav a {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  text-decoration: none; font-weight: 500; font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all var(--transition);
+}
+.nav a.active { color: var(--color-primary); border-bottom-color: var(--color-primary); }
+.nav a:hover:not(.active) { color: var(--color-text); }
+
+.page-title { font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-6); }
+.page-title span { color: var(--color-primary); }
+
+.toolbar { display: flex; gap: var(--space-3); margin-bottom: var(--space-5); align-items: center; flex-wrap: wrap; }
+.toolbar input {
+  padding: 10px 14px; flex: 1; min-width: 200px;
+  border: 1px solid var(--color-border); border-radius: var(--radius-md);
+  font-family: inherit; font-size: 0.9rem; background: var(--color-surface);
+}
+.toolbar button {
+  padding: 10px 18px; border: none; border-radius: var(--radius-md);
+  background: var(--color-primary); color: #fff; font-family: inherit; font-weight: 600;
+  cursor: pointer; transition: background var(--transition);
+}
+.toolbar button:hover { background: var(--color-primary-hover); }
+.toolbar .secondary { background: var(--color-surface); color: var(--color-text-secondary); border: 1px solid var(--color-border); }
+.toolbar .secondary:hover { background: #FAFAFA; color: var(--color-text); }
+.toolbar .find-btn { background: var(--color-info); color: #fff; }
+.toolbar .find-btn:hover { background: #3b8be6; }
+
+.table-container { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: var(--space-3) var(--space-4); text-align: left; border-bottom: 1px solid var(--color-border); font-size: 0.85rem; }
+th { background: var(--color-bg); font-weight: 600; color: var(--color-text-secondary); white-space: nowrap; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--color-bg); }
+td.url-cell { max-width: 500px; word-break: break-all; }
+td.url-cell a { color: var(--color-info); text-decoration: none; }
+td.url-cell a:hover { text-decoration: underline; }
+td.date-cell { color: var(--color-text-muted); white-space: nowrap; }
+td.label-cell { white-space: nowrap; }
+.label-badge {
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  padding: 2px 10px; border-radius: var(--radius-full);
+  font-size: 0.72rem; font-weight: 600; line-height: 1.5;
+  cursor: pointer; transition: all var(--transition);
+}
+.label-badge:hover { filter: brightness(0.95); box-shadow: 0 0 0 2px rgba(212,168,67,.3); }
+.label-none { background: #F5F5F5; color: #9E9E9E; }
+.label-agency { background: #EEF4FF; color: var(--color-info); }
+.label-landlord { background: #FEF7E6; color: var(--color-warning); }
+.label-marketing { background: #F0FDF4; color: var(--color-success); }
+.actions-cell { white-space: nowrap; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  height: 34px; padding: 0 var(--space-3); border-radius: var(--radius-md);
+  font-family: var(--font-family); font-size: 0.82rem; font-weight: 600;
+  border: 1px solid transparent; cursor: pointer;
+  transition: all var(--transition); white-space: nowrap; text-decoration: none; line-height: 1;
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-sm { height: 30px; padding: 0 var(--space-2); font-size: 0.78rem; }
+.btn-ghost { background: transparent; color: var(--color-text-secondary); border-color: transparent; }
+.btn-ghost:hover:not(:disabled) { background: var(--color-border-light); color: var(--color-text); }
+.btn-danger { background: transparent; color: var(--color-danger); }
+.btn-danger:hover:not(:disabled) { background: #FEF2F2; }
+
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.4); z-index: 1000;
+  align-items: center; justify-content: center; padding: var(--space-4);
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--color-surface); border-radius: var(--radius-xl);
+  max-width: 480px; width: 100%; max-height: 80vh; overflow-y: auto;
+  padding: var(--space-6); box-shadow: 0 20px 60px rgba(0,0,0,.15);
+  position: relative;
+}
+.modal-close { position: absolute; top: var(--space-3); right: var(--space-3); background: none; border: none; cursor: pointer; color: var(--color-text-muted); padding: var(--space-1); border-radius: var(--radius-sm); }
+.modal-close:hover { background: var(--color-bg); color: var(--color-text); }
+.modal h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: var(--space-4); }
+.form-group { margin-bottom: var(--space-4); }
+.form-group label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: .03em; margin-bottom: var(--space-1); }
+.form-group input, .form-group select {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md);
+  font-family: inherit; font-size: 0.85rem; color: var(--color-text); background: var(--color-surface);
+  outline: none; transition: all var(--transition);
+}
+.form-group input:focus, .form-group select:focus { border-color: var(--color-primary); box-shadow: 0 0 0 4px rgba(212,168,67,.15); }
+.form-actions { display: flex; gap: var(--space-2); margin-top: var(--space-2); }
+.form-actions .btn { flex: 1; }
+
+.toast { position: fixed; bottom: var(--space-6); left: 50%; transform: translateX(-50%); background: var(--color-text); color: #fff; padding: var(--space-3) var(--space-6); border-radius: var(--radius-full); font-size: 0.85rem; font-weight: 500; z-index: 2000; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+.toast.show { opacity: 1; }
+
+.empty-state { text-align: center; padding: var(--space-10) var(--space-4); color: var(--color-text-muted); font-size: 0.9rem; }
+.loading { color: var(--color-text-muted); font-size: 0.85rem; padding: var(--space-8) 0; text-align: center; }
+
+.label-dropdown {
+  position: absolute; z-index: 1100;
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-md); box-shadow: var(--shadow-md);
+  padding: var(--space-1) 0; min-width: 180px; display: none;
+}
+.label-dropdown.show { display: block; }
+.label-dropdown-item {
+  display: block; width: 100%; padding: var(--space-2) var(--space-3);
+  border: none; background: none; font-family: inherit; font-size: 0.8rem;
+  font-weight: 500; color: var(--color-text); text-align: left; cursor: pointer;
+  transition: background var(--transition);
+}
+.label-dropdown-item:hover { background: var(--color-bg); }
+.label-dropdown-item.active { color: var(--color-primary); font-weight: 600; }
+
+.keyword-row { display: flex; gap: var(--space-2); margin-bottom: var(--space-2); align-items: center; }
+.keyword-row input { flex: 1; padding: 8px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-family: inherit; font-size: 0.85rem; outline: none; }
+.keyword-row input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(212,168,67,.15); }
+.btn-remove-keyword { width: 28px; height: 28px; border: none; background: transparent; color: var(--color-danger); cursor: pointer; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; }
+.btn-remove-keyword:hover { background: #FEF2F2; }
+.btn-add-keyword { display: inline-flex; align-items: center; gap: var(--space-1); padding: 4px 10px; border: 1px dashed var(--color-border); border-radius: var(--radius-md); background: transparent; color: var(--color-text-secondary); font-family: inherit; font-size: 0.78rem; font-weight: 500; cursor: pointer; transition: all var(--transition); }
+.btn-add-keyword:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.find-status { margin-top: var(--space-3); padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); font-size: 0.85rem; color: var(--color-text-secondary); background: var(--color-bg); text-align: center; }
+
+.pagination { display: flex; align-items: center; justify-content: center; gap: var(--space-2); margin-top: var(--space-4); }
+.page-btn {
+  height: 32px; min-width: 32px; padding: 0 var(--space-2);
+  border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+  background: var(--color-surface); font-family: inherit; font-size: 0.8rem; font-weight: 500;
+  cursor: pointer; transition: all var(--transition);
+}
+.page-btn:hover:not(.active):not(:disabled) { background: var(--color-bg); }
+.page-btn.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+.page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.backend-guide-toggle {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  padding: 10px 16px; border: 1px dashed var(--color-primary); border-radius: var(--radius-md);
+  background: var(--color-primary-bg); color: var(--color-primary);
+  font-family: var(--font-family); font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; transition: all var(--transition);
+}
+.backend-guide-toggle:hover { background: var(--color-primary); color: #fff; }
+.backend-guide {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-primary);
+  border-radius: var(--radius-md); padding: 18px 20px;
+  margin-bottom: var(--space-5); font-size: 0.84rem; line-height: 1.6; color: var(--color-text);
+  box-shadow: var(--shadow-sm);
+}
+.backend-guide h2 { font-size: 1rem; font-weight: 700; color: var(--color-primary); margin-bottom: 6px; }
+.backend-guide h3 { font-size: 0.9rem; font-weight: 600; margin-top: 12px; margin-bottom: 4px; color: var(--color-text); }
+.backend-guide p { margin: 4px 0; }
+.backend-guide ul, .backend-guide ol { margin: 4px 0 4px 20px; }
+.backend-guide li { margin: 2px 0; }
+.backend-guide code { background: #F5F5F5; padding: 1px 6px; border-radius: 4px; font-size: 0.78rem; word-break: break-all; }
+.backend-guide table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 0.8rem; }
+.backend-guide th, .backend-guide td { border: 1px solid var(--color-border); padding: 6px 8px; text-align: left; vertical-align: top; }
+.backend-guide th { background: var(--color-primary-bg); color: var(--color-primary); font-weight: 600; }
+
+@media (max-width: 768px) {
+  body { padding: var(--space-3); }
+  .table-container { overflow-x: auto; }
+  table { min-width: 400px; }
+}
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <a href="/"><i data-lucide="settings-2" style="width:16px;height:16px"></i> Config</a>
+  <a href="/lead"><i data-lucide="users" style="width:16px;height:16px"></i> Leads</a>
+  <a href="/result"><i data-lucide="badge-check" style="width:16px;height:16px"></i> Result Leads</a>
+  <a href="/logs"><i data-lucide="scroll-text" style="width:16px;height:16px"></i> Logs</a>
+  <a href="/websites" class="active"><i data-lucide="link" style="width:16px;height:16px"></i> Websites</a>
+  <a href="/logout" style="margin-left:auto;color:var(--color-danger)"><i data-lucide="log-out" style="width:16px;height:16px"></i> Logout</a>
+</div>
+
+<button class="backend-guide-toggle" onclick="toggleBackendGuide()">
+  <i data-lucide="book-open" style="width:15px;height:15px"></i> คู่มือสำหรับทีม Backend — หน้า Websites
+</button>
+<div class="backend-guide" id="backendGuide" style="display:none">
+  <h2>คู่มือสำหรับทีม Backend — หน้า Websites</h2>
+  <p>จัดการเว็บไซต์ listing อสังหาริมทรัพย์ที่พบ — บันทึก URL, จัด-label, ค้นหาด้วย Google Search ผ่าน Serper API</p>
+
+  <h3>1) Database — ตารางที่เกี่ยวข้อง</h3>
+  <table>
+    <tr><th>Table</th><th>Columns</th><th>หมายเหตุ</th></tr>
+    <tr>
+      <td><code>saved_websites</code></td>
+      <td><code>id (uuid PK), url (text UNIQUE), label (text default 'none'), created_at</code></td>
+      <td>เก็บ URL ที่บันทึกไว้; <code>label</code> = none | agency | landlord | marketing</td>
+    </tr>
+    <tr>
+      <td><code>search_config</code></td>
+      <td><code>id (uuid PK), config_key (text UNIQUE), config_value (jsonb), created_at, updated_at</code></td>
+      <td>เก็บ config แบบ key-value; seed data: excluded_domains, search_language, search_keywords</td>
+    </tr>
+  </table>
+
+  <h3>2) API — Saved Websites (CRUD)</h3>
+  <table>
+    <tr><th>Method</th><th>URL</th><th>Body</th><th>Response</th></tr>
+    <tr><td>GET</td><td><code>/api/saved-websites</code></td><td>—</td><td><code>[{ id, url, label, created_at }]</code> (sort created_at desc)</td></tr>
+    <tr><td>POST</td><td><code>/api/saved-websites</code></td><td><code>{ url, label? }</code></td><td>201 row / 409 duplicate</td></tr>
+    <tr><td>PATCH</td><td><code>/api/saved-websites?id=</code></td><td><code>{ url? }</code> or <code>{ label? }</code></td><td>200 row / 404</td></tr>
+    <tr><td>DELETE</td><td><code>/api/saved-websites?id=</code></td><td>—</td><td>200 <code>{ ok: true }</code></td></tr>
+  </table>
+  <p><strong>Duplicate protection:</strong> DB constraint <code>UNIQUE (url)</code> + backend check query ก่อน insert → 409 ถ้าซ้ำ</p>
+
+  <h3>3) API — Find Websites (Serper Search)</h3>
+  <table>
+    <tr><th>Method</th><th>URL</th><th>Body</th><th>Response</th></tr>
+    <tr><td>POST</td><td><code>/api/find-websites</code></td><td><code>{ queries: ["keyword1", "keyword2"] }</code></td><td><code>{ websites: ["https://..."], count }</code></td></tr>
+  </table>
+  <p><strong>Serper API request format:</strong></p>
+  <pre style="background:#f5f5f5;padding:8px 12px;border-radius:6px;font-size:0.78rem;overflow-x:auto;margin:6px 0">POST https://google.serper.dev/search
+Headers: { "X-API-KEY": "&lt;SERPER_API_KEY&gt;", "Content-Type": "application/json" }
+Body (array): [
+  { "q": "warehouse factory for rent", "hl": "th" },
+  { "q": "โกดังโรงงานให้เช่า",      "hl": "th" }
+]</pre>
+  <p><code>hl</code> = host language code ของ Google (ค่าจาก <code>search_config</code> key <code>search_language</code>, default <code>"th"</code>) — กำหนดภาษา/region ของผลลัพธ์ Google Search</p>
+  <p><strong>Serper API response format:</strong></p>
+  <pre style="background:#f5f5f5;padding:8px 12px;border-radius:6px;font-size:0.78rem;overflow-x:auto;margin:6px 0">// Response เป็น array (1 element ต่อ 1 query)
+[
+  {
+    "searchParameters": { "q": "warehouse factory for rent", "hl": "th", ... },
+    "organic": [
+      { "title": "...", "link": "https://example.com/listing/123", "snippet": "..." },
+      { "title": "...", "link": "https://other.com/page", "snippet": "..." }
+    ]
+  },
+  { "organic": [...] }
+]</pre>
+  <p><strong>Workflow ภายใน:</strong></p>
+  <ol>
+    <li>โหลด config จาก <code>search_config</code> (<code>excluded_domains</code>, <code>search_language</code>)</li>
+    <li>แปลง queries → Serper body: <code>queries.map(q =&gt; ({ q, hl: searchLanguage }))</code> — ส่งเป็น <strong>array</strong> (batch request, 1 call ครอบทุก keyword)</li>
+    <li>เรียก <code>POST https://google.serper.dev/search</code> ด้วย <code>X-API-KEY</code> header</li>
+    <li>Response อาจเป็น array หรือ object เดียว → normalize เป็น array (<code>Array.isArray(serperData) ? serperData : [serperData]</code>)</li>
+    <li>Loop ทุก result → ดึง <code>organic[].link</code> → แปลงเป็น root domain ด้วย <code>new URL(link).origin</code> (ตัด path ทิ้ง เหลือแค่ <code>https://example.com</code>)</li>
+    <li>กรอง domain ที่อยู่ใน <code>excluded_domains</code> (subdomain match: <code>hostname === d || hostname.endsWith('.' + d)</code>)</li>
+    <li>Deduplicate origins ด้วย <code>Set</code> → sort alphabetical → return <code>{ websites: [...], count }</code></li>
+  </ol>
+  <p><strong>Excluded domains (default):</strong> <code>thaiindustrialproperty.com</code>, <code>facebook.com</code>, <code>youtube.com</code></p>
+  <p><strong>Error handling:</strong> Serper ไม่ OK → return 502 พร้อม error text (ตัด 300 ตัวอักษร); ไม่มี <code>SERPER_API_KEY</code> → return 500</p>
+
+  <h3>4) API — Search Config</h3>
+  <table>
+    <tr><th>Method</th><th>URL</th><th>Body</th><th>Response</th></tr>
+    <tr><td>GET</td><td><code>/api/search-config</code></td><td>—</td><td><code>{ excluded_domains: [...], search_language: "th", search_keywords: [...] }</code></td></tr>
+    <tr><td>PATCH</td><td><code>/api/search-config</code></td><td><code>{ search_keywords: [...] }</code></td><td>200 <code>{ ok: true }</code> (upsert per key)</td></tr>
+  </table>
+
+  <h3>5) Frontend Flow — Find Website</h3>
+  <ol>
+    <li>กด "Find Website" → <code>openFindModal()</code> → โหลด keywords จาก <code>GET /api/search-config</code></li>
+    <li>กด "Search" → <code>searchWebsites()</code>: <code>POST /api/find-websites</code> ด้วย keywords ทั้งหมด</li>
+    <li>Loop ผลลัพธ์ → <code>POST /api/saved-websites</code> ทีละ URL (<strong>auto-save ทั้งหมด</strong>)</li>
+    <li>URL ซ้ำ (409) → ข้าม, นับเป็น skipped</li>
+    <li>แสดง toast: "X saved, Y skipped (already exist)" → refresh ตาราง</li>
+  </ol>
+
+  <h3>6) Route Registration</h3>
+  <table>
+    <tr><th>File</th><th>Routes</th></tr>
+    <tr><td><code>api/index.js</code></td><td><code>saved-websites</code>, <code>search-config</code>, <code>find-websites</code> ใน <code>API_ROUTES</code> map</td></tr>
+    <tr><td><code>vercel.json</code></td><td>rewrite ทั้ง 3 → <code>/api/index?__route=...</code></td></tr>
+    <tr><td><code>scripts/dev.mjs</code></td><td>route ทั้ง 3 ผ่าน <code>api/index.js</code> (dev server)</td></tr>
+  </table>
+</div>
+
+<div class="page-title">
+  <i data-lucide="link" style="width:24px;height:24px;color:var(--color-primary)"></i>
+  Websites
+</div>
+
+<div class="toolbar">
+  <button onclick="openAddModal()"><i data-lucide="plus" style="width:14px;height:14px"></i> Add Website</button>
+  <button class="find-btn" onclick="openFindModal()"><i data-lucide="search" style="width:14px;height:14px"></i> Find Website</button>
+  <button class="secondary" onclick="loadWebsites()"><i data-lucide="refresh-cw" style="width:14px;height:14px"></i> Refresh</button>
+</div>
+
+<div class="table-container">
+  <table id="websiteTable">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>URL</th>
+        <th>Label</th>
+        <th>Added</th>
+        <th class="actions-cell">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="websiteBody">
+      <tr><td colspan="5" class="loading">Loading...</td></tr>
+    </tbody>
+  </table>
+</div>
+<div class="pagination" id="pagination"></div>
+
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAddModal()"><i data-lucide="x" style="width:20px;height:20px"></i></button>
+    <h2><i data-lucide="plus" style="width:18px;height:18px;vertical-align:middle"></i> Add Website</h2>
+    <form id="addForm" onsubmit="submitAdd(event)">
+      <div class="form-group">
+        <label>URL *</label>
+        <input type="url" id="addUrl" required placeholder="https://example.com" autofocus />
+      </div>
+      <div class="form-group">
+        <label>Label</label>
+        <select id="addLabel">
+          <option value="none" selected>None</option>
+          <option value="agency">Agency Website</option>
+          <option value="landlord">Landlord Website</option>
+          <option value="marketing">Marketing Platform</option>
+        </select>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeAddModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeEditModal()"><i data-lucide="x" style="width:20px;height:20px"></i></button>
+    <h2><i data-lucide="edit-3" style="width:18px;height:18px;vertical-align:middle"></i> Edit Website</h2>
+    <form id="editForm" onsubmit="submitEdit(event)">
+      <input type="hidden" id="editId" />
+      <div class="form-group">
+        <label>URL *</label>
+        <input type="url" id="editUrl" required />
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="findModal">
+  <div class="modal" style="max-width: 560px;">
+    <button class="modal-close" onclick="closeFindModal()"><i data-lucide="x" style="width:20px;height:20px"></i></button>
+    <h2><i data-lucide="search" style="width:18px;height:18px;vertical-align:middle"></i> Find Websites</h2>
+    <div class="form-group">
+      <label>Search Keywords</label>
+      <div id="keywordList"></div>
+      <button class="btn-add-keyword" onclick="addKeyword()"><i data-lucide="plus" style="width:12px;height:12px"></i> Add Keyword</button>
+    </div>
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" onclick="closeFindModal()">Cancel</button>
+      <button type="button" class="btn btn-ghost" onclick="saveDefaultKeywords()" style="margin-right:auto;font-size:0.78rem;"><i data-lucide="save" style="width:13px;height:13px"></i> Save as Default</button>
+      <button type="button" class="btn btn-primary" onclick="searchWebsites()"><i data-lucide="search" style="width:14px;height:14px"></i> Search</button>
+    </div>
+    <div id="findStatus" class="find-status" style="display:none;"></div>
+  </div>
+</div>
+
+<div class="label-dropdown" id="labelDropdown"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const API_BASE = '';
+let allWebsites = [];
+let currentPage = 1;
+const PAGE_SIZE = 10;
+
+function toggleBackendGuide() {
+  const g = document.getElementById('backendGuide');
+  g.style.display = g.style.display === 'none' ? 'block' : 'none';
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+}
+
+function formatDate(iso) {
+  if (!iso) return '\u2014';
+  const d = new Date(iso);
+  return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+window.onload = function () {
+  lucide.createIcons();
+  loadWebsites();
+};
+
+async function loadWebsites() {
+  const tbody = document.getElementById('websiteBody');
+  tbody.innerHTML = '<tr><td colspan="5" class="loading">Loading...</td></tr>';
+  try {
+    const res = await fetch(API_BASE + '/api/saved-websites');
+    if (!res.ok) throw new Error(await res.text());
+    allWebsites = await res.json();
+    currentPage = 1;
+    renderPage();
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Error: ' + esc(err.message) + '</td></tr>';
+  }
+}
+
+function labelBadgeText(label) {
+  const map = { none: 'None', agency: 'Agency Website', landlord: 'Landlord Website', marketing: 'Marketing Platform' };
+  return esc(map[label] || 'None');
+}
+
+function labelBadgeClass(label) {
+  const cls = { none: 'label-none', agency: 'label-agency', landlord: 'label-landlord', marketing: 'label-marketing' };
+  return cls[label] || 'label-none';
+}
+
+function renderTable(websites, startIndex) {
+  const tbody = document.getElementById('websiteBody');
+  if (!websites.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No websites yet. Click "Add Website" to get started.</td></tr>';
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < websites.length; i++) {
+    var w = websites[i];
+    html += '<tr>'
+      + '<td>' + (startIndex + i + 1) + '</td>'
+      + '<td class="url-cell"><a href="' + esc(w.url) + '" target="_blank" rel="noopener">' + esc(w.url) + '</a></td>'
+      + '<td class="label-cell" style="position:relative">'
+      + '<span class="label-badge ' + labelBadgeClass(w.label) + '" onclick="showLabelDropdown(event, \'' + esc(w.id) + '\', \'' + esc(w.label || 'none') + '\')">' + labelBadgeText(w.label) + '</span>'
+      + '</td>'
+      + '<td class="date-cell">' + formatDate(w.created_at) + '</td>'
+      + '<td class="actions-cell">'
+      + '<button class="btn btn-sm btn-ghost" onclick="openEditModal(\'' + esc(w.id) + '\', \'' + esc(w.url) + '\')" title="Edit"><i data-lucide="edit-3" style="width:14px;height:14px"></i></button> '
+      + '<button class="btn btn-sm btn-danger" onclick="deleteWebsite(\'' + esc(w.id) + '\', \'' + esc(w.url) + '\')" title="Delete"><i data-lucide="trash-2" style="width:14px;height:14px"></i></button>'
+      + '</td></tr>';
+  }
+  tbody.innerHTML = html;
+}
+
+function renderPage() {
+  var totalPages = Math.max(1, Math.ceil(allWebsites.length / PAGE_SIZE));
+  if (currentPage > totalPages) currentPage = totalPages;
+  var start = (currentPage - 1) * PAGE_SIZE;
+  var pageData = allWebsites.slice(start, start + PAGE_SIZE);
+  renderTable(pageData, start);
+  renderPagination(currentPage, totalPages);
+  lucide.createIcons();
+}
+
+function renderPagination(page, totalPages) {
+  var pag = document.getElementById('pagination');
+  if (totalPages <= 1) { pag.innerHTML = ''; return; }
+  var html = '';
+  html += '<button class="page-btn" onclick="goPage(' + (page - 1) + ')"' + (page <= 1 ? ' disabled' : '') + '>&#8249;</button>';
+  var range = 2;
+  var start = Math.max(1, page - range);
+  var end = Math.min(totalPages, page + range);
+  if (start > 1) html += '<button class="page-btn" onclick="goPage(1)">1</button>';
+  if (start > 2) html += '<span style="color:var(--color-text-muted);font-size:.8rem">...</span>';
+  for (var i = start; i <= end; i++) {
+    html += '<button class="page-btn' + (i === page ? ' active' : '') + '" onclick="goPage(' + i + ')">' + i + '</button>';
+  }
+  if (end < totalPages - 1) html += '<span style="color:var(--color-text-muted);font-size:.8rem">...</span>';
+  if (end < totalPages) html += '<button class="page-btn" onclick="goPage(' + totalPages + ')">' + totalPages + '</button>';
+  html += '<button class="page-btn" onclick="goPage(' + (page + 1) + ')"' + (page >= totalPages ? ' disabled' : '') + '>&#8250;</button>';
+  pag.innerHTML = html;
+}
+
+function goPage(p) {
+  currentPage = p;
+  renderPage();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function openAddModal() {
+  document.getElementById('addForm').reset();
+  document.getElementById('addLabel').value = 'none';
+  document.getElementById('addModal').classList.add('show');
+  document.getElementById('addUrl').focus();
+  lucide.createIcons();
+}
+
+function closeAddModal() {
+  document.getElementById('addModal').classList.remove('show');
+}
+
+async function submitAdd(e) {
+  e.preventDefault();
+  const url = document.getElementById('addUrl').value.trim();
+  const label = document.getElementById('addLabel').value;
+
+  if (!url) return showToast('URL is required');
+
+  try {
+    const res = await fetch(API_BASE + '/api/saved-websites', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, label })
+    });
+    if (res.status === 409) {
+      closeAddModal();
+      return showToast('URL already exists');
+    }
+    if (!res.ok) throw new Error(await res.text());
+    closeAddModal();
+    showToast('Website added');
+    loadWebsites();
+  } catch (err) {
+    showToast('Error: ' + err.message);
+  }
+}
+
+async function deleteWebsite(id, url) {
+  if (!confirm('Delete "' + url + '"?')) return;
+  try {
+    const res = await fetch(API_BASE + '/api/saved-websites?id=' + id, { method: 'DELETE' });
+    if (!res.ok) throw new Error(await res.text());
+    showToast('Website deleted');
+    loadWebsites();
+  } catch (err) {
+    showToast('Error: ' + err.message);
+  }
+}
+
+function openEditModal(id, url) {
+  document.getElementById('editId').value = id;
+  document.getElementById('editUrl').value = url;
+  document.getElementById('editModal').classList.add('show');
+  document.getElementById('editUrl').focus();
+  lucide.createIcons();
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').classList.remove('show');
+}
+
+async function submitEdit(e) {
+  e.preventDefault();
+  const id = document.getElementById('editId').value;
+  const url = document.getElementById('editUrl').value.trim();
+
+  if (!url) return showToast('URL is required');
+
+  try {
+    const res = await fetch(API_BASE + '/api/saved-websites?id=' + id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    closeEditModal();
+    showToast('Website updated');
+    loadWebsites();
+  } catch (err) {
+    showToast('Error: ' + err.message);
+  }
+}
+
+function showLabelDropdown(e, id, currentLabel) {
+  e.stopPropagation();
+  const dropdown = document.getElementById('labelDropdown');
+  const options = [
+    { value: 'none', text: 'None' },
+    { value: 'agency', text: 'Agency Website' },
+    { value: 'landlord', text: 'Landlord Website' },
+    { value: 'marketing', text: 'Marketing Platform' },
+  ];
+
+  dropdown.innerHTML = options.map(function(o) {
+    return '<button class="label-dropdown-item' + (o.value === currentLabel ? ' active' : '') + '" onclick="updateLabel(\'' + id + '\', \'' + o.value + '\')">' + o.text + '</button>';
+  }).join('');
+
+  const rect = e.currentTarget.getBoundingClientRect();
+  dropdown.style.left = rect.left + 'px';
+  dropdown.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+  dropdown.classList.add('show');
+
+  setTimeout(() => {
+    document.addEventListener('click', closeLabelDropdown, { once: true });
+  }, 0);
+}
+
+function closeLabelDropdown() {
+  document.getElementById('labelDropdown').classList.remove('show');
+}
+
+async function updateLabel(id, newLabel) {
+  closeLabelDropdown();
+  try {
+    const res = await fetch(API_BASE + '/api/saved-websites?id=' + id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ label: newLabel })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    showToast('Label updated');
+    loadWebsites();
+  } catch (err) {
+    showToast('Error: ' + err.message);
+  }
+}
+
+function openFindModal() {
+  document.getElementById('findStatus').style.display = 'none';
+  document.getElementById('findStatus').textContent = '';
+  document.getElementById('findModal').classList.add('show');
+  loadDefaultKeywords();
+}
+
+function closeFindModal() {
+  document.getElementById('findModal').classList.remove('show');
+}
+
+function buildKeywordRow(value) {
+  const row = document.createElement('div');
+  row.className = 'keyword-row';
+  row.innerHTML = '<input type="text" value="' + esc(value || '') + '" /><button class="btn-remove-keyword" onclick="removeKeyword(this)" title="Remove"><i data-lucide="x" style="width:14px;height:14px"></i></button>';
+  return row;
+}
+
+async function loadDefaultKeywords() {
+  const list = document.getElementById('keywordList');
+  try {
+    const res = await fetch(API_BASE + '/api/search-config');
+    if (!res.ok) throw new Error();
+    const config = await res.json();
+    const keywords = config.search_keywords || ['warehouse factory for rent', 'warehouse factory for sale', 'warehouse factory for rent and for sale'];
+    list.innerHTML = '';
+    keywords.forEach(kw => list.appendChild(buildKeywordRow(kw)));
+  } catch {
+    const defaults = ['warehouse factory for rent', 'warehouse factory for sale', 'warehouse factory for rent and for sale'];
+    list.innerHTML = '';
+    defaults.forEach(kw => list.appendChild(buildKeywordRow(kw)));
+  }
+  lucide.createIcons();
+}
+
+async function saveDefaultKeywords() {
+  const rows = document.querySelectorAll('#keywordList .keyword-row');
+  const keywords = [];
+  rows.forEach(row => {
+    const val = row.querySelector('input').value.trim();
+    if (val) keywords.push(val);
+  });
+  if (!keywords.length) return showToast('At least one keyword required');
+  try {
+    const res = await fetch(API_BASE + '/api/search-config', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ search_keywords: keywords })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    showToast('Default keywords saved');
+  } catch (err) {
+    showToast('Error: ' + err.message);
+  }
+}
+
+function addKeyword() {
+  const list = document.getElementById('keywordList');
+  list.appendChild(buildKeywordRow(''));
+  lucide.createIcons();
+  list.lastElementChild.querySelector('input').focus();
+}
+
+function removeKeyword(btn) {
+  const list = document.getElementById('keywordList');
+  if (list.children.length > 1) {
+    btn.closest('.keyword-row').remove();
+  } else {
+    showToast('At least one keyword required');
+  }
+}
+
+async function searchWebsites() {
+  const rows = document.querySelectorAll('#keywordList .keyword-row');
+  const queries = [];
+  rows.forEach(row => {
+    const val = row.querySelector('input').value.trim();
+    if (val) queries.push(val);
+  });
+
+  if (!queries.length) return showToast('Enter at least one keyword');
+
+  const statusDiv = document.getElementById('findStatus');
+  statusDiv.style.display = 'block';
+  statusDiv.textContent = 'Searching...';
+
+  try {
+    const res = await fetch(API_BASE + '/api/find-websites', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ queries })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+
+    if (!data.websites.length) {
+      statusDiv.textContent = 'No new websites found.';
+      return;
+    }
+
+    let saved = 0;
+    let skipped = 0;
+    const total = data.websites.length;
+
+    for (let i = 0; i < total; i++) {
+      statusDiv.textContent = 'Saving... ' + (i + 1) + '/' + total;
+      try {
+        const saveRes = await fetch(API_BASE + '/api/saved-websites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: data.websites[i], label: 'none' })
+        });
+        if (saveRes.status === 409) skipped++;
+        else if (saveRes.ok) saved++;
+      } catch {}
+    }
+
+    closeFindModal();
+    const msg = saved + ' saved' + (skipped ? ', ' + skipped + ' skipped (already exist)' : '');
+    showToast(msg);
+    loadWebsites();
+  } catch (err) {
+    statusDiv.textContent = 'Error: ' + err.message;
+  }
+}
+</script>
+</body>
+</html>

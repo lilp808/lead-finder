@@ -11,6 +11,7 @@ const routes = {
   '/lead': indexHandler,
   '/logs': indexHandler,
   '/result': indexHandler,
+  '/websites': indexHandler,
   '/api/login': indexHandler,
   '/api/collect': indexHandler,
   '/api/webhook': indexHandler,
@@ -21,6 +22,9 @@ const routes = {
   '/api/logs': indexHandler,
   '/api/cron-check': indexHandler,
   '/api/schedules': indexHandler,
+  '/api/saved-websites': indexHandler,
+  '/api/search-config': indexHandler,
+  '/api/find-websites': indexHandler,
 };
 
 function createMockRes(realRes) {
@@ -139,11 +143,15 @@ server.listen(PORT, () => {
   console.log(`  /lead                — Lead page`);
   console.log(`  /result              — Result leads page`);
   console.log(`  /logs                — Collect logs page`);
+  console.log(`  /websites            — Saved websites page`);
   console.log(`  POST /api/login      — Login (username/password from .env.local)`);
   console.log(`  GET /api/collect     — Trigger Apify`);
   console.log(`  POST /api/webhook    — Receive Apify results`);
   console.log(`  GET/POST /api/sources     — Manage sources`);
   console.log(`  GET/POST /api/schedules   — Manage cron schedules`);
+  console.log(`  GET/POST /api/saved-websites    — Manage saved websites`);
+  console.log(`  GET/PATCH /api/search-config     — Manage search config`);
+  console.log(`  POST /api/find-websites          — Search websites via Serper`);
   console.log(`  GET /api/cron-check       — Cron trigger`);
   console.log(`  GET/PATCH /api/leads      — List & batch update leads`);
   console.log(`  GET /api/leads/:id        — Lead detail`);

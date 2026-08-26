@@ -198,3 +198,52 @@ create table if not exists lead_logs (
 );
 
 create index if not exists idx_lead_logs_ran_at on lead_logs(ran_at desc);
+
+-- Saved Websites (external property listing URLs for quick access)
+create table if not exists saved_websites (
+  id         uuid primary key default gen_random_uuid(),
+  url        text not null,
+  label      text not null default 'none',
+  created_at timestamptz default now()
+);
+
+-- Migration for existing DBs
+alter table saved_websites add column if not exists label text not null default 'none';
+
+-- Migration: prevent duplicate URLs
+DO $$ BEGIN
+  ALTER TABLE saved_websites ADD CONSTRAINT saved_websites_url_unique UNIQUE (url);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- Search Config (for Find Website feature)
+create table if not exists search_config (
+  id           uuid primary key default gen_random_uuid(),
+  config_key   text unique not null,
+  config_value jsonb not null,
+  created_at   timestamptz default now(),
+  updated_at   timestamptz default now()
+);
+
+insert into search_config (config_key, config_value) values
+  ('excluded_domains', '["thaiindustrialproperty.com", "facebook.com", "youtube.com"]'::jsonb),
+  ('search_language', '"th"'::jsonb),
+  ('search_keywords', '["warehouse factory for rent", "warehouse factory for sale", "warehouse factory for rent and for sale"]'::jsonb)
+on conflict (config_key) do nothing;
+
+-- Migration: add search_keywords to existing DBs
+insert into search_config (config_key, config_value)
+values ('search_keywords', '["warehouse factory for rent", "warehouse factory for sale", "warehouse factory for rent and for sale"]'::jsonb)
+on conflict (config_key) do nothing;
+
+-- Migration: add youtube.com to existing DBs
+UPDATE search_config
+SET config_value = (
+  SELECT jsonb_agg(DISTINCT val)
+  FROM search_config sc, jsonb_array_elements_text(sc.config_value) val
+  WHERE sc.config_key = 'excluded_domains'
+  UNION ALL
+  SELECT '"youtube.com"'::jsonb
+)
+WHERE config_key = 'excluded_domains'
+  AND NOT config_value @> '"youtube.com"'::jsonb;

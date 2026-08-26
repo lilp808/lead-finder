@@ -25,7 +25,11 @@
     { "source": "/api/schedules/:id", "destination": "/api/index?__route=schedules&id=:id" },
     { "source": "/api/schedules", "destination": "/api/index?__route=schedules" },
     { "source": "/api/sources/:id", "destination": "/api/index?__route=sources&id=:id" },
-    { "source": "/api/sources", "destination": "/api/index?__route=sources" }
+    { "source": "/api/sources", "destination": "/api/index?__route=sources" },
+    { "source": "/websites", "destination": "/api/index?view=websites" },
+    { "source": "/api/saved-websites", "destination": "/api/index?__route=saved-websites" },
+    { "source": "/api/search-config", "destination": "/api/index?__route=search-config" },
+    { "source": "/api/find-websites", "destination": "/api/index?__route=find-websites" }
   ],
   "functions": {
     "api/index.js": {
